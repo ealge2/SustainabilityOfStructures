@@ -42,7 +42,7 @@ class Wood:
         self.density, self.GWP, self.cost, self.cost2 = result[0]
         self.fmd = float()
 
-    def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values
+    def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values -> README: Hier muss die Eingabe der Werte frei sein oder?
         if self.mech_prop[1:3] == "GL":
             gamma_m = 1.5  # SIA 265, 2.2.5: reduzierter Sicherheitsbeiwert für BSH
 
