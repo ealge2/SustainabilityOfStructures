@@ -118,7 +118,8 @@ class Section:
 class SupStrucRectangular(Section):
     # defines cross-section dimensions and has methods to calculate static properties of rectangular,
     # non-cracked sections
-    def __init__(self, section_type, b, h, phi=0):  # create a rectangular timber object
+
+    def __init__(self, section_type, b, h, phi=0):  # create a rectangular object
         super().__init__(section_type)
         self.b = b  # width [m]
         self.h = h  # height [m]
@@ -166,11 +167,11 @@ class RectangularWood(SupStrucRectangular, Section):
         super().__init__(section_type, b, h, phi)
         self.wood_type = wood_type
         mu_el, vu_el = self.calc_strength_elast(wood_type.fmd, wood_type.fvd)
-        self.mu_max, self.mu_min = [mu_el, mu_el]
+        self.mu_max, self.mu_min = [mu_el, mu_el]   #Readme: Why is this needed for wood?
         self.vu = vu_el
-        self.qs_class_n, self.qs_class_p = [3, 3]
+        self.qs_class_n, self.qs_class_p = [3, 3]   #Readme: What is this needed for?
         self.g0k = self.calc_weight(wood_type.weight)
-        self.ei1 = self.wood_type.Emmean*self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
+        self.ei1 = self.wood_type.Emmean*self.iy  # elastic stiffness [Nm^2]
         self.co2 = self.a_brutt * self.wood_type.GWP * self.wood_type.density  # [kg_CO2_eq/m]
         self.cost = self.a_brutt * self.wood_type.cost
 
@@ -178,7 +179,8 @@ class RectangularWood(SupStrucRectangular, Section):
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
     def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, phi=2.0, c_nom=0.03):
-        # create a rectangular timber object
+
+        # create a rectangular concrete object
         section_type = "rc_rec"
         super().__init__(section_type, b, h, phi)
         self.concrete_type = concrete_type
