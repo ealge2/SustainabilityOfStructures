@@ -324,7 +324,18 @@ class Member1D:
             if qs_class_vorh[1] <= qs_class_erf[1]:
                 qu = self.section.mu_max/(max(alpha_m)*self.system.l_tot ** 2)
             else:
-                qu = 0
+                if self.section.section_type == "rc_rec":
+                    # smooth change to 0 load bearing capacity (goal: enable more efficient optimization)
+                    epsilon = 1.0e-2
+                    if qs_class_vorh[1] == 1:
+                        shift = 0.35
+                    else:
+                        shift = 0.5
+                    x_d = self.section.x_p/self.section.d
+                    factor = 1-0.5*(1+2/np.pi*np.arctan((x_d-shift)/epsilon))
+                    qu = factor * self.section.mu_max/(max(alpha_m)*self.system.l_tot ** 2)
+                else:
+                    qu = 0
         else:
             if qs_class_vorh[0] <= qs_class_erf[0] & qs_class_vorh[1] <= qs_class_erf[1]:
                 qu = min(self.section.mu_max/(max(alpha_m)*self.system.l_tot ** 2), self.section.mu_min /

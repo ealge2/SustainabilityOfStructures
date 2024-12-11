@@ -1,14 +1,13 @@
 # file contains code for generating plots for "Austausch Nr. 1 mit erweitertem Projektteam"
 # parts of the code will to be integrated in a file, which contains general code for automated plot generation
 
+# IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
 import struct_optimization  # file with code for structural optimization
 import matplotlib.pyplot as plt
 
-# max. number of iterations per optimization. Fast results: max_iterations = 50, good results: max iterations = 1000
-# max_iter = 1000
-
+# INPUT
 # create dummy-database
 database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
@@ -25,7 +24,7 @@ reinfsteel1.get_design_values()
 # create initial wooden rectangular cross-section
 section_wd0 = struct_analysis.RectangularWood(timber1, 1.0, 0.1)
 # create initial reinforced concrete rectangular cross-section
-section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.1, 0.012, 0.15, 0.01, 0.15)
+section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -51,12 +50,15 @@ lengths = [3, 4, 5, 6, 7, 8, 9, 10, 12]
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc], [section_wd0, bodenaufbau_wd]]
 criteria = ["ULS", "SLS1"]
-optima = ["GWP", "h"]
+optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
+
+# ANALYSIS
+# max. number of iterations per optimization. Higher value leads to better results
+max_iter = 100
 member_list = []
 legend = []
-
 # create plot data
 for i in to_plot:
     for criterion in criteria:
@@ -65,7 +67,7 @@ for i in to_plot:
             for length in lengths:
                 sys = struct_analysis.BeamSimpleSup(length)
                 member0 = struct_analysis.Member1D(i[0], sys, i[1], req, g2k, qk)
-                opt_section = struct_optimization.get_optimized_section(member0, criterion, optimum)
+                opt_section = struct_optimization.get_optimized_section(member0, criterion, optimum, max_iter)
                 opt_member = struct_analysis.Member1D(opt_section, sys, i[1], req, g2k, qk)
                 members.append(opt_member)
             member_list.append(members)
@@ -122,26 +124,34 @@ for idx, info in enumerate(plotted_data):
     plt.legend()
 plt.show()
 
-#isolate cross-sections for verification
-idx_length = 5
-v_members = [member[5] for member in member_list]
 
+#  VALIDATION
+#  isolate cross-sections for verification
+validation_idx = 0  # index of length in length-list, corresponding optimal members are separated for further validation
+v_members = [member[validation_idx] for member in member_list]
+
+# print some properties of the optimal members, which are useful for manual validation
 for idx, member in enumerate(v_members):
     print(legend[idx])
     print("Section Nr. " + str(idx) + " :")
     print(member.section.section_type)
+    print("h:")
+    print(member.section.h)
     print("admissible load:")
     member.calc_qk_zul_gzt()
     print(member.qk_zul_gzt)
-    print("x/d:")
-    print(member.section.x_p/member.section.d)
+    print("load:")
+    print(member.qk)
+    print("co2 of section:")
+    print(member.section.co2)
+    if member.section.section_type == "rc_rec":
+        print("x/d:")
+        print(member.section.x_p/member.section.d)
+        print("di_xu:")
+        print(member.section.bw[0])
     print("Admissible deflections (ductile installations):")
-    print(member.w_install_adm)
+    print(member.w_app_adm)
     print("Calculated deflections (ductile installations):")
-    print(member.w_install)
-
-
+    print(member.w_app)
 
 print("Do manual verification of the data in v_members")
-
-print("End of code")
