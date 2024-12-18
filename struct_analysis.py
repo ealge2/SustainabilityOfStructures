@@ -236,6 +236,29 @@ class RectangularConcrete(SupStrucRectangular):
 
 #Ripped cross sections
 class SupStrucRipped(Section):
+    #defines
+    def __init__(self):
+
+class RippedConcrete(SupStrucRipped):
+    # defines properties of a rectangular, reinforced concrete section
+
+    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bg, s_bg, l0, phi=2.0, c_nom=0.03):
+        section_type = "rc_rec"
+        super().__init__(section_type, b, b_w, h, h_f, phi)
+        self.concrete_type = concrete_type
+        self.rebar_type = rebar_type
+        self.c_nom = c_nom
+        self.l0 = l0
+
+    def calc_beff(self):
+        #computes effective width of concrete flange: SIA 262, 4.1.3.3.2 (19)+(20)
+        b = self.b
+        b_w = self.b_w
+        l0 = self.l0
+        b_effi = min(0.2*(b-b_w)/2+0.1*l0, 0.2*l0)
+        b_eff = min(2*b_effi + b_w, b)
+        return b_eff
+
 
 
 class MatLayer:  # create a material layer
