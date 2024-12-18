@@ -22,7 +22,6 @@
 import sqlite3  # import modul for SQLite
 import numpy as np
 
-
 class Wood:
     # defines properties of wooden material
     def __init__(self, mech_prop, database):  # retrieve basic mechanical data from database
@@ -158,6 +157,11 @@ class SupStrucRectangular(Section):
         #  out: weight of cross section per m length [N/m]
         w = spec_weight * self.a_brutt
         return w
+
+#Ripped cross sections
+class SupStrucRipped(Section):
+
+
 
 
 class RectangularWood(SupStrucRectangular, Section):
