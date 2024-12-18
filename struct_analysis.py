@@ -240,7 +240,7 @@ class RectangularConcrete(SupStrucRectangular):
 class SupStrucRipped(Section):
     # defines cross-section dimensions and has methods to calculate static properties of ribbed,
     # non-cracked sections
-    def __init__(self, section_type, b, h, phi=0):  # create a rectangular object
+    def __init__(self, section_type, b, b_w, h, h_f, phi=0):  # create a rectangular object
         super().__init__(section_type)
         self.b_w = b_w  # web width [m]
         self.b = b      # width mid rib to mid rib [m]
@@ -250,7 +250,7 @@ class SupStrucRipped(Section):
         #self.iy = self.calc_moment_of_inertia()
         self.phi = phi
 
-class RippedConcrete(SupStrucRipped, Section):
+class RippedConcrete(SupStrucRipped):
     # defines properties of a rectangular, reinforced concrete section
 
     def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bg, s_bg, l0, phi=2.0, c_nom=0.03):
@@ -260,7 +260,7 @@ class RippedConcrete(SupStrucRipped, Section):
         self.rebar_type = rebar_type
         self.c_nom = c_nom
         self.l0 = l0
-        self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
+        self.bw = [[di_xw, n_xw], [di_xu, s_xu], [di_xo, s_xo]]
         self.bw_bg = [di_bg, s_bg]
 
         [self.d, self.dso, self.dsu] = self.calc_d()
@@ -268,11 +268,12 @@ class RippedConcrete(SupStrucRipped, Section):
         self.b_eff = self.calc_beff()
         self.iy = self.calc_moment_of_inertia()
 
+        [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
+        [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
+
     def calc_beff(self):
         #computes effective width of concrete flange: SIA 262, 4.1.3.3.2 (19)+(20)
-        b = self.b
-        b_w = self.b_w
-        l0 = self.l0
+        b = self.b, b_w = self.b_w, l0 = self.l0
         b_effi = min(0.2*(b-b_w)/2+0.1*l0, 0.2*l0)
         b_eff = min(2*b_effi + b_w, b)
         return b_eff
@@ -284,13 +285,9 @@ class RippedConcrete(SupStrucRipped, Section):
         return d, dso, dsu
 
     def calc_zs(self):
-        b = self.b
-        b_w = self.b_w
-        h = self.h
-        h_f = self.h_f
+        b = self.b, b_w = self.b_w, h = self.h, h_f = self.h_f
         zs = (b_w*(h-h_f)*(h-h_f)/2+b*h_f*h_f/2)/(b_w*(h-h_f)+b*h_f)
         return zs
-
 
     def calc_moment_of_inertia(self):
         #  in: width b [m], height h [m]
@@ -303,13 +300,14 @@ class RippedConcrete(SupStrucRipped, Section):
         return iy
 
     def calc_mu(self, sign='pos'):
-        b = self.b
+        b_w = self.b_w
+        b_eff = self.b_eff
         fsd = self.rebar_type.fsd
         fcd = self.concrete_type.fcd
         if sign == 'pos':
-            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b, fsd, fcd)
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b_eff, fsd, fcd)
         elif sign == 'neg':
-            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.ds, b, fsd, fcd)
+            [mu, x, a_s, qs_klasse] = print("to implement") #self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.dso, b_w, fsd, fcd)
         else:
             [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
             print("sigen of moment resistance has to be 'neg' or 'pos'")
