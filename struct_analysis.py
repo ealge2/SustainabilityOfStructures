@@ -22,6 +22,8 @@
 import sqlite3  # import modul for SQLite
 import numpy as np
 
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 class Wood:
     # defines properties of wooden material
     def __init__(self, mech_prop, database):  # retrieve basic mechanical data from database
@@ -98,7 +100,8 @@ class SteelReinforcingBar:
     def get_design_values(self, gamma_s=1.15):  # calculate design values
         self.fsd = self.fsk/gamma_s  # SIA 262, 2.3.2.5, Formel (4)
 
-
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 class Section:
     # contains fundamental section properties like section type weight, resistance and stiffness
     def __init__(self, section_type):
@@ -260,6 +263,8 @@ class RippedConcrete(SupStrucRipped):
         self.bw_bg = [di_bg, s_bg]
 
         [self.d, self.dso, self.dsu] = self.calc_d()
+        self.zs = self.calc_zs()
+        self.iy = self.calc_moment_of_inertia()
 
     def calc_beff(self):
         #computes effective width of concrete flange: SIA 262, 4.1.3.3.2 (19)+(20)
@@ -282,6 +287,7 @@ class RippedConcrete(SupStrucRipped):
         h = self.h
         h_f = self.h_f
         zs = (b_w*(h-hf)*(h-hf)/2+b*h_f*h_f/2)/(b_w*(h-h_f)+b*h_f)
+        return zs
 
 
     def calc_moment_of_inertia(self):
@@ -292,6 +298,33 @@ class RippedConcrete(SupStrucRipped):
         sa_rib = self.b_w*(self.h-self.h_f)*abs(self.zs-(self.h-self.h_f))**2
         sa_flange = self.b*self.h*abs(self.zs-self.h/2)**2
         return iy
+
+    def calc_mu(self, sign='pos'):
+        b = self.b
+        fsd = self.rebar_type.fsd
+        fcd = self.concrete_type.fcd
+        if sign == 'pos':
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b, fsd, fcd)
+        elif sign == 'neg':
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.ds, b, fsd, fcd)
+        else:
+            [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
+            print("sigen of moment resistance has to be 'neg' or 'pos'")
+        return mu, x, a_s, qs_klasse
+
+@staticmethod
+    def mu_unsigned(di, s, d, b, fsd, fcd):
+        # units input: [m, m, m, m, N/m^2, N/m^2]
+        a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
+        omega = a_s * fsd / (d * b * fcd)  # [-]
+        mu = a_s * fsd * d * (1-omega/2)  # [Nm]
+        x = omega * d / 0.85  # [m]
+        if x/d <= 0.35:
+            return mu, x, a_s, 1
+        elif x/d <= 0.5:
+            return mu, x, a_s, 2
+        else:
+            return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
 
 
