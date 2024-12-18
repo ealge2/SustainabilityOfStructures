@@ -100,7 +100,7 @@ class SteelReinforcingBar:
 
 
 class Section:
-    # contains fundamental section properties like sectoion type weight, resistance and stiffness
+    # contains fundamental section properties like section type weight, resistance and stiffness
     def __init__(self, section_type):
         self.section_type = section_type
         # self.mu_max = float
@@ -157,10 +157,6 @@ class SupStrucRectangular(Section):
         #  out: weight of cross section per m length [N/m]
         w = spec_weight * self.a_brutt
         return w
-
-#Ripped cross sections
-class SupStrucRipped(Section):
-
 
 
 
@@ -237,6 +233,9 @@ class RectangularConcrete(SupStrucRectangular):
             return mu, x, a_s, 2
         else:
             return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
+
+#Ripped cross sections
+class SupStrucRipped(Section):
 
 
 class MatLayer:  # create a material layer
