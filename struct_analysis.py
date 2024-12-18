@@ -180,7 +180,7 @@ class RectangularWood(SupStrucRectangular, Section):
 
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
-    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bg, s_bg, phi=2.0, c_nom=0.03):
+    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bg, s_bg_l, s_bg_t, phi=2.0, c_nom=0.03):
 
         # create a rectangular concrete object
         section_type = "rc_rec"
@@ -189,11 +189,11 @@ class RectangularConcrete(SupStrucRectangular):
         self.rebar_type = rebar_type
         self.c_nom = c_nom
         self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
-        self.bw_bg = [di_bg, s_bg]
+        self.bw_bg = [di_bg, s_bg_l, s_bg_t]    #diameter, distance longitudinal, distance transversal
         [self.d, self.ds] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
-        [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
-        # [self.vu, self.as_bg] = self.calc_shear_resistance() XXXXXXXXXXToDoXXXXXXXXXX
+        [self.mu_min, self.x_n, self.as_n, self.s_class_n] = self.calc_mu('neg')
+        [self.vu, self.as_bg] = self.calc_vu()
         self.g0k = self.calc_weight(concrete_type.weight)
         a_s_tot = self.as_p + self.as_n  # add area of stirrups XXXXXXXXXXToDoXXXXXXXXXX
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
@@ -236,12 +236,23 @@ class RectangularConcrete(SupStrucRectangular):
         else:
             return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
-    def calc_vu(self):
-        if di_bg == 0   #Bauteile ohne Querkraftbewehrung
+    def calc_vu(self, D_max=32, alpha = 45):
+        b = self.b
+        as_bg = np.pi * di ** 2 / (4 * self.bw_bg[1] * self.bw_bg[2]) * b
+        if self.di_bg == 0:   #Bauteile ohne Querkraftbewehrung
             k_g = 48/(16+D_max)
-            e_v = 1.5*f_sd*E_s #(39) -> READ ME: Überlegen, wie Formel (38) implementiert wird
-            k_d = 1/(1+e_v*d*k_g)
-            vu = k_d*tau_cd*d_v
+            e_v = 1.5*self.rebar_type.fsd*self.rebar_type.Es #(39) -> READ ME: Überlegen, wie Formel (38) implementiert wird
+            k_d = 1/(1+e_v*self.d*k_g)
+            vu_c = k_d*self.concrete_type.tcd*self.d
+            vu_s = 0
+            vu = vu_c
+            return vu_c, vu_s, vu , as_bg
+        else:
+            vu_s = as_bg*z*self.rebar_type.fsd*1/np.tan(np.radians(alpha)) #Einschnittige Bügel gerechnet
+            k_c = 0.55 #READ ME: make kc variable?
+            vu_c = b*z*k_c*self.concrete_type.fcd*np.sin(np.radians(alpha))*np.cos(np.radians(alpha))
+            vu = min(vu_c,vu_s)
+            return vu_c, vu_s, vu, as_bg
 
 #Ripped cross sections
 class SupStrucRipped(Section):
