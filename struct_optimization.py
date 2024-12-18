@@ -26,7 +26,8 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [h0, di_xu0]
 
     # define bounds of variables
-    bnds = Bounds([0.006, 0.006], [1.0, 0.04])  # height between 6 cm and 1.0 m, diameter of rebars between 6 mm and 40 mm
+    bnds = Bounds([0.006, 0.006], [1.0, 0.04])
+    # height between 6 cm and 1.0 m, diameter of rebars between 6 mm and 40 mm
 
     # definition of fixed values of cross-section
     b = m.section.b

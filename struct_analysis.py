@@ -162,7 +162,7 @@ class SupStrucRectangular(Section):
 
 class RectangularWood(SupStrucRectangular, Section):
     # defines properties of rectangular, wooden cross-section
-    def __init__(self, wood_type, b, h, phi=0.6):  # create a rectangular timber object
+    def __init__(self, wood_type, b, h, phi=0.6, xi=0.01, ei_b=0.0):  # create a rectangular timber object
         section_type = "wd_rec"
         super().__init__(section_type, b, h, phi)
         self.wood_type = wood_type
@@ -174,6 +174,8 @@ class RectangularWood(SupStrucRectangular, Section):
         self.ei1 = self.wood_type.Emmean*self.iy  # elastic stiffness [Nm^2]
         self.co2 = self.a_brutt * self.wood_type.GWP * self.wood_type.density  # [kg_CO2_eq/m]
         self.cost = self.a_brutt * self.wood_type.cost
+        self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
+        self.ei_b = ei_b  # stiffness perpendicular to direction of span
 
 
 class RectangularConcrete(SupStrucRectangular):
@@ -200,7 +202,9 @@ class RectangularConcrete(SupStrucRectangular):
         self.co2 = co2_rebar + co2_concrete
         self.cost = (a_s_tot * self.rebar_type.cost + (self.a_brutt-a_s_tot) * self.concrete_type.cost
                      + self.concrete_type.cost2)
-    #   self.ei2 = # XXXXXXXXXXToDoXXXXXXXXXX
+        # self.xi = XX  no damping factor for concrete defined (no value needed for applied calculation concepts)
+        # self.ei_b = XX  no stiffness in perpendicular direction defined (no value needed for applied calculation concepts)
+        #   self.ei2 = # XXXXXXXXXXToDoXXXXXXXXXX
 
     def calc_d(self):
         d = self.h - self.c_nom - self.bw[0][0]/2
@@ -361,10 +365,10 @@ class MatLayer:  # create a material layer
         connection = sqlite3.connect(database)
         cursor = connection.cursor()
         # get properties from database
-        inquiry = "SELECT h_fix, density, weight, GWP FROM floor_struc_prop WHERE name=" + mat_name
+        inquiry = "SELECT h_fix, E, density, weight, GWP FROM floor_struc_prop WHERE name=" + mat_name
         cursor.execute(inquiry)
         result = cursor.fetchall()
-        h_fix, density, weight, self.GWP = result[0]
+        h_fix, e, density, weight, self.GWP = result[0]
         if h_input is False:
             self.h = h_fix
         else:
@@ -375,6 +379,11 @@ class MatLayer:  # create a material layer
         else:
             self.density = roh_input
             self.weight = roh_input*10
+        if e == None:
+            self.ei = 0
+        else:
+            i = 1 * self.h**3 / 12
+            self.ei = e*i
         self.gk = self.weight * self.h  # weight per area in N/m^2
         self.co2 = self.density * self.h * self.GWP  # CO2-eq per area in kg-C02/m^2
 
@@ -385,12 +394,14 @@ class FloorStruc:  # create a floor structure
         self.co2 = 0
         self.gk_area = 0
         self.h = 0
+        self.ei = 0
         for mat_name, h_input, roh_input in mat_layers:
             current_layer = MatLayer(mat_name, h_input, roh_input, database_name)
             self.layers.append(current_layer)
             self.co2 += current_layer.co2
             self.gk_area += current_layer.gk
             self.h += current_layer.h
+            self.ei = max(self.ei, current_layer.ei)
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
@@ -401,6 +412,7 @@ class BeamSimpleSup:
         self.alpha_m = [0, 1/8]
         self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
         self.alpha_w = 5/384
+        self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
 
 
 class Member1D:
@@ -418,6 +430,7 @@ class Member1D:
         self.q_rare = self.gk + self.qk
         self.q_freq = self.gk + self.psi[1]*self.qk
         self.q_per = self.gk + self.psi[2]*self.qk
+        self.m = self.q_per/10
         self.w_install_adm = self.system.li_max/self.requirements.lw_install
         self.w_use_adm = self.system.li_max/self.requirements.lw_use
         self.w_app_adm = self.system.li_max/self.requirements.lw_app
@@ -436,6 +449,16 @@ class Member1D:
         self.w_app = self.system.alpha_w * (
                 self.q_per * (1 + self.section.phi)) * self.system.l_tot ** 4 / self.section.ei1
         self.co2 = system.l_tot * (floorstruc.co2 + section.co2)
+
+        # calculation first frequency (uncracked cross-section, method for cracked cross-section is not implemented jet)
+        self.f1 = self.calc_f1()
+        # calculation of further vibration criteria for wooden cross-sections
+        section_material = self.section.section_type[0:2]
+        if (self.f1 < 8.0 and section_material == "wd"): # check for frequency and material type
+            self.a_ed = self.calc_vib1()
+        else:
+            print("no wd with frequency under 8 Hz")
+
 
     def calc_qu(self):
         # calculates maximal load qu in respect to bearing moment mu_max, mu_min and static system
@@ -470,10 +493,45 @@ class Member1D:
     def calc_qk_zul_gzt(self, gamma_g=1.35, gamma_q=1.5):
         self.qk_zul_gzt = (self.qu - gamma_g * self.gk)/gamma_q
 
+    def calc_f1(self):
+        # calculates first frequency of system according to HBT, Seite 46
+        kf2 = self.system.kf2
+        l_rech = self.system.li_max
+        eil = self.section.ei1
+        m = self.m
+        f1 = kf2*np.pi/(2*l_rech**2)*(eil/m)**0.5  # HBT, Seite 46
+        return f1
+
+    def calc_vib1(self, f0=700):
+        # calculates a_Ed according to HBT, Seite 47
+        f1 = self.f1
+        if f1 >= 8:
+            print("frequency f1 above 8 Hz, no evaluation of a_Ed needed")
+            return 0
+        else:
+            ei_b = max(self.section.ei_b,
+                       self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
+            bm_rech = self.system.li_max / 1.1 * (ei_b / self.section.ei1)  # HBT Seite 46
+            m_gen = self.m * self.system.li_max / 2 * bm_rech
+            xi = self.section.xi
+            if f1 <= 5.1:
+                alpha = 0.2
+                ff = f1
+            elif f1 <= 6.9:
+                alpha = 0.06
+                ff = f1
+            else:
+                alpha = 0.06
+                ff = 6.9
+            a_ed = 0.4*f0*alpha/m_gen*1/(((f1/ff)**2-1)**2+(2*xi*f1/ff)**2)**0.5  # HBT, Seite 47
+            return a_ed
+
 
 class Requirements:
-    def __init__(self, install="ductile", lw_install=350, lw_use=350, lw_app=300):
+    def __init__(self, install="ductile", lw_install=350, lw_use=350, lw_app=300, f1=8, a_cd=0.1):
         self.install = install
-        self.lw_install = lw_install
-        self.lw_use = lw_use
-        self.lw_app = lw_app
+        self.lw_install = lw_install  # preset value: SIA 260
+        self.lw_use = lw_use  # preset value: SIA 260
+        self.lw_app = lw_app  # preset value: SIA 260
+        self.f1 = f1  # preset value: HBT, Seite 46
+        self.a_cd = a_cd  # preset value: HBT, Seite 46

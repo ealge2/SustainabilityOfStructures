@@ -1,5 +1,4 @@
-# file contains code for generating plots for "Austausch Nr. 1 mit erweitertem Projektteam"
-# parts of the code will to be integrated in a file, which contains general code for automated plot generation
+# file contains code for generating fundamental plots of first example (simple supported beam)
 
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
@@ -127,7 +126,7 @@ plt.show()
 
 #  VALIDATION
 #  isolate cross-sections for verification
-validation_idx = 0  # index of length in length-list, corresponding optimal members are separated for further validation
+validation_idx = 8  # index of length in length-list, corresponding optimal members are separated for further validation
 v_members = [member[validation_idx] for member in member_list]
 
 # print some properties of the optimal members, which are useful for manual validation
