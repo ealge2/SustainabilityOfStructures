@@ -265,6 +265,12 @@ class SupStrucRipped(Section):
         #self.iy = self.calc_moment_of_inertia()
         self.phi = phi
 
+        def calc_area(self):
+            #  in: width b [m], web with b_w [m], total height h [m], flange height h_f [m]
+            #  out: area [m^2]
+            a_brutt = self.b * self.h_f + self.b_w*(self.h-self.h_f)
+            return a_brutt
+
 class RippedConcrete(SupStrucRipped):
     # defines properties of a rectangular, reinforced concrete section
 
