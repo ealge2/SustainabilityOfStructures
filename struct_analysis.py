@@ -180,7 +180,7 @@ class RectangularWood(SupStrucRectangular, Section):
 
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
-    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, phi=2.0, c_nom=0.03):
+    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bg, s_bg, phi=2.0, c_nom=0.03):
 
         # create a rectangular concrete object
         section_type = "rc_rec"
@@ -189,7 +189,7 @@ class RectangularConcrete(SupStrucRectangular):
         self.rebar_type = rebar_type
         self.c_nom = c_nom
         self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
-        # self.bw_bg = XXXXXXXXXXToDoXXXXXXXXXX
+        self.bw_bg = [di_bg, s_bg]
         [self.d, self.ds] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
@@ -236,6 +236,13 @@ class RectangularConcrete(SupStrucRectangular):
         else:
             return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
+    def calc_vu(self):
+        if di_bg == 0   #Bauteile ohne Querkraftbewehrung
+            k_g = 48/(16+D_max)
+            e_v = 1.5*f_sd*E_s #(39) -> READ ME: Überlegen, wie Formel (38) implementiert wird
+            k_d = 1/(1+e_v*d*k_g)
+            vu = k_d*tau_cd*d_v
+
 #Ripped cross sections
 class SupStrucRipped(Section):
     # defines cross-section dimensions and has methods to calculate static properties of ribbed,
@@ -262,7 +269,6 @@ class RippedConcrete(SupStrucRipped):
         self.l0 = l0
         self.bw = [[di_xw, n_xw], [di_xu, s_xu], [di_xo, s_xo]]
         self.bw_bg = [di_bg, s_bg]
-
         [self.d, self.dso, self.dsu] = self.calc_d()
         self.zs = self.calc_zs()
         self.b_eff = self.calc_beff()
@@ -272,13 +278,14 @@ class RippedConcrete(SupStrucRipped):
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
 
     def calc_beff(self):
-        #computes effective width of concrete flange: SIA 262, 4.1.3.3.2 (19)+(20)
+        #computes effective width of concrete flange: SIA 262 4.1.3.3.2
         b = self.b, b_w = self.b_w, l0 = self.l0
-        b_effi = min(0.2*(b-b_w)/2+0.1*l0, 0.2*l0)
-        b_eff = min(2*b_effi + b_w, b)
+        b_effi = min(0.2*(b-b_w)/2+0.1*l0, 0.2*l0)  #SIA 262 (20)
+        b_eff = min(2*b_effi + b_w, b)              #SIA 262 (19)
         return b_eff
 
     def calc_d(self):
+        #calculates
         d = self.h-self.c_nom-self.bw_bg [1][1]-self.bw[0][0]/2
         dso = self.h_f-self.c_nom -self.bw[1][1]/2
         dsu = self.h_f-self.c_nom-self.bw[2][2]/2
@@ -320,6 +327,10 @@ class RippedConcrete(SupStrucRipped):
         omega = a_s * fsd / (d * b * fcd)  # [-]
         mu = a_s * fsd * d * (1-omega/2)  # [Nm]
         x = omega * d / 0.85  # [m]
+        if x > self.h_fl
+            print("x>h_fl")
+        else:
+            print("x<hfl")
         if x/d <= 0.35:
             return mu, x, a_s, 1
         elif x/d <= 0.5:
