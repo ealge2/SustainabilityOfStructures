@@ -22,7 +22,7 @@
 import sqlite3  # import modul for SQLite
 import numpy as np
 
-#-----------------------------------------------------------------------------------------------------------------------
+#DEFINITONS OF MATERIAL PROPERTIES--------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
 class Wood:
     # defines properties of wooden material
@@ -115,7 +115,6 @@ class Section:
         # self.ei1 = float
         # self.co2 = float
         # self.cost = float
-
 
 class SupStrucRectangular(Section):
     # defines cross-section dimensions and has methods to calculate static properties of rectangular,
@@ -239,17 +238,19 @@ class RectangularConcrete(SupStrucRectangular):
 
 #Ripped cross sections
 class SupStrucRipped(Section):
-    # defines cross-section dimensions and has methods to calculate static properties of rectangular,
+    # defines cross-section dimensions and has methods to calculate static properties of ribbed,
     # non-cracked sections
     def __init__(self, section_type, b, h, phi=0):  # create a rectangular object
         super().__init__(section_type)
-        self.b = b  # width [m]
-        self.h = h  # height [m]
+        self.b_w = b_w  # web width [m]
+        self.b = b      # width mid rib to mid rib [m]
+        self.h = h      # total height [m]
+        self.h_f = h_f  # flange height [m]
         #self.a_brutt = self.calc_area()
         #self.iy = self.calc_moment_of_inertia()
         self.phi = phi
 
-class RippedConcrete(SupStrucRipped):
+class RippedConcrete(SupStrucRipped, Section):
     # defines properties of a rectangular, reinforced concrete section
 
     def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bg, s_bg, l0, phi=2.0, c_nom=0.03):
@@ -264,6 +265,7 @@ class RippedConcrete(SupStrucRipped):
 
         [self.d, self.dso, self.dsu] = self.calc_d()
         self.zs = self.calc_zs()
+        self.b_eff = self.calc_beff()
         self.iy = self.calc_moment_of_inertia()
 
     def calc_beff(self):
@@ -286,7 +288,7 @@ class RippedConcrete(SupStrucRipped):
         b_w = self.b_w
         h = self.h
         h_f = self.h_f
-        zs = (b_w*(h-hf)*(h-hf)/2+b*h_f*h_f/2)/(b_w*(h-h_f)+b*h_f)
+        zs = (b_w*(h-h_f)*(h-h_f)/2+b*h_f*h_f/2)/(b_w*(h-h_f)+b*h_f)
         return zs
 
 
@@ -297,6 +299,7 @@ class RippedConcrete(SupStrucRipped):
         iy_flange = self.b* self.h_f ** 3 / 12
         sa_rib = self.b_w*(self.h-self.h_f)*abs(self.zs-(self.h-self.h_f))**2
         sa_flange = self.b*self.h*abs(self.zs-self.h/2)**2
+        iy = iy_rib + iy_flange + sa_rib + sa_flange
         return iy
 
     def calc_mu(self, sign='pos'):
@@ -312,7 +315,7 @@ class RippedConcrete(SupStrucRipped):
             print("sigen of moment resistance has to be 'neg' or 'pos'")
         return mu, x, a_s, qs_klasse
 
-@staticmethod
+    @staticmethod
     def mu_unsigned(di, s, d, b, fsd, fcd):
         # units input: [m, m, m, m, N/m^2, N/m^2]
         a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
@@ -327,7 +330,8 @@ class RippedConcrete(SupStrucRipped):
             return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
 
-
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 class MatLayer:  # create a material layer
     def __init__(self, mat_name, h_input, roh_input, database):  # get initial data from database
         self.name = mat_name
@@ -365,7 +369,8 @@ class FloorStruc:  # create a floor structure
             self.gk_area += current_layer.gk
             self.h += current_layer.h
 
-
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 class BeamSimpleSup:
     def __init__(self, length):
         self.l_tot = length
