@@ -269,6 +269,24 @@ class RippedConcrete(SupStrucRipped):
         dsu = self.h_f-self.c_nom-self.bw[2][2]/2
         return d, dso, dsu
 
+    def calc_zs(self):
+        b = self.b
+        b_w = self.b_w
+        h = self.h
+        h_f = self.h_f
+        zs = (b_w*(h-hf)*(h-hf)/2+b*h_f*h_f/2)/(b_w*(h-h_f)+b*h_f)
+
+
+    def calc_moment_of_inertia(self):
+        #  in: width b [m], height h [m]
+        #  out: second moment of inertia Iy [m^4]
+        iy_rib = self.b_w* (self.h-self.h_f) ** 3 / 12
+        iy_flange = self.b* self.h_f ** 3 / 12
+        sa_rib = self.b_w*(self.h-self.h_f)*abs(self.zs-(self.h-self.h_f))**2
+        sa_flange = self.b*self.h*abs(self.zs-self.h/2)**2
+        return iy
+
+
 
 class MatLayer:  # create a material layer
     def __init__(self, mat_name, h_input, roh_input, database):  # get initial data from database
