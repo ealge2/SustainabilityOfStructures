@@ -160,8 +160,6 @@ class SupStrucRectangular(Section):
         w = spec_weight * self.a_brutt
         return w
 
-
-
 class RectangularWood(SupStrucRectangular, Section):
     # defines properties of rectangular, wooden cross-section
     def __init__(self, wood_type, b, h, phi=0.6):  # create a rectangular timber object
@@ -210,9 +208,7 @@ class RectangularConcrete(SupStrucRectangular):
         return d, ds
 
     def calc_mu(self, sign='pos'):
-        b = self.b
-        fsd = self.rebar_type.fsd
-        fcd = self.concrete_type.fcd
+        b = self.b, fsd = self.rebar_type.fsd, fcd = self.concrete_type.fcd
         if sign == 'pos':
             [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b, fsd, fcd)
         elif sign == 'neg':
