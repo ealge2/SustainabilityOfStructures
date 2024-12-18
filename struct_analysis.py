@@ -249,6 +249,10 @@ class RippedConcrete(SupStrucRipped):
         self.rebar_type = rebar_type
         self.c_nom = c_nom
         self.l0 = l0
+        self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
+        self.bw_bg = [di_bg, s_bg]
+
+        [self.d, self.dso, self.dsu] = self.calc_d()
 
     def calc_beff(self):
         #computes effective width of concrete flange: SIA 262, 4.1.3.3.2 (19)+(20)
@@ -259,6 +263,11 @@ class RippedConcrete(SupStrucRipped):
         b_eff = min(2*b_effi + b_w, b)
         return b_eff
 
+    def calc_d(self):
+        d = self.h-self.c_nom-self.bw_bg [1][1]-self.bw[0][0]/2
+        dso = self.h_f-self.c_nom -self.bw[1][1]/2
+        dsu = self.h_f-self.c_nom-self.bw[2][2]/2
+        return d, dso, dsu
 
 
 class MatLayer:  # create a material layer
