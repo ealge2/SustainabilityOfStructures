@@ -236,8 +236,15 @@ class RectangularConcrete(SupStrucRectangular):
 
 #Ripped cross sections
 class SupStrucRipped(Section):
-    #defines
-    def __init__(self):
+    # defines cross-section dimensions and has methods to calculate static properties of rectangular,
+    # non-cracked sections
+    def __init__(self, section_type, b, h, phi=0):  # create a rectangular object
+        super().__init__(section_type)
+        self.b = b  # width [m]
+        self.h = h  # height [m]
+        #self.a_brutt = self.calc_area()
+        #self.iy = self.calc_moment_of_inertia()
+        self.phi = phi
 
 class RippedConcrete(SupStrucRipped):
     # defines properties of a rectangular, reinforced concrete section
