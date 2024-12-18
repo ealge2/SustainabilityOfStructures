@@ -107,29 +107,30 @@ def create_database(data_base_name):
     Mat_ID INTEGER PRIMARY KEY, 
     name VARCHAR(20), 
     h_fix FLOAT,
+    E FLOAT,
     density FLOAT,
     weight,
     GWP FLOAT);"""
     cursor.execute(sql_command)
 
     # fill data for parquet into table floor_struc_mat
-    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, density, weight, GWP)
-        VALUES (NULL, "Parkett 2-Schicht werkversiegelt, 11 mm", 0.011, 555 , 8e3, 1279e-3);"""
+    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, E, density, weight, GWP)
+        VALUES (NULL, "Parkett 2-Schicht werkversiegelt, 11 mm", 0.011, NULL, 555 , 8e3, 1279e-3);"""
     cursor.execute(sql_command)
 
     # fill data for screed into table floor_struc_mat
-    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, density, weight, GWP)
-        VALUES (NULL, "Unterlagsboden Zement, 85 mm", 0.085, 1850, 22e3, 120e-3);"""
+    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, E, density, weight, GWP)
+        VALUES (NULL, "Unterlagsboden Zement, 85 mm", 0.085, 21e9, 1850, 22e3, 120e-3);"""
     cursor.execute(sql_command)
 
     # fill data for impact sound insulation into table floor_struc_mat
-    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, density, weight, GWP)
-        VALUES (NULL, "Glaswolle", NULL, 80, 0.8e3, 1100e-3);"""
+    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, E, density, weight, GWP)
+        VALUES (NULL, "Glaswolle", NULL, NULL, 80, 0.8e3, 1100e-3);"""
     cursor.execute(sql_command)
 
     # fill data for grit into table floor_struc_mat
-    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, density, weight, GWP)
-        VALUES (NULL, "Kies gebrochen", NULL, 2000, 20e3, 18e-3);"""
+    sql_command = """INSERT INTO floor_struc_prop (Mat_ID, name, h_fix, E, density, weight, GWP)
+        VALUES (NULL, "Kies gebrochen", NULL, NULL, 2000, 20e3, 18e-3);"""
     cursor.execute(sql_command)
 
     # safe changes in database
