@@ -195,7 +195,7 @@ class RectangularConcrete(SupStrucRectangular):
         [self.mu_min, self.x_n, self.as_n, self.s_class_n] = self.calc_mu('neg')
         [self.vu, self.as_bg] = self.calc_vu()
         self.g0k = self.calc_weight(concrete_type.weight)
-        a_s_tot = self.as_p + self.as_n  # add area of stirrups XXXXXXXXXXToDoXXXXXXXXXX
+        a_s_tot = self.as_p + self.as_n  + self.as_bg
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         co2_concrete = (self.a_brutt-a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
         self.ei1 = self.concrete_type.Ecm*self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
@@ -238,8 +238,9 @@ class RectangularConcrete(SupStrucRectangular):
 
     def calc_vu(self, D_max=32, alpha = 45):
         b = self.b
-        as_bg = np.pi * di ** 2 / (4 * self.bw_bg[1] * self.bw_bg[2]) * b
-        if self.di_bg == 0:   #Bauteile ohne Querkraftbewehrung
+        z = 0.9 * self.d #APPROXIMATION
+        as_bg = np.pi * self.bw_bg[0] ** 2 / (4 * self.bw_bg[1] * self.bw_bg[2]) * b
+        if self.bw_bg[0] == 0:   #Bauteile ohne Querkraftbewehrung
             k_g = 48/(16+D_max)
             e_v = 1.5*self.rebar_type.fsd*self.rebar_type.Es #(39) -> READ ME: Überlegen, wie Formel (38) implementiert wird
             k_d = 1/(1+e_v*self.d*k_g)
