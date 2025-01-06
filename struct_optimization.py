@@ -1,24 +1,26 @@
-#  from scipy.optimize import direct
+from scipy.optimize import direct
 import struct_analysis
 from scipy.optimize import basinhopping, Bounds  # import Minimierungsfunktion aus dem SyiPy-Paket
 from scipy.optimize import minimize  # import Minimierungsfunktion aus dem SyiPy-Paket
 import numpy as np
 
-# Define the bounds for the variables
-bounds = Bounds([0, -1], [4, 2])
+class RandomDisplacementBounds(object):
+    # random displacement with bounds for basinhopping optimization
+    def __init__(self, xmin, xmax, stepsize=0.1):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.stepsize = stepsize
 
-# Define a simple custom step-taking class to enforce bounds
-class MyBounds:
-    def __init__(self, bounds):
-        self.bounds = bounds
+    def __call__(self, x):
+        """take a random step but ensure the new position is within the bounds """
+        min_step = np.maximum(self.xmin - x, -self.stepsize)
+        max_step = np.minimum(self.xmax - x, self.stepsize)
 
-    def __call__(self, **kwargs):
-        x = kwargs["x_new"]
-        tmax = bool(np.all(x <= self.bounds.ub))
-        tmin = bool(np.all(x >= self.bounds.lb))
-        return tmax and tmin
+        random_step = np.random.uniform(low=min_step, high=max_step, size=x.shape)
+        xnew = x + random_step
 
-# outer function for finding optimal geometry of rectangular reinforced concrete cross-section
+        return xnew
+
 def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h  # start value for height corresponds to 1/20 of system length
@@ -26,20 +28,20 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [h0, di_xu0]
 
     # define bounds of variables
-    bnds = Bounds([0.006, 0.006], [1.0, 0.04])
-    # height between 6 cm and 1.0 m, diameter of rebars between 6 mm and 40 mm
+    bh = (0.06, 1.0)  # height between 6 cm and 1.0 m
+    bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
+    bounds = [bh, bdi_xu]
 
     # definition of fixed values of cross-section
     b = m.section.b
     s_xu, di_xo, s_xo = m.section.bw[0][1], m.section.bw[1][0], m.section.bw[1][1]
     co, st = m.section.concrete_type, m.section.rebar_type
     add_arg = [m.system, co, st, b, s_xu, di_xo, s_xo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk]
-    # # optimize with direct algorithm (weakness: not perfect optimization):
-    # opt = direct(rc_rqs_co2, bnds, args=(add_arg,), eps=0.0005, maxfun=None)
-    # optimize with basinhopping algorithm (weakness: bounds are not jet implemented in outer level,
-    # what can lead to warnings):
-    opt = basinhopping(rc_rqs, var0, niter=max_iter, T=1, minimizer_kwargs={"args": (add_arg,), "bounds": bnds,
-                                                                            "method": "Powell"}, accept_test=MyBounds(bnds))
+
+    # optimize with basinhopping algorithm with bounds also implemented on both levels (inner and outer):
+    bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds]))
+    opt = basinhopping(rc_rqs, var0, niter=max_iter, T=1, minimizer_kwargs={"args": (add_arg,), "bounds": bounds,
+                                                                            "method": "Powell"}, take_step=bounded_step)
     h, di_xu = opt.x
     optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo)
     return optimized_section
@@ -82,10 +84,21 @@ def rc_rqs(var, add_arg):
         penalty1 = max(member.qk - member.qk_zul_gzt, 0)
         penalty2 = 1e5*max(d1, d2, d3, 0)
         if to_opt == "GWP":
-            return member.section.co2*(1+penalty1+penalty2)# + abs(penalty1) + abs(penalty2)
+            return member.section.co2*(1+penalty1+penalty2)
         elif to_opt == "h":
-            return member.section.h*(1000+penalty1+penalty2)# + 1e-6*abs(penalty1) + 1e-6*abs(penalty2)
-
+            return member.section.h*(1000+penalty1+penalty2)
+    elif criterion == "SLS2":
+        pen_f1 = member.requirements.f1 - member.f1  # Grössenordnung 1.0
+        penalty1 = max(member.qk - member.qk_zul_gzt, 0)
+        penalty2 = 1e2 * max(pen_f1, 0)
+        if to_opt == "GWP":
+            return member.section.co2*(1+penalty1+penalty2)
+        elif to_opt == "h":
+            return member.section.h*(1000+penalty1+penalty2)
+    else:
+        to_minimize = 99
+        print("criterion " + criterion + " is not defined")
+        print("criterion has to be 'ULS' or 'SLS1'")
 
 # outer function for finding optimal wooden rectangular cross-section
 def opt_gzt_wd_rqs(member, criterion="ULS"):
@@ -111,8 +124,21 @@ def wd_rqs_h(h, args):
         penalty1 = max(member.qk - member.qk_zul_gzt, 0)
         penalty2 = 1e5*max(d1, d2, d3, 0)
         to_minimize = member.section.h*(1000+penalty1+penalty2)
+    elif criterion == "SLS2":
+        pen_f1 = member.requirements.f1 - member.f1  # Grössenordnung 1.0
+        pen_a = member.a_ed - member.requirements.a_cd  # Grössenordnung 1e-2
+        pen_w = member.wf_ed - member.requirements.w_f_cdr1*member.r1  # HBT S. 48. r2 wird gleich 1 gesetzt
+        # (Störungen im benachbarten Feld akzeptiert)  # Grössenordnung 1e-5
+        pen_v = member.ve_ed - member.ve_cd  # Grössenordnung 1e-3  ############ Fehler vermutet! #############
+        penalty1 = max(member.qk - member.qk_zul_gzt, 0)
+        if member.f1 < member.requirements.f1:
+            penalty2 = 1e2*max(pen_f1, pen_a*1e2, pen_w*1e5, pen_v*1e3, 0)
+        else:
+            penalty2 = 1e2 * max(pen_w * 1e5, pen_v * 1e3, 0)
+        to_minimize = member.section.h*(1000+penalty1+penalty2)
     else:
         to_minimize = 99
+        print("criterion " + criterion + " is not defined")
         print("criterion has to be 'ULS' or 'SLS1'")
     return to_minimize
 

@@ -17,7 +17,7 @@ timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood materi
 timber1.get_design_values()
 
 # create initial wooden rectangular cross-section
-section = struct_analysis.RectangularWood(timber1, 1.0, 0.24, xi=0.02)
+section = struct_analysis.RectangularWood(timber1, 1.0, 0.32, xi=0.02)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -43,17 +43,9 @@ system = struct_analysis.BeamSimpleSup(length)
 # create wooden member
 member = struct_analysis.Member1D(section, system, bodenaufbau_wd, requirements, g2k, qk)
 
-print(member.section.wood_type.Emmean)
-print(member.section.ei1)
-print(member.section.ei_b)
-print(member.floorstruc.ei)
-print(member.g0k)
-print(member.g1k)
-print(member.g2k)
-print(member.gk)
-print(member.qk)
-print(member.m)
-print(member.f1)
-print(member.a_ed)
-print(1000*member.wf_ed)
-print(member.ve_ed)
+# print(member.section.ei1)
+# # print(member.m)
+# # print(member.f1)
+# # print(member.a_ed)
+# print(1000*member.wf_ed)
+# print(1000*member.ve_ed)

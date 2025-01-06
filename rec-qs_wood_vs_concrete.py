@@ -44,11 +44,11 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [3, 4, 5, 6, 7, 8, 9, 10, 12]
+lengths = [5, 6, 7, 8, 9, 10, 12]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc], [section_wd0, bodenaufbau_wd]]
-criteria = ["ULS", "SLS1"]
+criteria = ["ULS", "SLS1", "SLS2"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
@@ -96,8 +96,10 @@ for i, members in enumerate(member_list):
         linestyle = "-"  # line style for ULS
     elif cri == "SLS1":
         linestyle = "--"  # line style for SLS1
+    elif cri == "SLS2":
+        linestyle = "-."  # line style for SLS1
     else:
-        linestyle = ""
+        linestyle = ":"
     # set linewidth
     if opt == "h":
         linewidth = 0.5
