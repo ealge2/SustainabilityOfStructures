@@ -413,6 +413,7 @@ class BeamSimpleSup:
         self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
         self.alpha_w = 5/384
         self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
+        self.alpha_w_f_cd = 1/48
 
 
 class Member1D:
@@ -436,6 +437,9 @@ class Member1D:
         self.w_app_adm = self.system.li_max/self.requirements.lw_app
         self.qu = self.calc_qu()
         self.qk_zul_gzt = float
+        self.ei_b = max(self.section.ei_b,
+                   self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
+        self.bm_rech = self.system.li_max / 1.1 * (self.ei_b / self.section.ei1) ** 0.25  # HBT Seite 46
 
         # calculation of deflections (uncracked cross-section, method for cracked cross-section is not implemented jet)
         if self.requirements.install == "ductile":
@@ -454,10 +458,11 @@ class Member1D:
         self.f1 = self.calc_f1()
         # calculation of further vibration criteria for wooden cross-sections
         section_material = self.section.section_type[0:2]
-        if (self.f1 < 8.0 and section_material == "wd"): # check for frequency and material type
-            self.a_ed = self.calc_vib1()
-        else:
-            print("no wd with frequency under 8 Hz")
+        if section_material == "wd":  # check for material type
+            if (self.f1 < 8.0):  # check for frequency below 8 Hz
+                self.a_ed = self.calc_vib1()
+            self.wf_ed, self.ve_ed = self.calc_vib2()
+
 
 
     def calc_qu(self):
@@ -509,10 +514,7 @@ class Member1D:
             print("frequency f1 above 8 Hz, no evaluation of a_Ed needed")
             return 0
         else:
-            ei_b = max(self.section.ei_b,
-                       self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
-            bm_rech = self.system.li_max / 1.1 * (ei_b / self.section.ei1)  # HBT Seite 46
-            m_gen = self.m * self.system.li_max / 2 * bm_rech
+            m_gen = self.m * self.system.li_max / 2 * self.bm_rech
             xi = self.section.xi
             if f1 <= 5.1:
                 alpha = 0.2
@@ -523,15 +525,22 @@ class Member1D:
             else:
                 alpha = 0.06
                 ff = 6.9
-            a_ed = 0.4*f0*alpha/m_gen*1/(((f1/ff)**2-1)**2+(2*xi*f1/ff)**2)**0.5  # HBT, Seite 47
+                a_ed = 0.4*f0*alpha/m_gen*1/(((f1/ff)**2-1)**2+(2*xi*f1/ff)**2)**0.5  # HBT, Seite 47
             return a_ed
+
+    def calc_vib2(self, f=1000):
+        # calculates W_F,ED according to to HBT, Seite 48
+        wf_ed = self.system.alpha_w_f_cd*f*self.system.li_max**3/(self.bm_rech*self.section.ei1)
+        ve_ed = 367/(self.bm_rech*(self.m**3*self.section.ei1*1e6)**0.25)
+        return wf_ed, ve_ed
 
 
 class Requirements:
-    def __init__(self, install="ductile", lw_install=350, lw_use=350, lw_app=300, f1=8, a_cd=0.1):
+    def __init__(self, install="ductile", lw_install=350, lw_use=350, lw_app=300, f1=8, a_cd=0.1, w_f_cdr1=1.0):
         self.install = install
         self.lw_install = lw_install  # preset value: SIA 260
         self.lw_use = lw_use  # preset value: SIA 260
         self.lw_app = lw_app  # preset value: SIA 260
         self.f1 = f1  # preset value: HBT, Seite 46
         self.a_cd = a_cd  # preset value: HBT, Seite 46
+        self.w_f_cdr1 = w_f_cdr1  # preset value: HBT, Seite 48
