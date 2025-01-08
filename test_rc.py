@@ -12,18 +12,19 @@ import matplotlib.pyplot as plt
 database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
-# create material for wooden cross-section, derive corresponding design values
-timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
-timber1.get_design_values()
+# create material for reinforced concrete cross-section, derive corresponding design values
+concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)  # create a Wood material object
+concrete1.get_design_values()
+rebar1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)  # create a Wood material object
+rebar1.get_design_values()
 
-# create wooden rectangular cross-section
-section = struct_analysis.RectangularWood(timber1, 1.0, 0.24, xi=0.02)
+# create reinforced concrete rectangular cross-section
+section = struct_analysis.RectangularConcrete(concrete1, rebar1, 1.0, 0.24, 0.012, 0.15, 0.01, 0.15)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
-                                 ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
-                                 ["'Kies gebrochen'", 0.06, False]]
-bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau, database_name)
+                                 ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False]]
+bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau, database_name)
 
 requirements = struct_analysis.Requirements()
 
@@ -41,7 +42,12 @@ length = 5.8
 system = struct_analysis.BeamSimpleSup(length)
 
 # create wooden member
-member = struct_analysis.Member1D(section, system, bodenaufbau_wd, requirements, g2k, qk)
+member = struct_analysis.Member1D(section, system, bodenaufbau_rc, requirements, g2k, qk)
 
-print(member.f1)
-print(member.a_ed)
+print(section.mu_max)
+print(section.mr_p)
+print(section.x_p/section.d)
+print(member.qu)
+
+member.calc_qk_zul_gzt()
+print(member.qk_zul_gzt)
