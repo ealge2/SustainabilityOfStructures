@@ -180,7 +180,7 @@ class RectangularWood(SupStrucRectangular, Section):
 
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
-    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, phi=2.0, c_nom=0.03):
+    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, phi=2.0, c_nom=0.03, xi=0.03):
 
         # create a rectangular concrete object
         section_type = "rc_rec"
@@ -190,9 +190,12 @@ class RectangularConcrete(SupStrucRectangular):
         self.c_nom = c_nom
         self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
         # self.bw_bg = XXXXXXXXXXToDoXXXXXXXXXX
+        mr = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  # cracking moment
+        self.mr_p, self.mr_n = mr, mr
         [self.d, self.ds] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
+        self.roh, self.rohs = self.as_p/self.d, self.as_n/self.ds
         # [self.vu, self.as_bg] = self.calc_shear_resistance() XXXXXXXXXXToDoXXXXXXXXXX
         self.g0k = self.calc_weight(concrete_type.weight)
         a_s_tot = self.as_p + self.as_n  # add area of stirrups XXXXXXXXXXToDoXXXXXXXXXX
@@ -202,9 +205,9 @@ class RectangularConcrete(SupStrucRectangular):
         self.co2 = co2_rebar + co2_concrete
         self.cost = (a_s_tot * self.rebar_type.cost + (self.a_brutt-a_s_tot) * self.concrete_type.cost
                      + self.concrete_type.cost2)
-        # self.xi = XX  no damping factor for concrete defined (no value needed for applied calculation concepts)
-        # self.ei_b = XX  no stiffness in perpendicular direction defined (no value needed for applied calculation concepts)
-        #   self.ei2 = # XXXXXXXXXXToDoXXXXXXXXXX
+        self.ei_b = self.ei1
+        self.xi = xi  # XXXXXXX preset value is an assumption. Has to be verified with literature. XXXXXXX
+        self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d)
 
     def calc_d(self):
         d = self.h - self.c_nom - self.bw[0][0]/2
@@ -216,28 +219,32 @@ class RectangularConcrete(SupStrucRectangular):
         fsd = self.rebar_type.fsd
         fcd = self.concrete_type.fcd
         if sign == 'pos':
-            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b, fsd, fcd)
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b, fsd, fcd, self.mr_p)
         elif sign == 'neg':
-            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.ds, b, fsd, fcd)
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.ds, b, fsd, fcd, self.mr_n)
         else:
             [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
             print("sigen of moment resistance has to be 'neg' or 'pos'")
         return mu, x, a_s, qs_klasse
 
     @staticmethod
-    def mu_unsigned(di, s, d, b, fsd, fcd):
+    def mu_unsigned(di, s, d, b, fsd, fcd, mr):
         # units input: [m, m, m, m, N/m^2, N/m^2]
         a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
         omega = a_s * fsd / (d * b * fcd)  # [-]
         mu = a_s * fsd * d * (1-omega/2)  # [Nm]
         x = omega * d / 0.85  # [m]
-        if x/d <= 0.35:
+        if x/d <= 0.35 and mu >= mr:
             return mu, x, a_s, 1
-        elif x/d <= 0.5:
+        elif x/d <= 0.5 and mu >= mr:
             return mu, x, a_s, 2
         else:
             return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
+    @staticmethod
+    def f_w_ger(roh, rohs, phi, h, d):
+        f = (1-20*rohs)/(10*roh**0.7)*(0.75+0.1*phi)*(h/d)**3
+        return f
 
 class MatLayer:  # create a material layer
     def __init__(self, mat_name, h_input, roh_input, database):  # get initial data from database
@@ -315,26 +322,52 @@ class Member1D:
         self.w_use_adm = self.system.li_max/self.requirements.lw_use
         self.w_app_adm = self.system.li_max/self.requirements.lw_app
         self.qu = self.calc_qu()
+        self.mkd_n = self.system.alpha_m[0] * (self.gk + self.qk) * self.system.l_tot**2
+        self.mkd_p = self.system.alpha_m[1] * (self.gk + self.qk) * self.system.l_tot ** 2
         self.qk_zul_gzt = float
 
-        # calculation of deflections (uncracked cross-section, method for cracked cross-section is not implemented jet)
+        # calculation of deflections (uncracked plus cracked for concrete sections)
+        section_material = self.section.section_type[0:2]
+        unit_def = self.system.alpha_w * self.system.l_tot ** 4 / self.section.ei1  # deflection for q = 1, phi = 0
         if self.requirements.install == "ductile":
-            self.w_install = self.system.alpha_w * (
-                        self.q_freq + self.q_per * (self.section.phi - 1)) * self.system.l_tot ** 4 / self.section.ei1
+            self.w_install = unit_def * (self.q_freq + self.q_per * (self.section.phi - 1))
+            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                self.w_install_ger = unit_def * (
+                    self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi,
+                                                             self.section.h, self.section.d)
+                    + (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,
+                                                                               0, self.section.h, self.section.d)
+                    - self.q_per
+                )
         elif self.requirements.install == "brittle":
-            self.w_install = self.system.alpha_w * (
-                    self.q_rare + self.q_per * (self.section.phi - 1)) * self.system.l_tot ** 4 / self.section.ei1
-        self.w_use = self.system.alpha_w * (
-                    self.q_freq - self.gk) * self.system.l_tot ** 4 / self.section.ei1
-        self.w_app = self.system.alpha_w * (
-                self.q_per * (1 + self.section.phi)) * self.system.l_tot ** 4 / self.section.ei1
-        self.co2 = system.l_tot * (floorstruc.co2 + section.co2)
+            self.w_install = unit_def * (self.q_rare + self.q_per * (self.section.phi - 1))
+            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                self.w_install_ger = unit_def * (
+                    self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi,
+                                                             self.section.h, self.section.d)
+                    + (self.q_rare - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,
+                                                                               0, self.section.h, self.section.d)
+                    - self.q_per
+                )
+        self.w_use = unit_def * (self.q_freq - self.gk)
+        if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+            self.w_use_ger = unit_def * (
+                (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, 0,
+                                                                         self.section.h, self.section.d)
+            )
+        self.w_app = unit_def * (self.q_per * (1 + self.section.phi))
+        if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+            self.w_app_ger = unit_def * (
+                    self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi,
+                                                             self.section.h, self.section.d)
+            )
+        self.co2 = system.l_tot * (self.floorstruc.co2 + self.section.co2)
 
         # calculation first frequency (uncracked cross-section, method for cracked cross-section is not implemented jet)
         self.f1 = self.calc_f1()
         # calculation of further vibration criteria for wooden cross-sections
         section_material = self.section.section_type[0:2]
-        if section_material == "wd":  # check for material type
+        if section_material == "wd" or section_material == "rc":  # check for material type
             self.ei_b = max(self.section.ei_b,
                             self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
             self.bm_rech = self.system.li_max / 1.1 * (self.ei_b / self.section.ei1) ** 0.25  # HBT Seite 46
@@ -346,7 +379,7 @@ class Member1D:
                 self.r1 = 1.15  # HBT S. 48
             else:
                 self.r1 = 1.25  # HBT S. 48
-            self.ve_cd = self.requirements.alpha_ve_cd*(self.f1*self.section.xi-1)
+            self.ve_cd = self.requirements.alpha_ve_cd*100**(self.f1*self.section.xi-1)
 
     def calc_qu(self):
         # calculates maximal load qu in respect to bearing moment mu_max, mu_min and static system
@@ -359,14 +392,16 @@ class Member1D:
                 qu = self.section.mu_max/(max(alpha_m)*self.system.l_tot ** 2)
             else:
                 if self.section.section_type == "rc_rec":
-                    # smooth change to 0 load bearing capacity (goal: enable more efficient optimization)
-                    epsilon = 1.0e-2
+                    # smooth change to 0 load bearing capacity when roh<roh_min or roh>roh_zul
+                    # (enables more efficient optimization)
+                    epsilon = 1.0e-3
                     if qs_class_vorh[1] == 1:
                         shift = 0.35
                     else:
                         shift = 0.5
                     x_d = self.section.x_p/self.section.d
-                    factor = 1-0.5*(1+2/np.pi*np.arctan((x_d-shift)/epsilon))
+                    factor = min(0.5 * (1 + 2 / np.pi * np.arctan((self.section.mu_max-self.section.mr_p) / epsilon)),
+                                        1-0.5*(1+2/np.pi*np.arctan((x_d-shift)/epsilon)))
                     qu = factor * self.section.mu_max/(max(alpha_m)*self.system.l_tot ** 2)
                 else:
                     qu = 0
@@ -385,7 +420,14 @@ class Member1D:
         # calculates first frequency of system according to HBT, Seite 46
         kf2 = self.system.kf2
         l_rech = self.system.li_max
-        eil = self.section.ei1
+        section_material = self.section.section_type[0:2]
+        if section_material == "rc":  # take cracked stiffness for calculation of concrete sections
+            if self.mkd_p < self.section.mr_p and self.mkd_n < self.section.mr_n:
+                eil = self.section.ei1
+            else:
+                eil = self.section.ei2
+        else:
+            eil = self.section.ei1
         m = self.m
         f1 = kf2*np.pi/(2*l_rech**2)*(eil/m)**0.5  # HBT, Seite 46
         return f1
@@ -410,13 +452,18 @@ class Member1D:
     def calc_vib2(self, f=1000):
         # calculates W_F,ED according to to HBT, Seite 48
         wf_ed = self.system.alpha_w_f_cd*f*self.system.li_max**3/(self.bm_rech*self.section.ei1)
-        ve_ed = 364/(self.bm_rech*(self.m**3*self.section.ei1*1e6)**0.25)
+        section_material = self.section.section_type[0:2]
+        if section_material == "rc":  # take cracked stiffness for calculation of concrete sections
+            eil = self.section.ei2
+        else:
+            eil = self.section.ei1
+        ve_ed = 364/(self.bm_rech*(self.m**3*eil*1e6)**0.25)
         return wf_ed, ve_ed
 
 
 class Requirements:
-    def __init__(self, install="ductile", lw_install=350, lw_use=350, lw_app=300, f1=8, a_cd=0.1, w_f_cdr1=1,
-                 alpha_ve_cd=100/3):
+    def __init__(self, install="ductile", lw_install=350, lw_use=350, lw_app=300, f1=8, a_cd=0.1, w_f_cdr1=1.0e-3,
+                 alpha_ve_cd=1/3):
         self.install = install
         self.lw_install = lw_install  # preset value: SIA 260
         self.lw_use = lw_use  # preset value: SIA 260

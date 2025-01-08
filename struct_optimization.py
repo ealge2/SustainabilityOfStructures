@@ -70,35 +70,61 @@ def rc_rqs(var, add_arg):
     # create member
     member = struct_analysis.Member1D(section, system, floorstruc, criteria, g2k, qk)
     member.calc_qk_zul_gzt()  # calculate admissible live load
-    if criterion == "ULS":  # optimize ultimate limit state
-        # return co2 rsp. h of cross-section with penalty if q_adm =! q_k
-        penalty = max(member.qk - member.qk_zul_gzt, 0)
-        if to_opt == "GWP":
-            return member.section.co2*(1+penalty)# + abs(penalty)
-        elif to_opt == "h":
-            return member.section.h*(1000+penalty)# + 1e-3*abs(penalty)
-    elif criterion == "SLS1":  # optimize service limit state (deflections)
+
+    # define penalty1, if ULS is not fulfilled
+    penalty1 = max(member.qk - member.qk_zul_gzt, 0)
+
+    # define penalty2, if SLS1 (deflections) are not fulfilled
+    if member.mkd_p < member.section.mr_p and member.mkd_n < member.section.mr_n:
         d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
                       member.w_app - member.w_app_adm]
-        # return co2 rsp. h of cross-section with penalty if w_adm =! w and if qkzul != qk
-        penalty1 = max(member.qk - member.qk_zul_gzt, 0)
-        penalty2 = 1e5*max(d1, d2, d3, 0)
+    else:
+        d1, d2, d3 = [member.w_install_ger - member.w_install_adm, member.w_use_ger - member.w_use_adm,
+                      member.w_app_ger - member.w_app_adm]
+    penalty2 = 1e5 * max(d1, d2, d3, 0)
+
+    # define penalty3, if SLS2 (vibrations) are not fulfilled
+    pen_a = member.a_ed - member.requirements.a_cd  # Grössenordnung 1e-2
+    pen_w = member.wf_ed - member.requirements.w_f_cdr1 * member.r1  # HBT S. 48. r2 wird gleich 1 gesetzt
+    # (Störungen im benachbarten Feld akzeptiert)  # Grössenordnung 1e-5
+    pen_v = member.ve_ed - member.ve_cd  # Grössenordnung 1e-3
+    if member.f1 < member.requirements.f1:
+        penalty3 = max(pen_a * 1e2, pen_w * 1e5, pen_v * 1e3, 0)
+    else:
+        penalty3 = max(pen_w * 1e5, pen_v * 1e3, 0)
+
+    # optimize ULS only
+    if criterion == "ULS":  # optimize ultimate limit state
+        if to_opt == "GWP":
+            return member.section.co2*(1+penalty1)
+        elif to_opt == "h":
+            return member.section.h*(1+penalty1)
+
+    # optimize SLS1 (deflections). Make sure, that also ULS is fulfilled
+    elif criterion == "SLS1":  # optimize service limit state (deflections)
         if to_opt == "GWP":
             return member.section.co2*(1+penalty1+penalty2)
         elif to_opt == "h":
-            return member.section.h*(1000+penalty1+penalty2)
+            return member.section.h*(1+penalty1+penalty2)
+
+    # optimize SLS2 (vibrations). Make sure, that also ULS is fulfilled
     elif criterion == "SLS2":
-        pen_f1 = member.requirements.f1 - member.f1  # Grössenordnung 1.0
-        penalty1 = max(member.qk - member.qk_zul_gzt, 0)
-        penalty2 = 1e2 * max(pen_f1, 0)
         if to_opt == "GWP":
-            return member.section.co2*(1+penalty1+penalty2)
+            to_minimize = member.section.co2*(1+penalty1+penalty3)
         elif to_opt == "h":
-            return member.section.h*(1000+penalty1+penalty2)
+            to_minimize = member.section.h*(1+penalty1+penalty3)
+
+    # optimize solution, which fulfills all requirements (ULS, SLS1 and SLS2)
+    elif criterion == "ENV":
+        if to_opt == "GWP":
+            to_minimize = member.section.co2*(1+penalty1+penalty2+penalty3)
+        elif to_opt == "h":
+            to_minimize = member.section.h*(1+penalty1+penalty2+penalty3)
     else:
         to_minimize = 99
         print("criterion " + criterion + " is not defined")
-        print("criterion has to be 'ULS' or 'SLS1'")
+        print("criterion has to be 'ULS', 'SLS1', 'SLS2', or 'ENV'")
+    return to_minimize
 
 # outer function for finding optimal wooden rectangular cross-section
 def opt_gzt_wd_rqs(member, criterion="ULS"):
@@ -125,31 +151,45 @@ def wd_rqs_h(h, args):
         penalty2 = 1e5*max(d1, d2, d3, 0)
         to_minimize = member.section.h*(1000+penalty1+penalty2)
     elif criterion == "SLS2":
-        pen_f1 = member.requirements.f1 - member.f1  # Grössenordnung 1.0
         pen_a = member.a_ed - member.requirements.a_cd  # Grössenordnung 1e-2
         pen_w = member.wf_ed - member.requirements.w_f_cdr1*member.r1  # HBT S. 48. r2 wird gleich 1 gesetzt
         # (Störungen im benachbarten Feld akzeptiert)  # Grössenordnung 1e-5
-        pen_v = member.ve_ed - member.ve_cd  # Grössenordnung 1e-3  ############ Fehler vermutet! #############
+        pen_v = member.ve_ed - member.ve_cd  # Grössenordnung 1e-3
         penalty1 = max(member.qk - member.qk_zul_gzt, 0)
         if member.f1 < member.requirements.f1:
-            penalty2 = 1e2*max(pen_f1, pen_a*1e2, pen_w*1e5, pen_v*1e3, 0)
+            penalty2 = max(pen_a*1e2, pen_w*1e5, pen_v*1e3, 0)
         else:
-            penalty2 = 1e2 * max(pen_w * 1e5, pen_v * 1e3, 0)
-        to_minimize = member.section.h*(1000+penalty1+penalty2)
+            penalty2 = max(pen_w*1e5, pen_v*1e3, 0)
+        to_minimize = member.section.h*(1+penalty1+penalty2)
+    elif criterion == "ENV":
+        d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
+                      member.w_app - member.w_app_adm]
+        pen_a = member.a_ed - member.requirements.a_cd  # Grössenordnung 1e-2
+        pen_w = member.wf_ed - member.requirements.w_f_cdr1 * member.r1  # HBT S. 48. r2 wird gleich 1 gesetzt
+        # (Störungen im benachbarten Feld akzeptiert)  # Grössenordnung 1e-5
+        pen_v = member.ve_ed - member.ve_cd  # Grössenordnung 1e-3
+        penalty1 = max(member.qk - member.qk_zul_gzt, 0)
+        penalty2 = 1e5 * max(d1, d2, d3, 0)
+        if member.f1 < member.requirements.f1:
+            penalty3 = max(pen_a * 1e2, pen_w * 1e5, pen_v * 1e3, 0)
+        else:
+            penalty3 = max(pen_w * 1e5, pen_v * 1e3, 0)
+        to_minimize = member.section.h * (1 + penalty1 + penalty2 + penalty3)
     else:
         to_minimize = 99
         print("criterion " + criterion + " is not defined")
-        print("criterion has to be 'ULS' or 'SLS1'")
+        print("criterion has to be 'ULS', 'SLS1', 'SLS2' or ENV")
     return to_minimize
 
 
 # function for returning optimal section for defined QS-type, system, requirements, loads, criterion and type of optimum
 def get_optimized_section(member, criterion, to_opt, max_iter):
     if member.section.section_type == "rc_rec":
-        # available to_opt arguments: "GWP", h
-        # available criterion arguments: "ULS", "SLS1"
+        # available to_opt arguments: "GWP", "h"
+        # available criterion arguments: "ULS", "SLS1", "SLS2"
         return opt_rc_rec(member, to_opt, criterion, max_iter)
     elif member.section.section_type == "wd_rec":
+        # available criterion arguments: "ULS", "SLS1", "SLS2"
         return opt_gzt_wd_rqs(member, criterion=criterion)
     else:
         print("There is no optimization for the section type " + member.section.section_type + " available!")

@@ -11,26 +11,14 @@ import matplotlib.pyplot as plt
 database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
-# create material for wooden cross-section, derive corresponding design values
-timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
-timber1.get_design_values()
 # create materials for reinforced concrete cross-section, derive corresponding design values
 concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)
 concrete1.get_design_values()
 reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
 reinfsteel1.get_design_values()
 
-# create initial wooden rectangular cross-section
-section_wd0 = struct_analysis.RectangularWood(timber1, 1.0, 0.1, xi=0.02)
-# create initial reinforced concrete rectangular cross-section
 section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
 
-# create floor structure for solid wooden cross-section
-bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
-                                 ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
-                                 ["'Kies gebrochen'", 0.12, False]]
-bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_brettstappeldecke, database_name)
-# create floor structure for solid reinforced concrete cross-section
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
                        ["'Glaswolle'", 0.03, False]]
@@ -47,8 +35,8 @@ req = struct_analysis.Requirements()
 lengths = [4, 5, 6, 7, 8, 9, 10, 12]
 
 #  define content of plot
-to_plot = [[section_rc0, bodenaufbau_rc], [section_wd0, bodenaufbau_wd]]
-criteria = ["ULS", "ENV"]
+to_plot = [[section_rc0, bodenaufbau_rc]]
+criteria = ["ULS", "SLS1", "SLS2", "ENV"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
@@ -93,7 +81,7 @@ for i, members in enumerate(member_list):
         color = "k"
     # set linestyle
     if cri == "ULS":
-        linestyle = "-"  # line style for ULS
+        linestyle = "--"  # line style for ULS
     elif cri == "SLS1":
         linestyle = (0, (3, 1, 1, 1))  # line style for SLS1
     elif cri == "SLS1_ger":
@@ -101,7 +89,7 @@ for i, members in enumerate(member_list):
     elif cri == "SLS2":
         linestyle = ":"  # line style for SLS2
     elif cri == "ENV":
-        linestyle = "--"  # line style for ENV
+        linestyle = "-"  # line style for ENV
     else:
         linestyle = (0, (1, 10))
     # set linewidth
@@ -132,7 +120,7 @@ plt.show()
 
 #  VALIDATION
 #  isolate cross-sections for verification
-validation_idx = 3  # index of length in length-list, corresponding optimal members are separated for further validation
+validation_idx = 1  # index of length in length-list, corresponding optimal members are separated for further validation
 v_members = [member[validation_idx] for member in member_list]
 
 # print some properties of the optimal members, which are useful for manual validation
@@ -156,7 +144,11 @@ for idx, member in enumerate(v_members):
         print(member.section.bw[0])
     print("Admissible deflections (ductile installations):")
     print(member.w_app_adm)
+    print("Cracking moment vs. moment")
+    print(member.section.mr_p, member.mkd_p)
     print("Calculated deflections (ductile installations):")
-    print(member.w_app)
+    print(member.w_app, member.w_app_ger)
+    print(member.a_ed)
+    print(" ")
 
 print("Do manual verification of the data in v_members")

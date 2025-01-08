@@ -14,16 +14,9 @@ create_dummy_database.create_database(database_name)  # create database
 # create material for wooden cross-section, derive corresponding design values
 timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
 timber1.get_design_values()
-# create materials for reinforced concrete cross-section, derive corresponding design values
-concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)
-concrete1.get_design_values()
-reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
-reinfsteel1.get_design_values()
 
 # create initial wooden rectangular cross-section
 section_wd0 = struct_analysis.RectangularWood(timber1, 1.0, 0.1, xi=0.02)
-# create initial reinforced concrete rectangular cross-section
-section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -31,10 +24,6 @@ bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", F
                                  ["'Kies gebrochen'", 0.12, False]]
 bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_brettstappeldecke, database_name)
 # create floor structure for solid reinforced concrete cross-section
-bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
-                       ["'Unterlagsboden Zement, 85 mm'", False, False],
-                       ["'Glaswolle'", 0.03, False]]
-bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau_rcdecke, database_name)
 
 # define loads on member
 g2k = 0.75e3  # n.t. Einbauten
@@ -47,8 +36,8 @@ req = struct_analysis.Requirements()
 lengths = [4, 5, 6, 7, 8, 9, 10, 12]
 
 #  define content of plot
-to_plot = [[section_rc0, bodenaufbau_rc], [section_wd0, bodenaufbau_wd]]
-criteria = ["ULS", "ENV"]
+to_plot = [[section_wd0, bodenaufbau_wd]]
+criteria = ["ULS", "SLS1", "SLS2"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
