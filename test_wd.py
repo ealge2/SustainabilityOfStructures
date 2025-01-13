@@ -19,6 +19,7 @@ timber1.get_design_values()
 # create wooden rectangular cross-section
 section = struct_analysis.RectangularWood(timber1, 1.0, 0.24, xi=0.02)
 
+
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                                  ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
@@ -45,3 +46,10 @@ member = struct_analysis.Member1D(section, system, bodenaufbau_wd, requirements,
 
 print(member.f1)
 print(member.a_ed)
+print(section.mu_max)
+print(member.section.vu_p, member.section.vu_n)
+member.calc_qk_zul_gzt()
+print(member.qk_zul_gzt)
+print("Feuerwiderstand:")
+member.get_fire_resistance()
+print(member.fire_resistance)

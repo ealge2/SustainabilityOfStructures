@@ -71,28 +71,29 @@ def create_database(data_base_name):
     strength_bend FLOAT, 
     strength_shea FLOAT,
     E_modulus FLOAT,
-    density_load FLOAT);"""
+    density_load FLOAT,
+    burn_rate FLOAT);"""
     cursor.execute(sql_command)
 
     # fill data for concrete C25/30 into table material_prop
     sql_command = """INSERT INTO material_prop (Mat_ID, name, strength_comp, strength_tens, strength_bend,
-     strength_shea, E_modulus, density_load)
+     strength_shea, E_modulus, density_load, burn_rate)
         VALUES (NULL, "C25/30", 25e6 , 2.6e6, NULL,
-        NULL, 30e9, 25e3);"""
+        NULL, 30e9, 25e3, NULL);"""
     cursor.execute(sql_command)
 
     # fill data for B500B into table material_prop
     sql_command = """INSERT INTO material_prop (Mat_ID, name, strength_comp, strength_tens, strength_bend,
-     strength_shea, E_modulus, density_load)
+     strength_shea, E_modulus, density_load, burn_rate)
         VALUES (NULL, "B500B", 500e6 , 500e6, NULL,
-        NULL, 205e9, NULL);"""
+        NULL, 205e9, NULL, NULL);"""
     cursor.execute(sql_command)
 
     # fill data for timber GL24h into table material_prop
     sql_command = """INSERT INTO material_prop (Mat_ID, name, strength_comp, strength_tens, strength_bend,
-     strength_shea, E_modulus, density_load)
+     strength_shea, E_modulus, density_load, burn_rate)
         VALUES (NULL, "GL24h", NULL , NULL, 24e6,
-        1.8e6, 11e9, 5e3);"""
+        1.8e6, 11e9, 5e3, 0.7e-3);"""
     cursor.execute(sql_command)
 
     # delete existing floor structure property table
