@@ -93,15 +93,13 @@ for i, members in enumerate(member_list):
         color = "k"
     # set linestyle
     if cri == "ULS":
-        linestyle = "-"  # line style for ULS
+        linestyle = "--"  # line style for ULS
     elif cri == "SLS1":
         linestyle = (0, (3, 1, 1, 1))  # line style for SLS1
-    elif cri == "SLS1_ger":
-        linestyle = (0, (3, 1, 1, 1, 1, 1))  # line style for SLS1_ger
     elif cri == "SLS2":
         linestyle = ":"  # line style for SLS2
     elif cri == "ENV":
-        linestyle = "--"  # line style for ENV
+        linestyle = "-"  # line style for ENV
     else:
         linestyle = (0, (1, 10))
     # set linewidth

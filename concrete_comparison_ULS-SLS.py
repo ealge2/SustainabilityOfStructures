@@ -36,7 +36,7 @@ lengths = [4, 5, 6, 7, 8, 9, 10, 12]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc]]
-criteria = ["ULS", "SLS1", "SLS2", "ENV"]
+criteria = ["ULS", "SLS1", "SLS2", "FIRE", "ENV"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
@@ -84,8 +84,6 @@ for i, members in enumerate(member_list):
         linestyle = "--"  # line style for ULS
     elif cri == "SLS1":
         linestyle = (0, (3, 1, 1, 1))  # line style for SLS1
-    elif cri == "SLS1_ger":
-        linestyle = (0, (3, 1, 1, 1, 1, 1))  # line style for SLS1_ger
     elif cri == "SLS2":
         linestyle = ":"  # line style for SLS2
     elif cri == "ENV":

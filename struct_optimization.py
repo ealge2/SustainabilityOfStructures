@@ -93,6 +93,10 @@ def rc_rqs(var, add_arg):
     else:
         penalty3 = max(pen_w * 1e5, pen_v * 1e3, 0)
 
+    # define penalty4, if fire resistance is not fulfilled
+    member.get_fire_resistance()
+    penalty4 = max(member.requirements.t_fire-member.fire_resistance, 0)
+
     # optimize ULS only
     if criterion == "ULS":  # optimize ultimate limit state
         if to_opt == "GWP":
@@ -103,27 +107,34 @@ def rc_rqs(var, add_arg):
     # optimize SLS1 (deflections). Make sure, that also ULS is fulfilled
     elif criterion == "SLS1":  # optimize service limit state (deflections)
         if to_opt == "GWP":
-            return member.section.co2*(1+penalty1+penalty2)
+            return member.section.co2*(1+penalty2)
         elif to_opt == "h":
-            return member.section.h*(1+penalty1+penalty2)
+            return member.section.h*(1+penalty2)
 
     # optimize SLS2 (vibrations). Make sure, that also ULS is fulfilled
     elif criterion == "SLS2":
         if to_opt == "GWP":
-            to_minimize = member.section.co2*(1+penalty1+penalty3)
+            to_minimize = member.section.co2*(1+penalty3)
         elif to_opt == "h":
-            to_minimize = member.section.h*(1+penalty1+penalty3)
+            to_minimize = member.section.h*(1+penalty3)
 
-    # optimize solution, which fulfills all requirements (ULS, SLS1 and SLS2)
+    # optimize fire resistance only
+    elif criterion == "FIRE":
+        if to_opt == "GWP":
+            return member.section.co2*(1+penalty4)
+        elif to_opt == "h":
+            return member.section.h * (1+penalty4)
+
+    # optimize solution, which fulfills all requirements (ULS, SLS1 and SLS2, FIRE)
     elif criterion == "ENV":
         if to_opt == "GWP":
-            to_minimize = member.section.co2*(1+penalty1+penalty2+penalty3)
+            to_minimize = member.section.co2*(1+penalty1+penalty2+penalty3+penalty4)
         elif to_opt == "h":
-            to_minimize = member.section.h*(1+penalty1+penalty2+penalty3)
+            to_minimize = member.section.h*(1+penalty1+penalty2+penalty3+penalty4)
     else:
         to_minimize = 99
         print("criterion " + criterion + " is not defined")
-        print("criterion has to be 'ULS', 'SLS1', 'SLS2', or 'ENV'")
+        print("criterion has to be 'ULS', 'SLS1', 'SLS2', 'FIRE' or 'ENV'")
     return to_minimize
 
 # outer function for finding optimal wooden rectangular cross-section
@@ -161,6 +172,11 @@ def wd_rqs_h(h, args):
         else:
             penalty2 = max(pen_w*1e5, pen_v*1e3, 0)
         to_minimize = member.section.h*(1+penalty1+penalty2)
+    elif criterion == "FIRE":
+        # define penalty4, if fire resistance is not fulfilled
+        member.get_fire_resistance()
+        penalty4 = max(member.requirements.t_fire - member.fire_resistance, 0)
+        to_minimize = member.section.h*(1+penalty4)
     elif criterion == "ENV":
         d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
                       member.w_app - member.w_app_adm]
@@ -174,7 +190,10 @@ def wd_rqs_h(h, args):
             penalty3 = max(pen_a * 1e2, pen_w * 1e5, pen_v * 1e3, 0)
         else:
             penalty3 = max(pen_w * 1e5, pen_v * 1e3, 0)
-        to_minimize = member.section.h * (1 + penalty1 + penalty2 + penalty3)
+        member.get_fire_resistance()
+        penalty4 = max(member.requirements.t_fire - member.fire_resistance, 0)
+        to_minimize = member.section.h * (1 + penalty1 + penalty2 + penalty3+penalty4)
+
     else:
         to_minimize = 99
         print("criterion " + criterion + " is not defined")
