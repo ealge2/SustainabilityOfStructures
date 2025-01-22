@@ -279,7 +279,7 @@ class RectangularConcrete(SupStrucRectangular):
             return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
 
-    def calc_shear_resistance(self, sign ='pos', d_installation=0.0):
+    def calc_shear_resistance(self, d_installation=0.0):
         # calculates shear resistance with d
         di = self.bw_bg[0]  # diameter
         s = self.bw_bg[1]  # spacing
@@ -605,5 +605,5 @@ class Requirements:
         self.f1 = f1  # preset value: HBT, Seite 46
         self.a_cd = a_cd  # preset value: HBT, Seite 46
         self.w_f_cdr1 = w_f_cdr1  # preset value: HBT, Seite 48
-        self.alpha_ve_cd = alpha_ve_cd  # preset calue: HBT, Seite 49
+        self.alpha_ve_cd = alpha_ve_cd  # preset value: HBT, Seite 49
         self.t_fire = int(fire[1:])  # unit: [min]
