@@ -349,6 +349,88 @@ class RectangularConcrete(SupStrucRectangular):
         else:
             resistance = 0
         return resistance
+
+class RippedConcrete(SupStrucRipped):
+    # defines properties of a rectangular, reinforced concrete section
+
+    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bg, s_bg, l0, phi=2.0, c_nom=0.03):
+        section_type = "rc_rec"
+        super().__init__(section_type, b, b_w, h, h_f, phi)
+        self.concrete_type = concrete_type
+        self.rebar_type = rebar_type
+        self.c_nom = c_nom
+        self.l0 = l0
+        self.bw = [[di_xw, n_xw], [di_xu, s_xu], [di_xo, s_xo]]
+        self.bw_bg = [di_bg, s_bg]
+        [self.d, self.dso, self.dsu] = self.calc_d()
+        self.zs = self.calc_zs()
+        self.b_eff = self.calc_beff()
+        self.iy = self.calc_moment_of_inertia()
+
+        [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
+        [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
+
+    def calc_beff(self):
+        #computes effective width of concrete flange: SIA 262 4.1.3.3.2
+        b = self.b, b_w = self.b_w, l0 = self.l0
+        b_effi = min(0.2*(b-b_w)/2+0.1*l0, 0.2*l0)  #SIA 262 (20)
+        b_eff = min(2*b_effi + b_w, b)              #SIA 262 (19)
+        return b_eff
+
+    def calc_d(self):
+        #calculates
+        d = self.h-self.c_nom-self.bw_bg [1][1]-self.bw[0][0]/2
+        dso = self.h_f-self.c_nom -self.bw[1][1]/2
+        dsu = self.h_f-self.c_nom-self.bw[2][2]/2
+        return d, dso, dsu
+
+    def calc_zs(self):
+        b = self.b, b_w = self.b_w, h = self.h, h_f = self.h_f
+        zs = (b_w*(h-h_f)*(h-h_f)/2+b*h_f*h_f/2)/(b_w*(h-h_f)+b*h_f)
+        return zs
+
+    def calc_moment_of_inertia(self):
+        #  in: width b [m], height h [m]
+        #  out: second moment of inertia Iy [m^4]
+        iy_rib = self.b_w* (self.h-self.h_f) ** 3 / 12
+        iy_flange = self.b* self.h_f ** 3 / 12
+        sa_rib = self.b_w*(self.h-self.h_f)*abs(self.zs-(self.h-self.h_f))**2
+        sa_flange = self.b*self.h*abs(self.zs-self.h/2)**2
+        iy = iy_rib + iy_flange + sa_rib + sa_flange
+        return iy
+
+    def calc_mu(self, sign='pos'):
+        b_w = self.b_w
+        b_eff = self.b_eff
+        fsd = self.rebar_type.fsd
+        fcd = self.concrete_type.fcd
+        if sign == 'pos':
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b_eff, fsd, fcd)
+        elif sign == 'neg':
+            [mu, x, a_s, qs_klasse] = print("to implement") #self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.dso, b_w, fsd, fcd)
+        else:
+            [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
+            print("sigen of moment resistance has to be 'neg' or 'pos'")
+        return mu, x, a_s, qs_klasse
+
+    @staticmethod
+    def mu_unsigned(di, s, d, b, fsd, fcd):
+        # units input: [m, m, m, m, N/m^2, N/m^2]
+        a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
+        omega = a_s * fsd / (d * b * fcd)  # [-]
+        mu = a_s * fsd * d * (1-omega/2)  # [Nm]
+        x = omega * d / 0.85  # [m]
+        if x > self.h_fl
+            print("x>h_fl")
+        else:
+            print("x<hfl")
+        if x/d <= 0.35:
+            return mu, x, a_s, 1
+        elif x/d <= 0.5:
+            return mu, x, a_s, 2
+        else:
+            return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
+
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
 class MatLayer:  # create a material layer
@@ -401,7 +483,6 @@ class BeamSimpleSup:
     def __init__(self, length):
         self.l_tot = length
         self.li_max = self.l_tot  # max span (used for calculation of admissible deflections)
-        self.alpha_m = [0, 1/8]  # Faktor zur Berechung des Momentes unter verteilter Last
         self.alpha_m = [0, 1/8]  # Faktor zur Berechung des Momentes unter verteilter Last
         self.alpha_v = [0, 1/2] # Faktor zur Berechung der Querkarft unter verteilter Last
         self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
