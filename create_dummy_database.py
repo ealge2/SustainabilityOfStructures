@@ -6,7 +6,7 @@ def create_database(data_base_name):
     # create or open database sustainability
     connection = sqlite3.connect(data_base_name)
 
-    # create crusor object
+    # create cursor object
     cursor = connection.cursor()
 
     # delete existing products table

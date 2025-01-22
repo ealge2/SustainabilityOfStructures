@@ -33,7 +33,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [4, 5, 6, 7, 8, 9, 10, 12]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
 to_plot = [[section_wd0, bodenaufbau_wd]]
@@ -119,7 +119,7 @@ plt.show()
 
 #  VALIDATION
 #  isolate cross-sections for verification
-validation_idx = 3  # index of length in length-list, corresponding optimal members are separated for further validation
+validation_idx = 0  # index of length in length-list, corresponding optimal members are separated for further validation
 v_members = [member[validation_idx] for member in member_list]
 
 # print some properties of the optimal members, which are useful for manual validation
@@ -145,5 +145,19 @@ for idx, member in enumerate(v_members):
     print(member.w_app_adm)
     print("Calculated deflections (ductile installations):")
     print(member.w_app)
+    print("f1:")
+    print(member.f1)
+    print("a_ed:")
+    print(member.a_ed)
+    print("a_cd:")
+    print(member.requirements.a_cd)
+    print("wf_ed, ve_ed:")
+    print(member.wf_ed, member.ve_ed)
+    print("wf_cd, ve_cd:")
+    print(member.requirements.w_f_cdr1 * member.r1, member.ve_cd)
+    print("fire resistance:")
+    member.get_fire_resistance()
+    print(member.fire_resistance)
+    print(" ")
 
 print("Do manual verification of the data in v_members")

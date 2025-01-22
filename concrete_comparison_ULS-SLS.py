@@ -32,7 +32,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [4, 5, 6, 7, 8, 9, 10, 12]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc]]
@@ -147,6 +147,9 @@ for idx, member in enumerate(v_members):
     print("Calculated deflections (ductile installations):")
     print(member.w_app, member.w_app_ger)
     print(member.a_ed)
+    print("fire resistance:")
+    member.get_fire_resistance()
+    print(member.fire_resistance)
     print(" ")
 
 print("Do manual verification of the data in v_members")
