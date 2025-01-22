@@ -28,7 +28,7 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [h0, di_xu0]
 
     # define bounds of variables
-    bh = (0.06, 1.0)  # height between 6 cm and 1.0 m
+    bh = (0.06, 1.2)  # height between 6 cm and 1.0 m
     bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bounds = [bh, bdi_xu]
 
@@ -140,7 +140,7 @@ def rc_rqs(var, add_arg):
 # outer function for finding optimal wooden rectangular cross-section
 def opt_gzt_wd_rqs(member, criterion="ULS"):
     h_0 = member.section.h
-    bnds = [(0.04, 1.0)]
+    bnds = [(0.04, 1.2)]
     minimal_h = minimize(wd_rqs_h, h_0, args=[member, criterion], bounds=bnds, method='Powell')
     h_opt = minimal_h.x[0]
     section = struct_analysis.RectangularWood(member.section.wood_type, member.section.b, h_opt)
