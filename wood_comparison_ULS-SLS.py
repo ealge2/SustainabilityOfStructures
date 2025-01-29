@@ -99,7 +99,6 @@ for i, members in enumerate(member_list):
     else:
         linewidth = 0.1
     label = sec_typ + ", " + cri + ", optimized for " + opt
-#    for j, pl in enumerate(plotted_data):
     for idx, data in enumerate(plotdata):
         plt.subplot(3, 2, idx + 1)
         plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label)
