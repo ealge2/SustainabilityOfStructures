@@ -362,40 +362,139 @@ class SupStrucRipped(Section):
         self.b_w = b_w #web width [m]
         self.h = h #total height [m]
         self.h_f = h_f#flange height [m]
-        #self.b_eff = self.calc_beff()
-        #self.a_brutt = self.calc_area()
-        #self.iy = self.calc_moment_of_inertia()
+        self.h_w = h-h_f
+        self.b_eff = self.calc_beff()
+        self.a_brutt = self.calc_area()
+        self.z_s = self.calc_center_of_gravity()
+        self.iy = self.calc_moment_of_inertia()
+
+    def calc_area(self):
+        # in: width b and bw [m], height h and h_f[m]
+        # out: area [m2]
+        a_brutt = self.b * self.h_f + self.b_w*(self.h-self.h_f)
+        return a_brutt
+
+    def calc_beff(self,l_0=10):
+        # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
+        # out: effective width b_eff
+
+        b_eff_i = 0.2 * (self.b-self.b_w)/2 + 0.1 * l_0
+        if b_eff_i > 0.2 * l_0:
+            b_eff_i = 0.2 * l_0
+        else:
+            pass
+
+        b_eff = 2 * b_eff_i + self.b_w
+        if b_eff > self.b:
+            b_eff = self.b
+        else:
+            pass
+
+        return b_eff
 
 
-    #def calc_area(self):
-    # in: width b and bw [m], height h and h_f[m]
-    # out: area [m2]
+    def calc_center_of_gravity(self):
+        z_s = self.b_eff * self.h_f^2/2 + self.b_w * self.h_w^2/2 /(self.b_eff * self.h_f+self.b_w * self.h_w^2)
+        return z_s
 
-    #def calc_beff(self):
+    def calc_moment_of_inertia(self):
+        # in:
+        # out:
 
-    #def calc_moment_of_inertia(self):
+        I_01 = self.b * self.h_f^3/12
+        as_01 = self.b * self.h_f * abs(self.z_s - self.h_f)^2
+        I_02 = self.b_w * self.h_w^3/12
+        as_02 = self.b_w * self.h_w * abs(self.z_s - self.h_w)^2
+
+        Iy = I_01 + I_02 + as_01 + as_02
+        return Iy
 
     #def calc_strength_elast(self, fy, ty):
 
     #def calc_strength_plast(self, fy, ty):
 
-    #def calc_weight(self,spec_weight):
+    def calc_weight(self, spec_weight):
+        #  in: specific weight [N/m^3]
+        #  out: weight of cross section per m length [N/m]
+        w = spec_weight * self.a_brutt
+        return w
 
 
+class RippedConcrete(SupStrucRipped):
+    #defines properties of a rectangular, reinforced concrete section
+    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, n_bw=0,
+                 phi=2.0, c_nom=0.03, xi=0.02):
+        section_type = "rc_rec"
+        super().__init__(section_type, b, b_w, h, h_f, phi)
+        self.concrete_type = concrete_type
+        self.rebar_type = rebar_type
+        self.c_nom = c_nom
+        self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
+        self.bw_r = [di_xw, n_xw]
+        self.bw_bg = [di_bw, s_bw, n_bw]
+        mr = 1000
+        #self.mr_p, self.mr_n = mr, mr
+        [self.d, self.ds] = self.calc_d()
+        [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
 
 
-#class RippedConcrete(SupStrucRipped):
-    # defines properties of a rectangular, reinforced concrete section
-    #def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, n_bw=0
-    #             phi=2.0, c_nom=0.03, xi=0.02):
-        #section_type = "rc_rec"
-        #super().__init__(section_type, b, b_w, h, h_f, phi)
-        #self.concrete_type = concrete_type
-        #self.rebar_type = rebar_type
-        #self.c_nom = c_nom
-        #self.bw 0 =
-        #self.bw_bg
-        #mr =
+    def calc_d(self):
+        d = self.h - self.c_nom - self.bw_bg[0] - self.bw_r[0]/2 #Nur eine Lage Längsbewehrung implementiert. ACHTUNG: Check implementieren, ob genug Platz für Längsbewehrung vorhanden!!
+        ds = self.h - self.c_nom - self.bw_bg[0] - self.bw[1][0]/2
+        return d, ds
+
+    def calc_mu(self, sign='pos'):
+        # calculates moment resistence of slab
+        # calculates moment resistence of Plattenbalken = PB
+        b = 1
+        fsd = self.rebar_type.fsd
+        fcd = self.concrete_type.fcd
+        if sign == 'pos':
+            [mu, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[0][0], self.bw[0][1], self.d, b, fsd, fcd, self.mr_p)
+        elif sign == 'neg':
+            [mus, x, a_s, qs_klasse] = self.mu_unsigned(self.bw[1][0], self.bw[1][1], self.ds, b, fsd, fcd, self.mr_n)
+            mu = -mus
+        else:
+            [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
+            print("sigen of moment resistance has to be 'neg' or 'pos'")
+
+        [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+
+
+        return mu, x, a_s, qs_klasse
+
+    @staticmethod
+    def mu_unsigned(di, s, d, b, fsd, fcd, mr):
+        # units input: [m, m, m, m, N/m^2, N/m^2]
+        a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
+        omega = a_s * fsd / (d * b * fcd)  # [-]
+        mu = a_s * fsd * d * (1 - omega / 2)  # [Nm]
+        x = omega * d / 0.85  # [m]
+        if x / d <= 0.35 and mu >= mr:
+            return mu, x, a_s, 1
+        elif x / d <= 0.5 and mu >= mr:
+            return mu, x, a_s, 2
+        else:
+            return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
+
+    @staticmethod
+    def mu_unsigned_PB(di, n, d, b, h_f, fsd, fcd, mr):
+        a_s = np.pi * di ** 2 / 4 * n # [m^2]
+        omega = a_s * fsd / (d * b * fcd) #[-]
+        mu = a_s * fsd * d * (1-omega/2) # [Nm]
+        x = omega * d / 0.85
+        if x > h_f:
+            return print("Druckzonenhöhe > Plattenhöhe")
+        else:
+            pass
+
+        if x / d <= 0.35 and mu >= mr:
+            return mu, x, a_s, 1
+        elif x / d <= 0.5 and mu >= mr:
+            return mu, x, a_s, 2
+        else:
+            return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
