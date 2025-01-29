@@ -16,7 +16,7 @@ create_dummy_database.create_database(database_name)  # create database
 # Search database for glh and kvh products
 connection = sqlite3.connect(database_name)
 cursor = connection.cursor()
-# get id of materials from database
+# get prod_id of relevant materials from database
 material_name1 = "'glue-laminated_timber'"
 material_name2 = "'solid_structural_timber_(kvh)'"
 inquiry = ("SELECT PRO_ID FROM products WHERE"
@@ -33,9 +33,10 @@ for i, prod_id in enumerate(result):
     cursor.execute(inquiry)
     result = cursor.fetchall()
     mech_prop = "'"+result[0][0]+"'"
-    timber = struct_analysis.Wood(mech_prop, database_name)  # create a Wood material object
+    timber = struct_analysis.Wood(mech_prop, database_name, prod_id_str)  # create a Wood material object
     timber.get_design_values()
-    print(timber.Emmean)
+
+    print(timber.GWP)
 # create initial wooden rectangular cross-section
 # section_wd0 = struct_analysis.RectangularWood(timber, 1.0, 0.1, xi=0.02)
 #

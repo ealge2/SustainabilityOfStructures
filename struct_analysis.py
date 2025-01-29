@@ -27,7 +27,7 @@ from scipy.optimize import minimize
 #-----------------------------------------------------------------------------------------------------------------------
 class Wood:
     # defines properties of wooden material
-    def __init__(self, mech_prop, database):  # retrieve basic mechanical data from database
+    def __init__(self, mech_prop, database, prod_id="undef"):  # retrieve basic mechanical data from database
         self.mech_prop = mech_prop
         connection = sqlite3.connect(database)
         cursor = connection.cursor()
@@ -38,10 +38,17 @@ class Wood:
         result = cursor.fetchall()
         self.fmk, self.fvd, self.Emmean, self.weight, self.burn_rate = result[0]
         # get GWP properties from database
-        inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE mech_prop="+mech_prop
-        cursor.execute(inquiry)
-        result = cursor.fetchall()
-        self.density, self.GWP, self.cost, self.cost2 = result[0]
+        if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
+            # properties in database
+            inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE mech_prop="+mech_prop
+            cursor.execute(inquiry)
+            result = cursor.fetchall()
+            self.density, self.GWP, self.cost, self.cost2 = result[0]
+        else:
+            inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE PRO_ID="+prod_id
+            cursor.execute(inquiry)
+            result = cursor.fetchall()
+            self.density, self.GWP, self.cost, self.cost2 = result[0]
         self.fmd = float()
 
     def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values
@@ -53,7 +60,7 @@ class Wood:
 
 class ReadyMixedConcrete:
     # defines properties of concrete material
-    def __init__(self, mech_prop, database, dmax=32):  # retrieve basic mechanical data from database (self, table,
+    def __init__(self, mech_prop, database, dmax=32, prod_id=0):  # retrieve basic mechanical data from database (self, table,
         self.ec2d = float()
         self.tcd = float()
         self.fcd = float()
@@ -82,7 +89,7 @@ class ReadyMixedConcrete:
 
 class SteelReinforcingBar:
     # defines properties of reinforcement  material
-    def __init__(self, mech_prop, database):
+    def __init__(self, mech_prop, database, prod_id=0):
         # retrieve basic mechanical data from database (self, table, database name)
         self.mech_prop = mech_prop
         connection = sqlite3.connect(database)
