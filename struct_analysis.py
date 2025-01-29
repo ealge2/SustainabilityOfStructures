@@ -358,12 +358,12 @@ class SupStrucRipped(Section):
 
     def __init__(self,section_type,b,b_w,h,h_f,phi=0):
         super().__init__(section_type)
-        self.b = b # flange width [m] (Abstand Rippenachse-Rippenachse)
-        self.b_w = b_w #web width [m]
-        self.h = h #total height [m]
-        self.h_f = h_f#flange height [m]
-        self.h_w = h-h_f
-        self.b_eff = self.calc_beff()
+        self.b = b      # flange width [m] (Abstand Rippenachse-Rippenachse)
+        self.b_w = b_w  # web width [m]
+        self.h = h      # total height [m]
+        self.h_f = h_f  # flange height [m]
+        self.h_w = h-h_f# web height [m]
+        self.b_eff = self.calc_beff()   #Effective width
         self.a_brutt = self.calc_area()
         self.z_s = self.calc_center_of_gravity()
         self.iy = self.calc_moment_of_inertia()
@@ -377,12 +377,12 @@ class SupStrucRipped(Section):
     def calc_beff(self,l_0=10):
         # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
         # out: effective width b_eff
-        b_eff_i = 0.2 * (self.b-self.b_w)/2 + 0.1 * l_0
+        b_eff_i = 0.2 * (self.b-self.b_w)/2 + 0.1 * l_0     # SIA 262, 4.1.3.3.2 (20)
         if b_eff_i > 0.2 * l_0:
             b_eff_i = 0.2 * l_0
         else:
             pass
-        b_eff = 2 * b_eff_i + self.b_w
+        b_eff = 2 * b_eff_i + self.b_w                      # SIA 262, 4.1.3.3.2 (19)
         if b_eff > self.b:
             b_eff = self.b
         else:
@@ -415,27 +415,28 @@ class SupStrucRipped(Section):
 class RippedConcrete(SupStrucRipped):
     #defines properties of a rectangular, reinforced concrete section
     #di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
-    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, n_bw=0,
+    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, di_PB_bw, s_PB_bw, n_bw=0, n_PB_bw=0,
                  phi=2.0, c_nom=0.03, xi=0.02):
-        section_type = "rc_rec"
+        section_type = "rc_rib"
         super().__init__(section_type, b, b_w, h, h_f, phi)
         self.concrete_type = concrete_type
         self.rebar_type = rebar_type
         self.c_nom = c_nom
-        self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
-        self.bw_r = [di_xw, n_xw]   #Longitudinal reinforcement in rib
-        self.bw_bg = [di_bw, s_bw, n_bw]
+        self.bw = [[di_xu, s_xu], [di_xo, s_xo]]    #Slab reinforcement
+        self.bw_r = [di_xw, n_xw]                   #Longitudinal reinforcement in rib
+        self.bw_bg = [di_bw, s_bw, n_bw]            #Slab shear reinforcement
+        self.bw_bg_r = [di_PB_bw, s_PB_bw, n_PB_bw] #Shear reinforcement in rib
         mr = 1000
         self.mr_p, self.mr_n = mr, mr
-        [self.d, self.ds] = self.calc_d()
+        [self.d, self.ds, self.d_PB, self.ds_PB] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
-        [self.mu_pb_max, self.x_pb_p, self.as_pb_p, self.qs_class_pb_p] = self.calc_mu_pb('pos')
-        [self.mu_pb_min, self.x_pb_n, self.as_pb_n, self.qs_class_pb_n] = self.calc_mu_pb('neg') #STIMMT NOCH NICHT
-
-        #self.roh, self.rohs = self.as_p / self.d, self.as_n / self.ds
-        #[self.vu_p, self.vu_n, self.as_bw] = self.calc_shear_resistance()
-        #self.g0k = self.calc_weight(concrete_type.weight)
+        [self.mu_PB_max, self.x_PB_p, self.as_PB_p, self.qs_class_PB_p] = self.calc_mu_pb('pos')
+        [self.mu_PB_min, self.x_PB_n, self.as_PB_n, self.qs_class_PB_n] = self.calc_mu_pb('neg') #STIMMT NOCH NICHT
+        self.roh, self.rohs, self.roh_PB = self.as_p / self.d, self.as_n / self.ds, self.as_pb_p / self.d_PB
+        [self.vu_p, self.vu_n, self.as_bw] = self.calc_shear_resistance('Platte')    #Platte "Querrichtung"
+        [self.vu_PB_p, self.vu_PB_n, self.as_PB_bw] = self.calc_shear_resistance('Plattenbalken') #Rippe Plattenbalken "Längsrichtung"
+        self.g0k = self.calc_weight(concrete_type.weight)
         #a_s_tot = self.as_p + self.as_n + self.as_bw
         #co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         #co2_concrete = (self.a_brutt - a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
@@ -447,12 +448,12 @@ class RippedConcrete(SupStrucRipped):
         #self.xi = xi  # XXXXXXX preset value is an assumption. Has to be verified with literature. XXXXXXX
         #self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d)
 
-
-
     def calc_d(self):
-        d = self.h - self.c_nom - self.bw_bg[0] - self.bw_r[0]/2 #Nur eine Lage Längsbewehrung implementiert. ACHTUNG: Check implementieren, ob genug Platz für Längsbewehrung vorhanden!!
-        ds = self.h - self.c_nom - self.bw_bg[0] - self.bw[1][0]/2
-        return d, ds
+        d =  self.h - self.c_nom - self.bw[0][0]/2  # Statische Höhe 1. Lage Platte
+        ds = self.h - self.c_nom - self.bw[1][0]/2  # Statische Höhe 4. Lage Platte
+        d_PB = self.h - self.c_nom - self.bw_bg[0] - self.bw_r[0]/2 # Nur eine Lage Längsbewehrung implementiert. ACHTUNG: Check implementieren, ob genug Platz für Längsbewehrung vorhanden!!
+        ds_PB = self.h - self.c_nom - self.bw[1][0]/2 #
+        return d, ds, d_PB, ds_PB
 
     #Slab = Platte in Querrichtung. ACHTUNG: DURCHLAUFWIRKUNG MUSS NOCH IMPLEMENTIERT WERDEN!
     #Kann man die Berechnung der Platte zusammenführen mit Rectangular Concrete?
@@ -479,13 +480,13 @@ class RippedConcrete(SupStrucRipped):
         if sign == 'pos':
             [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
         elif sign == 'neg':
-            [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+            [mus_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw[1][0], self.bw[1][1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+            mu = - mus_PB
         else:
-            [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
+            [mu_PB, x, a_s, qs_klasse] = [0, 0, 0, 0]
             print("sigen of moment resistance has to be 'neg' or 'pos'")
 
-        return mu, x, a_s, qs_klasse
-
+        return mu_PB, x, a_s, qs_klasse
 
     @staticmethod
     def mu_unsigned(di, s, d, b, fsd, fcd, mr):
@@ -521,11 +522,11 @@ class RippedConcrete(SupStrucRipped):
 
         #negatives Moment fehlt
 
-    def calc_shear_resistance(self, d_installation=0.0):
+    def calc_shear_resistance(self, bauteil = 'Platte', d_installation=0.0):
         # calculates shear resistance with d
-        di = self.bw_bg[0]  # diameter
-        s = self.bw_bg[1]  # spacing
-        n = self.bw_bg[2]  # number of stirrups per spacing
+        di, di_r = self.bw_bg[0], self.bw_bg_r[0]   # diameter
+        s, s_r = self.bw_bg[1], self.bw_bg_r[1]     # spacing
+        n, n_r = self.bw_bg[2], self.bw_bg_r[2]     # number of stirrups per spacing
         fck = self.concrete_type.fck
         fcd = self.concrete_type.fcd
         tcd = self.concrete_type.tcd
@@ -533,23 +534,43 @@ class RippedConcrete(SupStrucRipped):
         fsk = self.rebar_type.fsk
         fsd = self.rebar_type.fsd
         es = self.rebar_type.Es
-        bw = self.b #ANPASSEN AUF RIPPE
-        d = self.d
-        ds = self.ds
-        x_p = self.x_p
-        x_n = self.x_n
+        bw = self.b
+        b_w = self.b_w
+        d, d_PB = self.d, self.d_PB
+        ds, ds_PB = self.ds, self.ds_PB
+        x_p, x_PB_p = self.x_p, self.x_PB_p
+        x_n, x_PB_n = self.x_n, self.X_PB_n
         as_bw = np.pi * di ** 2 / 4 * n / s
-        if d_installation < d / 6:
-            dv_p = d
+        as_PB_bw = np.pi * di ** 2 /4 * n / s
+
+        if bauteil == 'Platte':
+            if d_installation < d / 6:          #SIA 262 4.3.3.2.8
+                dv_p = d
+            else:
+                dv_p = d - d_installation
+            if d_installation < ds / 6:
+                dv_n = ds
+            else:
+                dv_n = ds - d_installation
+
+            vu_p = self.vu_unsigned(bw, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)
+            vu_n = self.vu_unsigned(bw, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)
+
+            return vu_p, vu_n, as_bw
+
         else:
-            dv_p = d - d_installation
-        if d_installation < ds / 6:
-            dv_n = ds
-        else:
-            dv_n = ds - d_installation
-        vu_p = self.vu_unsigned(bw, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)
-        vu_n = self.vu_unsigned(bw, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)
-        return vu_p, vu_n, as_bw
+            if d_installation < d_PB / 6:          #SIA 262 4.3.3.2.8
+                dv_PB_p = d_PB
+            else:
+                dv_PB_p = d_PB - d_installation
+            if d_installation < ds_PB / 6:
+                dv_PB_n = ds_PB
+            else:
+                dv_PB_n = ds_PB - d_installation
+
+            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax)
+            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax)
+            return vu_PB_p, vu_PB_n, as_PB_bw
 
     @staticmethod
     def vu_unsigned(bw, as_bw, d, dv, x, fck, fcd, tcd, fsk, fsd, es, dmax=32, alpha=np.pi / 4, kc=0.55):
@@ -568,6 +589,7 @@ class RippedConcrete(SupStrucRipped):
             if rohw < rohw_min:
                 print("minimal reinforcement ratio of stirrups is lower than required according to SIA 262, (110)")
             return min(vrds, vrdc)
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
