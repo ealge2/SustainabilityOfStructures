@@ -354,6 +354,18 @@ class RectangularConcrete(SupStrucRectangular):
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
+class RippedConcrete(SupStrucRipped):
+    # defines properties of a rectangular, reinforced concrete section
+    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bg, s_bg,
+                 phi=2.0, c_nom=0.03):
+        section_type = "rc_rec"
+        super().__init__(section_type, b, b_w, h, h_f, phi)
+        self.concrete_type = concrete_type
+        self.rebar_type = rebar_type
+        self.c_nom = c_nom
+
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 class MatLayer:  # create a material layer
     def __init__(self, mat_name, h_input, roh_input, database):  # get initial data from database
         self.name = mat_name
