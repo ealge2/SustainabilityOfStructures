@@ -356,40 +356,46 @@ class RectangularConcrete(SupStrucRectangular):
 #-----------------------------------------------------------------------------------------------------------------------
 class SupStrucRipped(Section):
 
-    def __init__(self,section_type,b,b_w,h,h_r,phi=0):
+    def __init__(self,section_type,b,b_w,h,h_f,phi=0):
         super().__init__(section_type)
         self.b = b # flange width [m] (Abstand Rippenachse-Rippenachse)
         self.b_w = b_w #web width [m]
+        self.h = h #total height [m]
+        self.h_f = h_f#flange height [m]
+        #self.b_eff = self.calc_beff()
+        #self.a_brutt = self.calc_area()
+        #self.iy = self.calc_moment_of_inertia()
 
 
-    def calc_area(self):
+    #def calc_area(self):
+    # in: width b and bw [m], height h and h_f[m]
+    # out: area [m2]
+
+    #def calc_beff(self):
+
+    #def calc_moment_of_inertia(self):
+
+    #def calc_strength_elast(self, fy, ty):
+
+    #def calc_strength_plast(self, fy, ty):
+
+    #def calc_weight(self,spec_weight):
 
 
-    def calc_beff(self):
-
-    def calc_moment_of_inertia(self):
-
-    def calc_strength_elast(self, fy, ty):
-
-    def calc_strength_plast(self, fy, ty):
-
-    def calc_weight(self,spec_weight):
 
 
-
-
-class RippedConcrete(SupStrucRipped):
+#class RippedConcrete(SupStrucRipped):
     # defines properties of a rectangular, reinforced concrete section
-    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, n_bw=0
-                 phi=2.0, c_nom=0.03, xi=0.02):
-        section_type = "rc_rec"
-        super().__init__(section_type, b, b_w, h, h_f, phi)
-        self.concrete_type = concrete_type
-        self.rebar_type = rebar_type
-        self.c_nom = c_nom
-        self.bw 0 =
-        self.bw_bg
-        mr =
+    #def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, n_bw=0
+    #             phi=2.0, c_nom=0.03, xi=0.02):
+        #section_type = "rc_rec"
+        #super().__init__(section_type, b, b_w, h, h_f, phi)
+        #self.concrete_type = concrete_type
+        #self.rebar_type = rebar_type
+        #self.c_nom = c_nom
+        #self.bw 0 =
+        #self.bw_bg
+        #mr =
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
