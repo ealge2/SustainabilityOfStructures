@@ -435,6 +435,7 @@ class RippedConcrete(SupStrucRipped):
         self.bw_bg_r = [di_PB_bw, s_PB_bw, n_PB_bw] #Shear reinforcement in rib
         mr = 1000
         self.mr_p, self.mr_n = mr, mr
+        self.mr_PB_p, self.mr_PB_n = mr, mr
         [self.d, self.ds, self.d_PB, self.ds_PB] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
@@ -485,10 +486,10 @@ class RippedConcrete(SupStrucRipped):
         fsd = self.rebar_type.fsd
         fcd = self.concrete_type.fcd
         if sign == 'pos':
-            [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+            [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d_PB, self.b_eff, fsd, fcd, self.mr_PB_p) #UNFINISHED
         elif sign == 'neg':
-            [mus_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw[1][0], self.bw[1][1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
-            mu = - mus_PB
+            [mus_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw[1][0], self.bw[1][1], self.ds_PB, self.b_w, fsd, fcd, self.mr_PB_n) #UNFINISHED
+            mu_PB = - mus_PB
         else:
             [mu_PB, x, a_s, qs_klasse] = [0, 0, 0, 0]
             print("sigen of moment resistance has to be 'neg' or 'pos'")
@@ -575,8 +576,8 @@ class RippedConcrete(SupStrucRipped):
             else:
                 dv_PB_n = ds_PB - d_installation
 
-            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax)
-            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax)
+            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
+            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
             return vu_PB_p, vu_PB_n, as_PB_bw
 
     @staticmethod
