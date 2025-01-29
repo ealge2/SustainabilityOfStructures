@@ -377,21 +377,17 @@ class SupStrucRipped(Section):
     def calc_beff(self,l_0=10):
         # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
         # out: effective width b_eff
-
         b_eff_i = 0.2 * (self.b-self.b_w)/2 + 0.1 * l_0
         if b_eff_i > 0.2 * l_0:
             b_eff_i = 0.2 * l_0
         else:
             pass
-
         b_eff = 2 * b_eff_i + self.b_w
         if b_eff > self.b:
             b_eff = self.b
         else:
             pass
-
         return b_eff
-
 
     def calc_center_of_gravity(self):
         z_s = self.b_eff * self.h_f^2/2 + self.b_w * self.h_w^2/2 /(self.b_eff * self.h_f+self.b_w * self.h_w^2)
@@ -400,17 +396,14 @@ class SupStrucRipped(Section):
     def calc_moment_of_inertia(self):
         # in:
         # out:
-
-        I_01 = self.b * self.h_f^3/12
-        as_01 = self.b * self.h_f * abs(self.z_s - self.h_f)^2
+        I_01 = self.b_eff * self.h_f^3/12
+        as_01 = self.b_eff * self.h_f * abs(self.z_s - self.h_f/2)^2
         I_02 = self.b_w * self.h_w^3/12
-        as_02 = self.b_w * self.h_w * abs(self.z_s - self.h_w)^2
-
+        as_02 = self.b_w * self.h_w * abs(self.z_s - self.h_w/2)^2
         Iy = I_01 + I_02 + as_01 + as_02
         return Iy
 
     #def calc_strength_elast(self, fy, ty):
-
     #def calc_strength_plast(self, fy, ty):
 
     def calc_weight(self, spec_weight):
@@ -419,9 +412,9 @@ class SupStrucRipped(Section):
         w = spec_weight * self.a_brutt
         return w
 
-
 class RippedConcrete(SupStrucRipped):
     #defines properties of a rectangular, reinforced concrete section
+    #di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
     def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, n_bw=0,
                  phi=2.0, c_nom=0.03, xi=0.02):
         section_type = "rc_rec"
@@ -430,12 +423,30 @@ class RippedConcrete(SupStrucRipped):
         self.rebar_type = rebar_type
         self.c_nom = c_nom
         self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
-        self.bw_r = [di_xw, n_xw]
+        self.bw_r = [di_xw, n_xw]   #Longitudinal reinforcement in rib
         self.bw_bg = [di_bw, s_bw, n_bw]
         mr = 1000
-        #self.mr_p, self.mr_n = mr, mr
+        self.mr_p, self.mr_n = mr, mr
         [self.d, self.ds] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
+        [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
+        [self.mu_pb_max, self.x_pb_p, self.as_pb_p, self.qs_class_pb_p] = self.calc_mu_pb('pos')
+        [self.mu_pb_min, self.x_pb_n, self.as_pb_n, self.qs_class_pb_n] = self.calc_mu_pb('neg') #STIMMT NOCH NICHT
+
+        #self.roh, self.rohs = self.as_p / self.d, self.as_n / self.ds
+        #[self.vu_p, self.vu_n, self.as_bw] = self.calc_shear_resistance()
+        #self.g0k = self.calc_weight(concrete_type.weight)
+        #a_s_tot = self.as_p + self.as_n + self.as_bw
+        #co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
+        #co2_concrete = (self.a_brutt - a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
+        #self.ei1 = self.concrete_type.Ecm * self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
+        #self.co2 = co2_rebar + co2_concrete
+        #self.cost = (a_s_tot * self.rebar_type.cost + (self.a_brutt - a_s_tot) * self.concrete_type.cost
+        #         + self.concrete_type.cost2)
+        #self.ei_b = self.ei1
+        #self.xi = xi  # XXXXXXX preset value is an assumption. Has to be verified with literature. XXXXXXX
+        #self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d)
+
 
 
     def calc_d(self):
@@ -443,9 +454,10 @@ class RippedConcrete(SupStrucRipped):
         ds = self.h - self.c_nom - self.bw_bg[0] - self.bw[1][0]/2
         return d, ds
 
+    #Slab = Platte in Querrichtung. ACHTUNG: DURCHLAUFWIRKUNG MUSS NOCH IMPLEMENTIERT WERDEN!
+    #Kann man die Berechnung der Platte zusammenführen mit Rectangular Concrete?
     def calc_mu(self, sign='pos'):
         # calculates moment resistence of slab
-        # calculates moment resistence of Plattenbalken = PB
         b = 1
         fsd = self.rebar_type.fsd
         fcd = self.concrete_type.fcd
@@ -458,10 +470,22 @@ class RippedConcrete(SupStrucRipped):
             [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
             print("sigen of moment resistance has to be 'neg' or 'pos'")
 
-        [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+        return mu, x, a_s, qs_klasse
 
+    def calc_mu_pb(self, sign='pos'):
+        # calculates moment resistence of Plattenbalken = PB
+        fsd = self.rebar_type.fsd
+        fcd = self.concrete_type.fcd
+        if sign == 'pos':
+            [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+        elif sign == 'neg':
+            [mu_PB, x, a_s, qs_klasse] = self.mu_unsigned_PB(self.bw_r[0], self.bw_r[1], self.d, self.b_eff, self.h_f, fsd, fcd, self.mr_p)
+        else:
+            [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
+            print("sigen of moment resistance has to be 'neg' or 'pos'")
 
         return mu, x, a_s, qs_klasse
+
 
     @staticmethod
     def mu_unsigned(di, s, d, b, fsd, fcd, mr):
@@ -481,20 +505,69 @@ class RippedConcrete(SupStrucRipped):
     def mu_unsigned_PB(di, n, d, b, h_f, fsd, fcd, mr):
         a_s = np.pi * di ** 2 / 4 * n # [m^2]
         omega = a_s * fsd / (d * b * fcd) #[-]
-        mu = a_s * fsd * d * (1-omega/2) # [Nm]
+        mu_PB = a_s * fsd * d * (1-omega/2) # [Nm]
         x = omega * d / 0.85
         if x > h_f:
             return print("Druckzonenhöhe > Plattenhöhe")
         else:
             pass
 
-        if x / d <= 0.35 and mu >= mr:
-            return mu, x, a_s, 1
-        elif x / d <= 0.5 and mu >= mr:
-            return mu, x, a_s, 2
+        if x / d <= 0.35 and mu_PB >= mr:
+            return mu_PB, x, a_s, 1
+        elif x / d <= 0.5 and mu_PB >= mr:
+            return mu_PB, x, a_s, 2
         else:
-            return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
+            return mu_PB, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
+        #negatives Moment fehlt
+
+    def calc_shear_resistance(self, d_installation=0.0):
+        # calculates shear resistance with d
+        di = self.bw_bg[0]  # diameter
+        s = self.bw_bg[1]  # spacing
+        n = self.bw_bg[2]  # number of stirrups per spacing
+        fck = self.concrete_type.fck
+        fcd = self.concrete_type.fcd
+        tcd = self.concrete_type.tcd
+        dmax = self.concrete_type.dmax  # dmax in mm
+        fsk = self.rebar_type.fsk
+        fsd = self.rebar_type.fsd
+        es = self.rebar_type.Es
+        bw = self.b #ANPASSEN AUF RIPPE
+        d = self.d
+        ds = self.ds
+        x_p = self.x_p
+        x_n = self.x_n
+        as_bw = np.pi * di ** 2 / 4 * n / s
+        if d_installation < d / 6:
+            dv_p = d
+        else:
+            dv_p = d - d_installation
+        if d_installation < ds / 6:
+            dv_n = ds
+        else:
+            dv_n = ds - d_installation
+        vu_p = self.vu_unsigned(bw, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)
+        vu_n = self.vu_unsigned(bw, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)
+        return vu_p, vu_n, as_bw
+
+    @staticmethod
+    def vu_unsigned(bw, as_bw, d, dv, x, fck, fcd, tcd, fsk, fsd, es, dmax=32, alpha=np.pi / 4, kc=0.55):
+        if as_bw == 0:  # cross-section without stirrups
+            ev = 1.5 * fsd / es
+            kg = 48 / (16 + dmax)
+            kd = 1 / (1 + ev * d * kg)
+            vrd = kd * tcd * dv
+            return vrd
+        else:  # cross-section with vertical stirrups
+            z = d - 0.85 * x / 2
+            vrds = as_bw * z * fsd
+            vrdc = bw * z * kc * fcd * np.sin(alpha) * np.cos(alpha)  # unit of alpha: [rad]
+            rohw = as_bw / bw
+            rohw_min = 0.001 * (fck * 1e-6 / 30) ** 0.5 * 500 / (fsk * 1e-6)
+            if rohw < rohw_min:
+                print("minimal reinforcement ratio of stirrups is lower than required according to SIA 262, (110)")
+            return min(vrds, vrdc)
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
