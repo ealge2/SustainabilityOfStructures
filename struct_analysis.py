@@ -397,7 +397,7 @@ class SupStrucRibbedConcrete(Section):
     def calc_center_of_gravity(self):
         # in: Geometry effective width b_eff [m], slab height h_f [m], rib width b_w [m], rib height h_w [m]
         # out: center of gravity z_s [m]
-        z_s = self.b_eff * self.h_f**2/2 + self.b_w * self.h_w^2/2 /(self.b_eff * self.h_f+self.b_w * self.h_w**2)
+        z_s = (self.b_eff * self.h_f**2/2 + self.b_w * self.h_w**2/2 ) / (self.b_eff * self.h_f+self.b_w * self.h_w)
         return z_s
 
     def calc_moment_of_inertia(self):
@@ -601,17 +601,17 @@ class RibbedConcrete(SupStrucRibbedConcrete):
 
 # .....................................................................................
 class SupStrucRibbedWood(Section):
-     def __init__(self,section_type,b,h,a,t2,t3,phi=0):
-         super().__init__(section_type)
-         self.b = b         # rib width [m]
-         self.h = h         # rib height [m]
-         self.a = a         # spacing between ribs [m]
-         self.t2 = t2       # slab height bottom flange [m]
-         self.t3 = t3       # slab height top flange [m]
-         self.bc_ef = self.calc_bef('comp')   # Effective width top flange compression [m]
-         self.bt_ef = self.calc_bef('tens')  # Effective width bottom flange tension [m]
-#         self.a_brutt = self.calc_area()
-#         self.z_s = self.calc_center_of_gravity()
+    def __init__(self,section_type,b,h,a,t2,t3,phi=0):
+        super().__init__(section_type)
+        self.b = b         # rib width [m]
+        self.h = h         # rib height [m]
+        self.a = a         # spacing between ribs [m]
+        self.t2 = t2       # slab height bottom flange [m]
+        self.t3 = t3       # slab height top flange [m]
+        self.bc_ef = self.calc_bef('comp')   # Effective width top flange compression [m]
+        self.bt_ef = self.calc_bef('tens')  # Effective width bottom flange tension [m]
+#        self.a_brutt = self.calc_area()
+        self.z_s = self.calc_center_of_gravity()
 #         self.iy = self.calc_moment_of_inertia()
 #         self.w = self.calc_weight()
 #
@@ -621,23 +621,25 @@ class SupStrucRibbedWood(Section):
 #         a_brutt = self.b * self.h_f + self.b_w*(self.h-self.h_f)
 #         return a_brutt
 #
-     def calc_bef(self,sign = 'comp', l_0=10,):
-         # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
-         # out: effective width b_eff
-         if sign == 'comp':
-             b_ef_schub = 0.1*l_0
-             b_ef_beulen = 0.2*self.t3                        # falls Fasern rechtwinklig zu Stegen wären, ist Faktor falsch!
-             b_ef = min(b_ef_schub, b_ef_beulen, self.a-self.b)
-         else:
-             b_ef_schub = 0.1*l_0
-             b_ef = min(b_ef_schub, self.a-self.b)
-         return b_ef
-#
-#     def calc_center_of_gravity(self):
-#         # in: Geometry effective width b_eff [m], slab height h_f [m], rib width b_w [m], rib height h_w [m]
-#         # out: center of gravity z_s [m]
-#         z_s = self.b_eff * self.h_f**2/2 + self.b_w * self.h_w^2/2 /(self.b_eff * self.h_f+self.b_w * self.h_w**2)
-#         return z_s
+    def calc_bef(self,sign = 'comp', l_0=10,):
+        # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
+        # out: effective width b_eff
+        if sign == 'comp':
+            b_ef_schub = 0.1*l_0
+            b_ef_beulen = 0.2*self.t3                        # falls Fasern rechtwinklig zu Stegen wären, ist Faktor falsch!
+            b_ef = min(b_ef_schub, b_ef_beulen, self.a-self.b)
+            return b_ef
+        else:
+            b_ef_schub = 0.1 * l_0
+            b_ef = min(b_ef_schub, self.a - self.b)
+            return b_ef
+
+    def calc_center_of_gravity(self):
+        # in: Geometry effective width b, h, a, t2, b_ef_t, t3, b_ef_c
+        # out: center of gravity z_s [m]
+        z_s = (( self.b*self.h**2/2 + self.bt_ef*self.t2^2/2 + self.bc_ef*self.t3^2/2) /
+               (self.b*self.h+self.bt_ef*self.t2 +self.bc_ef*self.t3))
+        return z_s
 #
 #     def calc_moment_of_inertia(self):
 #         # in: Geometry effective width b_eff [m], slab height h_f [m], rib width b_w [m], rib height h_w [m], center of gravity z_s [m]
