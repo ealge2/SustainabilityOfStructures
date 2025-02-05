@@ -361,8 +361,7 @@ class RectangularConcrete(SupStrucRectangular):
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
-class SupStrucRipped(Section):
-
+class SupStrucRibbedConcrete(Section):
     def __init__(self,section_type,b,b_w,h,h_f,phi=0):
         super().__init__(section_type)
         self.b = b      # flange width [m] (Abstand Rippenachse-Rippenachse)
@@ -420,7 +419,7 @@ class SupStrucRipped(Section):
         w = spec_weight * self.a_brutt
         return w
 #.....................................................................................
-class RippedConcrete(SupStrucRipped):
+class RibbedConcrete(SupStrucRibbedConcrete):
     #defines properties of a rectangular, reinforced concrete section
     #di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
     def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw, di_pb_bw, s_pb_bw, n_bw=0, n_pb_bw=0,
@@ -578,8 +577,8 @@ class RippedConcrete(SupStrucRipped):
             else:
                 dv_PB_n = ds_PB - d_installation
 
-            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, d_PB, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
-            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, ds_PB, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
+            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, d_PB, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax)
+            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, ds_PB, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax)
             return vu_PB_p, vu_PB_n, as_PB_bw
 
     @staticmethod
@@ -592,8 +591,8 @@ class RippedConcrete(SupStrucRipped):
             return vrd
         else:  # cross-section with vertical stirrups
             z = d - 0.85 * x / 2
-            vrds = as_bw * z * fsd
-            vrdc = bw * z * kc * fcd * np.sin(alpha) * np.cos(alpha)  # unit of alpha: [rad]
+            vrds = as_bw * z * fsd      # SIA 262, 4.3.3.4.3, (43)
+            vrdc = bw * z * kc * fcd * np.sin(alpha) * np.cos(alpha)  # unit of alpha: [rad]    # SIA 262, 4.3.3.4.6, (45)
             rohw = as_bw / bw
             rohw_min = 0.001 * (fck * 1e-6 / 30) ** 0.5 * 500 / (fsk * 1e-6)
             if rohw < rohw_min:
@@ -601,9 +600,122 @@ class RippedConcrete(SupStrucRipped):
             return min(vrds, vrdc)
 
 # .....................................................................................
-    class RippedWood(SupStrucRipped):
-        # defines properties of a rectangular, reinforced concrete section
-        # di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
+class SupStrucRibbedWood(Section):
+     def __init__(self,section_type,b,h,a,t2,t3,phi=0):
+         super().__init__(section_type)
+         self.b = b         # rib width [m]
+         self.h = h         # rib height [m]
+         self.a = a         # spacing between ribs [m]
+         self.t2 = t2       # slab height bottom flange [m]
+         self.t3 = t3       # slab height top flange [m]
+         self.bc_ef = self.calc_bef('comp')   # Effective width top flange compression [m]
+         self.bt_ef = self.calc_bef('tens')  # Effective width bottom flange tension [m]
+#         self.a_brutt = self.calc_area()
+#         self.z_s = self.calc_center_of_gravity()
+#         self.iy = self.calc_moment_of_inertia()
+#         self.w = self.calc_weight()
+#
+#     def calc_area(self):
+#         # in: width b and bw [m], height h and h_f[m]
+#         # out: area [m2]
+#         a_brutt = self.b * self.h_f + self.b_w*(self.h-self.h_f)
+#         return a_brutt
+#
+     def calc_bef(self,sign = 'comp', l_0=10,):
+         # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
+         # out: effective width b_eff
+         if sign == 'comp':
+             b_ef_schub = 0.1*l_0
+             b_ef_beulen = 0.2*self.t3                        # falls Fasern rechtwinklig zu Stegen wären, ist Faktor falsch!
+             b_ef = min(b_ef_schub, b_ef_beulen, self.a-self.b)
+         else:
+             b_ef_schub = 0.1*l_0
+             b_ef = min(b_ef_schub, self.a-self.b)
+         return b_ef
+#
+#     def calc_center_of_gravity(self):
+#         # in: Geometry effective width b_eff [m], slab height h_f [m], rib width b_w [m], rib height h_w [m]
+#         # out: center of gravity z_s [m]
+#         z_s = self.b_eff * self.h_f**2/2 + self.b_w * self.h_w^2/2 /(self.b_eff * self.h_f+self.b_w * self.h_w**2)
+#         return z_s
+#
+#     def calc_moment_of_inertia(self):
+#         # in: Geometry effective width b_eff [m], slab height h_f [m], rib width b_w [m], rib height h_w [m], center of gravity z_s [m]
+#         # out: moment of inertia I_y [m^4]
+#         i_01 = self.b_eff * self.h_f**3/12
+#         as_01 = self.b_eff * self.h_f * abs(self.z_s - self.h_f/2)**2
+#         i_02 = self.b_w * self.h_w**3/12
+#         as_02 = self.b_w * self.h_w * abs(self.z_s - self.h_w/2)**2
+#         iy = i_01 + i_02 + as_01 + as_02
+#         return iy
+#
+#     #def calc_strength_elast(self, fy, ty):
+#     #def calc_strength_plast(self, fy, ty):
+#
+#     def calc_weight(self, spec_weight):
+#         #  in: specific weight [N/m^3]
+#         #  out: weight of cross section per m length [N/m]
+#         w = spec_weight * self.a_brutt
+#         return w
+
+
+class RibbedWood(SupStrucRibbedWood):
+    # defines properties of ribbed timber slab = "Hohlkastendecke" → box beam floor or "Ripendecke" = → joist floor
+    def __init__(self, wood_type, b, h, t2, t3, phi=0.6, xi=0.01, ei_b=0.0):  # create a rectangular timber object
+        section_type = "wd_rib"
+        super().__init__(section_type, b, h, phi)
+        self.wood_type = wood_type  #ACHTUNG: Beplankung muss andere Werte annehmen können
+    #     mu_el, vu_el = self.calc_strength_elast(wood_type.fmd, wood_type.fvd)
+    #     self.mu_max, self.mu_min = [mu_el,-mu_el]
+    #     self.vu_p, self.vu_n = vu_el, vu_el
+    #     self.qs_class_n, self.qs_class_p = [3, 3]  # Required cross-section class: 1:=PP, 2:EP, 3:EE
+    #     self.g0k = self.calc_weight(wood_type.weight)
+    #     self.ei1 = self.wood_type.Emmean * self.iy  # elastic stiffness [Nm^2]
+    #     self.co2 = self.a_brutt * self.wood_type.GWP * self.wood_type.density  # [kg_CO2_eq/m]
+    #     self.cost = self.a_brutt * self.wood_type.cost
+    #     self.ei_b = ei_b  # stiffness perpendicular to direction of span
+    #     self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
+
+    # def calc_strength_elast(self, fy, ty):
+    #     #  in: yielding strength fy [Pa], shear strength ty [Pa]
+    #     #  out: elastic bending resistance [Nm], elastic shear resistance [N]
+    #     mu_el = self.iy * fy * 2 / self.h
+    #     vu_el = self.b * self.h * ty / 1.5
+    #     return mu_el, vu_el
+
+
+    # @staticmethod
+    # def fire_resistance(member):
+    #     bnds = [(0, 240)]
+    #     t0 = 60
+    #     max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)
+    #     t_max = max_t.x[0]
+    #     return t_max
+    #
+    # @staticmethod
+    # def fire_minimizer(t, args):
+    #     member = args[0]
+    #     rem_sec = RectangularWood.remaining_section(member.section, member.fire, t)
+    #     mu_fire = 1.8 * rem_sec.mu_max
+    #     vu_fire = 1.8 * rem_sec.vu_p  # SIA 265 (51)
+    #     qd_fire = member.psi[2] * member.qk + member.gk
+    #     qd_fire_zul = min(mu_fire / (max(member.system.alpha_m) * member.system.l_tot ** 2),
+    #                           vu_fire / (max(member.system.alpha_v) * member.system.l_tot))
+    #     to_opt = abs(qd_fire - qd_fire_zul)
+    #     return to_opt
+    #
+    #     staticmethod
+    # def remaining_section(section, fire, t=60, dred=0.007):
+    #     betan = section.wood_type.burn_rate
+    #     dcharn = betan * t
+    #     d_ef = dcharn + dred
+    #     h_fire = max(section.h - d_ef * (fire[0] + fire[2]))
+    #     b_fire = max(section.b - d_ef * (fire[1] + fire[3]), 0)
+    #     rem_sec = RectangularWood(section.wood_type, b_fire, h_fire)
+    #     return rem_sec
+
+
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
