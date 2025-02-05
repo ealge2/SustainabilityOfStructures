@@ -502,10 +502,10 @@ class RippedConcrete(SupStrucRipped):
     @staticmethod
     def mu_unsigned(di, s, d, b, fsd, fcd, mr):
         # units input: [m, m, m, m, N/m^2, N/m^2]
-        a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
-        omega = a_s * fsd / (d * b * fcd)  # [-]
-        mu = a_s * fsd * d * (1 - omega / 2)  # [Nm]
-        x = omega * d / 0.85  # [m]
+        a_s = np.pi * di ** 2 / (4 * s) * b     # [m^2]
+        omega = a_s * fsd / (d * b * fcd)       # [-]
+        mu = a_s * fsd * d * (1 - omega / 2)    # [Nm]
+        x = omega * d / 0.85                    # [m]
         if x / d <= 0.35 and mu >= mr:
             return mu, x, a_s, 1
         elif x / d <= 0.5 and mu >= mr:
@@ -540,7 +540,7 @@ class RippedConcrete(SupStrucRipped):
         fck = self.concrete_type.fck
         fcd = self.concrete_type.fcd
         tcd = self.concrete_type.tcd
-        dmax = self.concrete_type.dmax  # dmax in mm
+        dmax = self.concrete_type.dmax              # dmax in mm
         fsk = self.rebar_type.fsk
         fsd = self.rebar_type.fsd
         es = self.rebar_type.Es
@@ -578,17 +578,17 @@ class RippedConcrete(SupStrucRipped):
             else:
                 dv_PB_n = ds_PB - d_installation
 
-            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
-            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
+            vu_PB_p = self.vu_unsigned(b_w, as_PB_bw, d_PB, dv_PB_p, x_PB_p, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
+            vu_PB_n = self.vu_unsigned(b_w, as_PB_bw, ds_PB, dv_PB_n, x_PB_n, fck, fcd, tcd, fsk, fsd, es, dmax) #UNFINISHED
             return vu_PB_p, vu_PB_n, as_PB_bw
 
     @staticmethod
     def vu_unsigned(bw, as_bw, d, dv, x, fck, fcd, tcd, fsk, fsd, es, dmax=32, alpha=np.pi / 4, kc=0.55):
         if as_bw == 0:  # cross-section without stirrups
-            ev = 1.5 * fsd / es
-            kg = 48 / (16 + dmax)
-            kd = 1 / (1 + ev * d * kg)
-            vrd = kd * tcd * dv
+            ev = 1.5 * fsd / es         # SIA 262, 4.3.3.2.2, (39)
+            kg = 48 / (16 + dmax)       # SIA 262, 4.3.3.2.1, (37)
+            kd = 1 / (1 + ev * d * kg)  # SIA 262, 4.3.3.2.1, (36)
+            vrd = kd * tcd * dv         # SIA 262, 4.3.3.2.1, (35)
             return vrd
         else:  # cross-section with vertical stirrups
             z = d - 0.85 * x / 2
@@ -599,6 +599,11 @@ class RippedConcrete(SupStrucRipped):
             if rohw < rohw_min:
                 print("minimal reinforcement ratio of stirrups is lower than required according to SIA 262, (110)")
             return min(vrds, vrdc)
+
+# .....................................................................................
+    class RippedWood(SupStrucRipped):
+        # defines properties of a rectangular, reinforced concrete section
+        # di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
