@@ -70,7 +70,7 @@ for i, members in enumerate(member_list):
         plotdata[1].append(mem.section.h + mem.floorstruc.h)
         plotdata[2].append(mem.section.co2)
         plotdata[3].append(mem.section.co2 + mem.floorstruc.co2)
-        plotdata[4].append(mem.section.cost + mem.floorstruc.co2)
+        plotdata[4].append(mem.section.cost)
     sec_typ, cri, opt = legend[i]
     # set line color
     if sec_typ == "rc_rec":

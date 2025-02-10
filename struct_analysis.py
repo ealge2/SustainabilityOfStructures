@@ -41,14 +41,11 @@ class Wood:
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
             inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE mech_prop="+mech_prop
-            cursor.execute(inquiry)
-            result = cursor.fetchall()
-            self.density, self.GWP, self.cost, self.cost2 = result[0]
         else:
             inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE PRO_ID="+prod_id
-            cursor.execute(inquiry)
-            result = cursor.fetchall()
-            self.density, self.GWP, self.cost, self.cost2 = result[0]
+        cursor.execute(inquiry)
+        result = cursor.fetchall()
+        self.density, self.GWP, self.cost, self.cost2 = result[0]
         self.fmd = float()
 
     def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values
@@ -60,7 +57,7 @@ class Wood:
 
 class ReadyMixedConcrete:
     # defines properties of concrete material
-    def __init__(self, mech_prop, database, dmax=32, prod_id=0):  # retrieve basic mechanical data from database (self, table,
+    def __init__(self, mech_prop, database, dmax=32, prod_id="undef"):  # retrieve basic mechanical data from database (self, table,
         self.ec2d = float()
         self.tcd = float()
         self.fcd = float()
@@ -74,7 +71,11 @@ class ReadyMixedConcrete:
         result = cursor.fetchall()
         self.fck, self.fctm, self.Ecm, self.weight = result[0]
         # get GWP properties from database
-        inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE mech_prop="+mech_prop
+        if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
+            # properties in database
+            inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE mech_prop="+mech_prop
+        else:
+            inquiry = "SELECT density, GWP, cost, cost2 FROM products WHERE PRO_ID="+prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
         self.density, self.GWP, self.cost, self.cost2 = result[0]
@@ -89,7 +90,7 @@ class ReadyMixedConcrete:
 
 class SteelReinforcingBar:
     # defines properties of reinforcement  material
-    def __init__(self, mech_prop, database, prod_id=0):
+    def __init__(self, mech_prop, database, prod_id="undef"):
         # retrieve basic mechanical data from database (self, table, database name)
         self.mech_prop = mech_prop
         connection = sqlite3.connect(database)
@@ -100,7 +101,11 @@ class SteelReinforcingBar:
         result = cursor.fetchall()
         self.fsk, self.Es = result[0]
         # get GWP properties from database
-        inquiry = "SELECT density, GWP, cost FROM products WHERE mech_prop="+mech_prop
+        if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
+            # properties in database
+            inquiry = "SELECT density, GWP, cost FROM products WHERE mech_prop="+mech_prop
+        else:
+            inquiry = "SELECT density, GWP, cost FROM products WHERE PRO_ID="+prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
         self.density, self.GWP, self.cost = result[0]
@@ -254,6 +259,8 @@ class RectangularConcrete(SupStrucRectangular):
     def calc_d(self):
         d = self.h - self.c_nom - self.bw[0][0]/2
         ds = self.h - self.c_nom - self.bw[1][0]/2
+        if d<=0 or ds <=0:
+            print("d of ds<=0. Cross-section is not valid")
         return d, ds
 
     def calc_mu(self, sign='pos'):
