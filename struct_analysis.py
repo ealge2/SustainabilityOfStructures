@@ -227,7 +227,7 @@ class RectangularWood(SupStrucRectangular, Section):
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
     def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bw=0.0, s_bw=0.15, n_bw=0,
-                 phi=2.0, c_nom=0.03, xi=0.02):
+                 phi=2.0, c_nom=0.03, xi=0.02, jnt_srch=0.25):
 
         # create a rectangular concrete object
         section_type = "rc_rec"
@@ -245,7 +245,9 @@ class RectangularConcrete(SupStrucRectangular):
         self.roh, self.rohs = self.as_p/self.d, self.as_n/self.ds
         [self.vu_p, self.vu_n, self.as_bw] = self.calc_shear_resistance()
         self.g0k = self.calc_weight(concrete_type.weight)
-        a_s_tot = self.as_p + self.as_n + self.as_bw
+        a_s_stat = self.as_p + self.as_n + self.as_bw  # rebar area without reinforcement joint surcharge
+        joint_surcharge = jnt_srch  # joint surcharge
+        a_s_tot = a_s_stat * (1+joint_surcharge)  # rebar area without reinforcement joint surcharge
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         co2_concrete = (self.a_brutt-a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
         self.ei1 = self.concrete_type.Ecm*self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
@@ -259,7 +261,7 @@ class RectangularConcrete(SupStrucRectangular):
     def calc_d(self):
         d = self.h - self.c_nom - self.bw[0][0]/2
         ds = self.h - self.c_nom - self.bw[1][0]/2
-        if d<=0 or ds <=0:
+        if d <= 0 or ds <= 0:
             print("d of ds<=0. Cross-section is not valid")
         return d, ds
 
