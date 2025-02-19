@@ -4,12 +4,12 @@
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
-import struct_optimization  # file with code for structural optimization
+#import struct_optimization  # file with code for structural optimization
 #import matplotlib.pyplot as plt
 
 # INPUT
 # create dummy-database
-database_name = "dummy_sustainability.db"  # define database name
+database_name = "dummy_sustainability_1.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # create material for reinforced concrete cross-section, derive corresponding design values
@@ -19,7 +19,7 @@ rebar1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)  # create
 rebar1.get_design_values()
 
 # create reinforced concrete rectangular cross-section
-section = struct_analysis.RectangularConcrete(concrete1, rebar1, 1.0, 0.24, 0.012, 0.15, 0.012, 0.15, 0.012, 0.15, 0)
+section = struct_analysis.RibbedConcrete(concrete1, rebar1, 5.0, 0.40, 1.20, 0.18, 0.012, 0.15, 0.012, 0.15, 0.030, 7, 0, 0.15, 0.01, 0.15, 2 )
 
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -36,7 +36,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system length
-length = 5.8
+length = 16
 
 # create simple supported beam system
 system = struct_analysis.BeamSimpleSup(length)
@@ -51,8 +51,8 @@ print()
 print(member.qu)
 print(member.section.vu_p, member.section.vu_n)
 
-member.calc_qk_zul_gzt()
-print(member.qk_zul_gzt)
-print("Feuerwiderstand:")
-member.get_fire_resistance()
-print(member.fire_resistance)
+#member.calc_qk_zul_gzt()
+#print(member.qk_zul_gzt)
+#print("Feuerwiderstand:")
+#member.get_fire_resistance()
+#print(member.fire_resistance)
