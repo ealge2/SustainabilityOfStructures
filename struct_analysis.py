@@ -213,7 +213,6 @@ class RectangularWood(SupStrucRectangular, Section):
         to_opt = abs(qd_fire-qd_fire_zul)
         return to_opt
 
-
     @staticmethod
     def remaining_section(section, fire, t=60, dred=0.007):
         betan = section.wood_type.burn_rate
