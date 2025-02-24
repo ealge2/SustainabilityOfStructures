@@ -1,12 +1,17 @@
 import struct_analysis  # file with code for structural analysis
 import struct_optimization  # file with code for structural optimization
 import sqlite3  # import modul for SQLite
+import random
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from shapely.geometry import Polygon
 
 
 def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requirements, crsec_type, mat_names,
-                 g2k=0.75, qk=2.0, max_iter=50):
+                 g2k=0.75, qk=2.0, max_iter=50, idx_vrfctn=-1):
+
+    if idx_vrfctn == -1:
+        idx_vrfctn = random.randint(0, len(lengths)-1)
 
     # GENERATE INITIAL CROSS-SECTIONS
     # Search database (table products, attribute material) for products,
@@ -40,7 +45,9 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 # create a Rebar material object
                 rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
                 # create initial wooden rectangular cross-section
-                section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15, 0.01, 0.15)
+                section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
+                                                                0.014, 0.15, 0.01, 0.15,
+                                                                0.01, 0.15, 2)
                 # define content of plot-line
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
@@ -105,14 +112,18 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     # PLOT DATASET TO FIGURE
     plt.figure(1)
     data_max = [0, 0, 0, 0, 0, 0]
+    vrfctn_members = [[], []]
     for i, members in enumerate(member_list):
         plotdata = [[], [], [], [], []]
-        for mem in members:
+        for j, mem in enumerate(members):
             plotdata[0].append(mem.section.h)
             plotdata[1].append(mem.section.h + mem.floorstruc.h)
             plotdata[2].append(mem.section.co2)
             plotdata[3].append(mem.section.co2 + mem.floorstruc.co2)
             plotdata[4].append(mem.section.cost)
+            if j == idx_vrfctn:
+                vrfctn_members[0].append(mem)
+                vrfctn_members[1].append(i)
         sec_typ, mat, cri, opt = legend[i]
         # set line color
         if sec_typ == "rc_rec":
@@ -140,6 +151,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         else:
             linewidth = 0.1
         label = sec_typ + ", " + mat + ", " + cri + ", optimized for " + opt
+        # plot data
         for idx, data in enumerate(plotdata):
             plt.subplot(3, 2, idx + 1)
             # prepare area
@@ -153,5 +165,78 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             # plot lines
             plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label)
             data_max[idx] = max(data_max[idx], max(data))
+            # plot points of verification into graph
+            ver_x, ver_y = lengths[idx_vrfctn], data[idx_vrfctn]
+            plt.plot(ver_x, ver_y, 'o', color='black', markersize=2)
+            plt.annotate(f'#{i}', xy=(ver_x, ver_y),
+                         xytext=(ver_x + 0.05*lengths[-1], ver_y),
+                         arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
+                         fontsize=9, color='black', va='center')
 
-    return data_max
+
+    return data_max, vrfctn_members
+
+
+def plot_section(section):
+    # Create a figure and axis
+    if section.section_type == "rc_rec":  # Rectangular Reinforced Concrete Cross-Section
+        fig, ax = plot_rectangle_with_dimensions(section.b, section.h, 'green', 'x')
+        ax = plot_rebars_long(ax, section.bw)
+        legend = (f'{section.concrete_type.mech_prop}, prod_ID:{section.concrete_type.prod_id} \n'
+                  f'{section.rebar_type.mech_prop}, prod_ID:{section.rebar_type.prod_id} \n'
+                  f'di_xo / s_xo = {section.bw[1][0]:.3f} / {section.bw[1][1]} \n'
+                  f'di_xu / s_xu = {section.bw[0][0]:.3f} / {section.bw[0][1]} \n'
+                  f'di_bw / s_bw / # = {section.bw_bg[0]} / {section.bw_bg[1]} / {section.bw_bg[2]} \n'
+                  f'c_nom = {100*section.c_nom:.1f} cm \n'
+                  f'x/d = {section.x_p/section.d:.2f} \n'
+                  f'GWP = {section.co2:.0f} kg/m^2')
+    elif section.section_type == "wd_rec":  # Rectangular Wooden Cross-Section
+        fig, ax = plot_rectangle_with_dimensions(section.b, section.h, 'brown', '/')
+        legend = (f'{section.wood_type.mech_prop}, prod_ID:{section.wood_type.prod_id} \n'
+                  f'GWP = {section.co2:.0f} kg/m^2')
+    else:
+        print("no plot for specified section_type defined jet")
+
+    fig.text(0.1, 0.9, legend, ha='left', va='top', fontsize=9, color='black',
+             bbox=dict(facecolor='lightgrey', edgecolor='black', boxstyle='round,pad=0.2'))
+
+
+# Function to plot a rectangular cross-section with given dimensions
+def plot_rectangle_with_dimensions(width, height, color='black', hatch='*'):
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Define the rectangle with hatching (lower-left corner at (x, y), width, and height)
+    rect = patches.Rectangle((0.1, 0.1), width, height, linewidth=1, edgecolor=color, facecolor='none', hatch=hatch,
+                             fill=False)
+
+    # Add the rectangle to the plot
+    ax.add_patch(rect)
+
+    # Add dimension annotations
+    ax.annotate(f'{width:.2f} m', xy=(0.1 + width / 2, 0.05), xytext=(0.1 + width / 2, 0.06), ha='center')
+    ax.annotate(f'{height:.2f} m', xy=(0.02, 0.1 + height / 2), xytext=(0.01, 0.1 + height / 2), va='center',
+                 rotation='vertical')
+
+    # Draw arrows for dimensions
+    ax.annotate('', xy=(0.1, 0.05), xytext=(0.1 + width, 0.05), arrowprops=dict(arrowstyle='|-|', color='black'))
+    ax.annotate('', xy=(0.05, 0.1), xytext=(0.05, 0.1 + height), arrowprops=dict(arrowstyle='|-|', color='black'))
+
+    # Hide the x and y axes
+    ax.axis('off')
+
+    # Set the aspect of the plot to be equal
+    ax.set_aspect('equal')
+
+    # Set the limits of the plot
+    ax.set_xlim(0, width+0.2)
+    ax.set_ylim(0, height+0.2)
+
+    return fig, ax
+
+
+def plot_rebars_long(ax, bw, color='blue'):
+    ax.plot(x, y, 'o', color=color, markersize=2))
+
+
+    return fig, ax

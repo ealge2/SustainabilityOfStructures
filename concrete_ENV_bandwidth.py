@@ -17,7 +17,7 @@ database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # max. number of iterations per optimization. Higher value leads to better results
 max_iter = 20
@@ -41,7 +41,7 @@ req = struct_analysis.Requirements()
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
 # retrieve data from database, find optimal cross-sections and plot results
-data_max = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req, "rc_rec",
+data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req, "rc_rec",
                                       mat_names, g2k, qk, max_iter)
 
 # define legend of plots
@@ -57,6 +57,14 @@ for idx, info in enumerate(plotted_data):
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx+1])))
     else:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
-    plt.legend()
+    # plt.legend()
     plt.grid()
+
+# plot cross-section of members for verification
+for i, mem in enumerate(vrfctn_members[0]):
+    section = mem.section
+    plot_datasets.plot_section(section)
+    # Show the plot
+    plt.title(f'#{vrfctn_members[1][i]}')
+
 plt.show()

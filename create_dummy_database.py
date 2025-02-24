@@ -46,7 +46,7 @@ def create_database(data_base_name):
     sql_command = """INSERT INTO products (source, EPD_date, valid_from, valid_to, product_name, oekobaudat_id,
             material_group, material, cement, mech_prop, density, GWP, cost, cost2)
             VALUES ("Betonsortenrechner", NULL, NULL, NULL, "NPK B RC-C50", "1.4.01", "mineral_building_products",
-             "ready_mixed_concrete", "CEM II/B CH-Mix", "C25/30", 2190, 98e-3, 220, 50);"""
+             "ready_mixed_concrete", "CEM II/B CH-Mix", "C25/30", 2242, 100e-3, 220, 50);"""
     cursor.execute(sql_command)
 
     # fill dummy data for concrete C30/37 into table products

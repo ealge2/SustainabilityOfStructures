@@ -17,10 +17,14 @@ database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+# Index of verified length
+idx_vrc = 5
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 50
+max_iter = 20
+
 
 #  define content of plot
 criteria = ["ENV"]
@@ -51,22 +55,25 @@ def max_of_arrays(existing_data, new_data):
     return [max(a, b) for a, b in zip(existing_data, new_data)]
 
 data_max = [0, 0, 0, 0, 0, 0]
+vrfctn_members = []
 
 # CREATE AND PLOT DATASET FOR RECTANGULAR WOODEN CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
 # retrive data from database, find optimal cross-sections and plot results
-data_max_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd, req,
-                                          "wd_rec", mat_names, g2k, qk, max_iter)
+data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd, req,
+                                          "wd_rec", mat_names, g2k, qk, max_iter, idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
+vrfctn_members.append(vrfctn_members_new)
 
 # CREATE AND PLOT DATASET FOR RECTANGULAR REINFORCED CONCRETE CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
 # retrive data from database, find optimal cross-sections and plot results
-data_max_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req,
-                                          "rc_rec", mat_names, g2k, qk, max_iter)
+data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req,
+                                          "rc_rec", mat_names, g2k, qk, max_iter, idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
+vrfctn_members.append(vrfctn_members_new)
 
 # DEFINE LABELS OF PLOTS
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
@@ -82,8 +89,16 @@ for idx, info in enumerate(plotted_data):
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx+1])))
     else:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
-    plt.legend()
+    # plt.legend()
     plt.grid()
+
+# plot cross-section of members for verification
+for mem_group in vrfctn_members:
+    for i, mem in enumerate(mem_group[0]):
+        section = mem.section
+        plot_datasets.plot_section(section)
+        # Show the plot
+        plt.title(f'#{mem_group[1][i]}')
 
 # SHOW FIGURE
 plt.show()
