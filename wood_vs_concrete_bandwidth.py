@@ -6,7 +6,6 @@ import struct_analysis  # file with code for structural analysis
 import plot_datasets  # file with code for plotting results in a standardized way
 import matplotlib.pyplot as plt
 
-
 #  INPUT
 # create dummy-database
 database_name = "dummy_sustainability.db"  # define database name
@@ -21,11 +20,9 @@ idx_vrc = 5
 # max. number of iterations per optimization. Higher value leads to better results
 max_iter = 20
 
-
 #  define content of plot
 criteria = ["ENV"]
 optima = ["GWP"]
-
 
 # create floor structure for solid wooden cross-section
 bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
