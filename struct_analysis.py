@@ -382,13 +382,14 @@ class RectangularConcrete(SupStrucRectangular):
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
 class SupStrucRibbedConcrete(Section):
-    def __init__(self, section_type, b, b_w, h, h_f, phi=0):
+    def __init__(self, section_type, b, b_w, h, h_f, l0, phi=0):
         super().__init__(section_type)
-        self.b = b  # flange width [m] (Abstand Rippenachse-Rippenachse)
-        self.b_w = b_w  # web width [m]
-        self.h = h  # total height [m]
-        self.h_f = h_f  # flange height [m]
-        self.h_w = h - h_f  # web height [m]
+        self.b = b              # flange width [m] (Abstand Rippenachse-Rippenachse)
+        self.b_w = b_w          # web width [m]
+        self.h = h              # total height [m]
+        self.h_f = h_f          # flange height [m]
+        self.h_w = h - h_f      # web height [m]
+        self.l0 = l0
         self.b_eff = self.calc_beff()  #Effective width
         self.a_brutt = self.calc_area()
         self.z_s = self.calc_center_of_gravity()
@@ -402,9 +403,10 @@ class SupStrucRibbedConcrete(Section):
         a_brutt = self.b * self.h_f + self.b_w * (self.h - self.h_f)
         return a_brutt
 
-    def calc_beff(self, l_0=10):
+    def calc_beff(self):
         # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
         # out: effective width b_eff
+        l_0 = self.l0
         b_eff_i = 0.2 * (self.b - self.b_w) / 2 + 0.1 * l_0  # SIA 262, 4.1.3.3.2 (20)
         if b_eff_i > 0.2 * l_0:
             b_eff_i = 0.2 * l_0
@@ -449,11 +451,11 @@ class SupStrucRibbedConcrete(Section):
 class RibbedConcrete(SupStrucRibbedConcrete):
     #defines properties of a rectangular, reinforced concrete section
     #di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
-    def __init__(self, concrete_type, rebar_type, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw,
-                 di_pb_bw, s_pb_bw, n_bw=0, n_pb_bw=0,
+    def __init__(self, concrete_type, rebar_type, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw,
+                 di_pb_bw, s_pb_bw, n_bw=0, n_pb_bw=2,
                  phi=2.0, c_nom=0.03, xi=0.02):
         section_type = "rc_rib"
-        super().__init__(section_type, b, b_w, h, h_f, phi)
+        super().__init__(section_type, b, b_w, h, h_f, l0, phi)
         self.concrete_type = concrete_type
         self.rebar_type = rebar_type
         self.c_nom = c_nom
@@ -490,7 +492,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
     def calc_d(self):
         d = self.h - self.c_nom - self.bw[0][0] / 2  # Statische Höhe 1. Lage Platte
         ds = self.h - self.c_nom - self.bw[1][0] / 2  # Statische Höhe 4. Lage Platte
-        d_PB = self.h - self.c_nom - self.bw_bg[0] - self.bw_r[
+        d_PB = self.h - self.c_nom - self.bw_bg_r[0] - self.bw_r[
             0] / 2  # Nur eine Lage Längsbewehrung implementiert. ACHTUNG: Check implementieren, ob genug Platz für Längsbewehrung vorhanden!!
         ds_PB = self.h - self.c_nom - self.bw[1][0]  # Mittlere statische Höhe 3./4. Lage Platte
         return d, ds, d_PB, ds_PB
@@ -535,7 +537,8 @@ class RibbedConcrete(SupStrucRibbedConcrete):
     def mu_unsigned(di, s, d, b, fsd, fcd, mr):
         # units input: [m, m, m, m, N/m^2, N/m^2]
         a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
-        omega = a_s * fsd / (d * b * fcd)  # [-]
+        omega = a_s * fsd / (d * b * fcd) # [-]
+
         mu = a_s * fsd * d * (1 - omega / 2)  # [Nm]
         x = omega * d / 0.85  # [m]
         if x / d <= 0.35 and mu >= mr:
@@ -638,6 +641,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
     def f_w_ger(roh, rohs, phi, h, d):
         f = (1 - 20 * rohs) / (10 * roh ** 0.7) * (0.75 + 0.1 * phi) * (h / d) ** 3
         return f
+
 
 
 # .....................................................................................
@@ -744,7 +748,7 @@ class RibWood(SupStrucRibWood):
         self.ei1 = self.wood_type_1.Emmean * self.iy  # elastic stiffness [Nm^2], Zeitpunkt t = 0
 
     #     self.co2 = self.a_brutt * self.wood_type.GWP * self.wood_type.density  # [kg_CO2_eq/m]
-    #     self.cost = self.a_brutt * self.wood_type.cost
+        self.cost = self.b * self.h / self.a * self.wood_type_1.cost + (self.t2 + self.t3)  * self.wood_type_2.cost
     #     self.ei_b = ei_b  # stiffness perpendicular to direction of span
     #     self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
 
@@ -788,23 +792,23 @@ class RibWood(SupStrucRibWood):
 
     def calc_vu(self):
         ty1 = self.wood_type_1.fvd
-        vu_1 = ty1 * self.b * self.h / 1.5
+        vu_1 = ty1 * self.b * self.h / 1.5  #nur Rippe angesetzt
         return vu_1
 
     # FEHLT: Rollschubnachweis!!
 
-    #@staticmethod
-    #def calc_vu(ty, b,h ):
-    #    vu  = ty * b * h
-    #    return vu
+    @staticmethod
+    def calc_vu(ty, b,h ):
+        vu  = ty * b * h
+        return vu
 
-    # @staticmethod
-    # def fire_resistance(member):
-    #     bnds = [(0, 240)]
-    #     t0 = 60
-    #     max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)
-    #     t_max = max_t.x[0]
-    #     return t_max
+    @staticmethod
+    def fire_resistance(member):
+         bnds = [(0, 240)]
+         t0 = 60
+         max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)
+         t_max = max_t.x[0]
+         return t_max
     #
     # @staticmethod
     # def fire_minimizer(t, args):
