@@ -263,8 +263,8 @@ class RectangularConcrete(SupStrucRectangular):
         self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d)
 
     def calc_d(self):
-        d = self.h - self.c_nom - self.bw[0][0] / 2
-        ds = self.h - self.c_nom - self.bw[1][0] / 2
+        d = self.h - self.c_nom - self.bw_bg[0] - self.bw[0][0] / 2
+        ds = self.h - self.c_nom - self.bw_bg[0] - self.bw[1][0] / 2
         if d <= 0 or ds <= 0:
             print("d of ds<=0. Cross-section is not valid")
         return d, ds
@@ -985,11 +985,16 @@ class Member1D:
 
         if min(alpha_m) == 0:
             if qs_class_vorh[1] <= qs_class_erf[1]:
+                # if cross-section fulfills the ductility criterion (e.g. required: PP, present PP) then assign the full
+                # bending strength
                 qu_bend = self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2)
             else:
-                if self.section.section_type == "rc_rec":
-                    # smooth change to 0 load bearing capacity when roh<roh_min or roh>roh_zul
-                    # (enables more efficient optimization)
+                # if the cross-section is not fulfilling the ductility criterion (e.g. required: EP, present PP) then
+                # assign a value, which drops from the full bending strength fast towards 0 (for concrete sections)
+                # or a value of 0 (for all other sections)
+                if self.section.section_type[0:2] == "rc":
+                    # for reinforced concrete cross-sections: smooth change to 0 load bearing capacity when roh<roh_min
+                    # or roh>roh_zul (enables more efficient optimization)
                     epsilon = 1.0e-3
                     if qs_class_vorh[1] == 1:
                         shift = 0.35
@@ -1000,6 +1005,7 @@ class Member1D:
                                  1 - 0.5 * (1 + 2 / np.pi * np.arctan((x_d - shift) / epsilon)))
                     qu_bend = factor * self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2)
                 else:
+                    # for all other cross-sections bending strength = 0
                     qu_bend = 0
             qu_shear = self.section.vu_p / (max(alpha_v) * self.system.l_tot)
         else:
