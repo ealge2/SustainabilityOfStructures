@@ -314,7 +314,7 @@ class RectangularConcrete(SupStrucRectangular):
         ds = self.ds
         x_p = self.x_p
         x_n = self.x_n
-        as_bw = np.pi * di ** 2 / 4 * n / s
+        as_bw = self.calc_as_bw(di, n, s)
         if d_installation < d / 6:
             dv_p = d
         else:
@@ -323,26 +323,34 @@ class RectangularConcrete(SupStrucRectangular):
             dv_n = ds
         else:
             dv_n = ds - d_installation
-        vu_p = self.vu_unsigned(bw, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)
-        vu_n = self.vu_unsigned(bw, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)
+        vu_p = self.vu_unsigned(bw, di, n, s, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)
+        vu_n = self.vu_unsigned(bw, di, n, s, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)
         return vu_p, vu_n, as_bw
 
     @staticmethod
-    def vu_unsigned(bw, as_bw, d, dv, x, fck, fcd, tcd, fsk, fsd, es, dmax=32, alpha=np.pi / 4, kc=0.55):
-        if as_bw == 0:  # cross-section without stirrups
+    def calc_as_bw(di, n, s):
+        as_bw = np.pi * di ** 2 / 4 * n / s
+        return as_bw
+
+    @staticmethod
+    def vu_unsigned(bw, di, n, s, as_bw, d, dv, x, fck, fcd, tcd, fsk, fsd, es, dmax=32, alpha=np.pi / 4, kc=0.55):
+        rohw = as_bw / min(bw, 0.4)  # SIA 262, Zif. 5.5.2.2
+        rohw_min = 0.001 * (fck * 1e-6 / 30) ** 0.5 * 500 / (fsk * 1e-6)  # SIA 262, Zif. 5.5.2.2
+        s_max = 25*s  # SIA262, Zif. 5.5.2.2
+        if bw < 0.5:  # SIA262, Zif. 5.5.2.3
+            n_min = 2
+        else:
+            n_min = 4
+        if rohw < rohw_min or s > s_max or n < n_min:  # cross-section resistance without stirrups
             ev = 1.5 * fsd / es
             kg = 48 / (16 + dmax)
             kd = 1 / (1 + ev * d * kg)
             vrd = kd * tcd * dv
             return vrd
-        else:  # cross-section with vertical stirrups
+        else:  # cross-section resistance with vertical stirrups
             z = d - 0.85 * x / 2
             vrds = as_bw * z * fsd
             vrdc = bw * z * kc * fcd * np.sin(alpha) * np.cos(alpha)  # unit of alpha: [rad]
-            rohw = as_bw / bw
-            rohw_min = 0.001 * (fck * 1e-6 / 30) ** 0.5 * 500 / (fsk * 1e-6)
-            if rohw < rohw_min:
-                print("minimal reinforcement ratio of stirrups is lower than required according to SIA 262, (110)")
             return min(vrds, vrdc)
 
     @staticmethod

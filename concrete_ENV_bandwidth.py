@@ -4,12 +4,8 @@
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
-import struct_optimization  # file with code for structural optimization
 import plot_datasets  # file with code for plotting results in a standardized way
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon
-import sqlite3  # import modul for SQLite
-
 
 # INPUT
 # create dummy-database
@@ -17,7 +13,7 @@ database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [6, 8, 10, 12]
+lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # max. number of iterations per optimization. Higher value leads to better results
 max_iter = 20
@@ -28,7 +24,7 @@ optima = ["GWP"]
 
 # create floor structure for solid wooden cross-section
 bodenaufbau_rc_slap = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
-                                 ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False]]
+                       ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False]]
 bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau_rc_slap, database_name)
 
 # define loads on member
@@ -41,8 +37,8 @@ req = struct_analysis.Requirements()
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
 # retrieve data from database, find optimal cross-sections and plot results
-data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req, "rc_rec",
-                                      mat_names, g2k, qk, max_iter)
+data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req,
+                                                      "rc_rec", mat_names, g2k, qk, max_iter)
 
 # define legend of plots
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],

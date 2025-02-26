@@ -3,12 +3,8 @@
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
-import struct_optimization  # file with code for structural optimization
 import plot_datasets  # file with code for plotting results in a standardized way
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon
-import sqlite3  # import modul for SQLite
-
 
 # INPUT
 # create dummy-database

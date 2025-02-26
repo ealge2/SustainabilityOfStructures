@@ -3,15 +3,11 @@
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
-import struct_optimization  # file with code for structural optimization
 import plot_datasets  # file with code for plotting results in a standardized way
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon
-import sqlite3  # import modul for SQLite
 
 
-
-# INPUT
+#  INPUT
 # create dummy-database
 database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
@@ -54,6 +50,7 @@ req = struct_analysis.Requirements()
 def max_of_arrays(existing_data, new_data):
     return [max(a, b) for a, b in zip(existing_data, new_data)]
 
+
 data_max = [0, 0, 0, 0, 0, 0]
 vrfctn_members = []
 
@@ -61,8 +58,9 @@ vrfctn_members = []
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
 # retrive data from database, find optimal cross-sections and plot results
-data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd, req,
-                                          "wd_rec", mat_names, g2k, qk, max_iter, idx_vrc)
+data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd,
+                                                              req, "wd_rec", mat_names, g2k, qk, max_iter,
+                                                              idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
@@ -70,8 +68,9 @@ vrfctn_members.append(vrfctn_members_new)
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
 # retrive data from database, find optimal cross-sections and plot results
-data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req,
-                                          "rc_rec", mat_names, g2k, qk, max_iter, idx_vrc)
+data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc,
+                                                              req, "rc_rec", mat_names, g2k, qk, max_iter,
+                                                              idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
