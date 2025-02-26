@@ -181,7 +181,10 @@ def plot_section(section):
     # Create a figure and axis
     if section.section_type == "rc_rec":  # Rectangular Reinforced Concrete Cross-Section
         fig, ax = plot_rectangle_with_dimensions(section.b, section.h, 'green', 'x')
-        ax = plot_rebars_long(ax, section.bw)
+        plot_rebars_long(ax, section)
+        # add stirrups to plot (if stirrups are defined)
+        if section.bw_bg[2]>0:
+            plot_stirrups(ax, section)
         legend = (f'{section.concrete_type.mech_prop}, prod_ID:{section.concrete_type.prod_id} \n'
                   f'{section.rebar_type.mech_prop}, prod_ID:{section.rebar_type.prod_id} \n'
                   f'di_xo / s_xo = {section.bw[1][0]:.3f} / {section.bw[1][1]} \n'
@@ -202,25 +205,25 @@ def plot_section(section):
 
 
 # Function to plot a rectangular cross-section with given dimensions
-def plot_rectangle_with_dimensions(width, height, color='black', hatch='*'):
+def plot_rectangle_with_dimensions(width, height, color='black', hatch='*', offset=0.1):
     # Create a figure and axis
     fig, ax = plt.subplots()
 
     # Define the rectangle with hatching (lower-left corner at (x, y), width, and height)
-    rect = patches.Rectangle((0.1, 0.1), width, height, linewidth=1, edgecolor=color, facecolor='none', hatch=hatch,
+    rect = patches.Rectangle((offset, offset), width, height, linewidth=1, edgecolor=color, facecolor='none', hatch=hatch,
                              fill=False)
 
     # Add the rectangle to the plot
     ax.add_patch(rect)
 
     # Add dimension annotations
-    ax.annotate(f'{width:.2f} m', xy=(0.1 + width / 2, 0.05), xytext=(0.1 + width / 2, 0.06), ha='center')
-    ax.annotate(f'{height:.2f} m', xy=(0.02, 0.1 + height / 2), xytext=(0.01, 0.1 + height / 2), va='center',
+    ax.annotate(f'b = {width:.2f} m', xy=(offset + width / 2, 0.05), xytext=(offset + width / 2, 0.06), ha='center')
+    ax.annotate(f'h = {height:.2f} m', xy=(0.02, offset + height / 2), xytext=(0.01, offset + height / 2), va='center',
                  rotation='vertical')
 
-    # Draw arrows for dimensions
-    ax.annotate('', xy=(0.1, 0.05), xytext=(0.1 + width, 0.05), arrowprops=dict(arrowstyle='|-|', color='black'))
-    ax.annotate('', xy=(0.05, 0.1), xytext=(0.05, 0.1 + height), arrowprops=dict(arrowstyle='|-|', color='black'))
+    ## Draw arrows for dimensions
+    # ax.annotate('', xy=(0.1, 0.05), xytext=(0.1 + width, 0.05), arrowprops=dict(arrowstyle='|-|', color='black'))
+    # ax.annotate('', xy=(0.05, 0.1), xytext=(0.05, 0.1 + height), arrowprops=dict(arrowstyle='|-|', color='black'))
 
     # Hide the x and y axes
     ax.axis('off')
@@ -229,14 +232,50 @@ def plot_rectangle_with_dimensions(width, height, color='black', hatch='*'):
     ax.set_aspect('equal')
 
     # Set the limits of the plot
-    ax.set_xlim(0, width+0.2)
-    ax.set_ylim(0, height+0.2)
+    ax.set_xlim(0, width+2*offset)
+    ax.set_ylim(0, height+2*offset)
 
     return fig, ax
 
 
-def plot_rebars_long(ax, bw, color='blue'):
-    ax.plot(x, y, 'o', color=color, markersize=2))
+def plot_rebars_long(ax, section, color='blue', offset=0.1):
+    # get rebar positions
+    rebar_positions = get_rebar_positions(section, offset)
+    # plot rebars
+    for (x, y, r) in rebar_positions:
+        rebar = plt.Circle((x, y), r, color='blue')
+        ax.add_patch(rebar)
 
 
-    return fig, ax
+def get_rebar_positions(section, offset):
+    # create x and y coordinates of lower longitudinal reinforcement
+    y_u = section.h - section.d
+    s_xu = section.bw[0][1]
+    x_u = [section.b/2]
+    while max(x_u) + s_xu < section.b:
+        x_u.append(max(x_u) + s_xu)
+        x_u.append(min(x_u) - s_xu)
+
+    # create x and y coordinates of upper longitudinal reinforcement
+    y_o = section.ds
+    s_xo = section.bw[1][1]
+    x_o = [section.b/2]
+    while max(x_o) + s_xo < section.b:
+        x_o.append(max(x_o) + s_xo)
+        x_o.append(min(x_o) - s_xo)
+
+    # assemble rebar positions and dimensions relative to cross-section left lower edge corrected by offset
+    di_xu = section.bw[0][0]
+    di_xo = section.bw[1][0]
+    rebar_positions = []
+    for xi in x_u:
+        rebar_i = (xi+offset, y_u+offset, di_xu)
+        rebar_positions.append(rebar_i)
+    for xi in x_o:
+        rebar_i = (xi+offset, y_o+offset, di_xo)
+        rebar_positions.append(rebar_i)
+
+    return rebar_positions
+
+def plot_stirrups(section, offset):
+    a = 1
