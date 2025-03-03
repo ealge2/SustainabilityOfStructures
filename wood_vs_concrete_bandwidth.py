@@ -12,13 +12,13 @@ database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 # Index of verified length
-idx_vrc = 5
+idx_vrc = 6
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 20
+max_iter = 30
 
 #  define content of plot
 criteria = ["ENV"]
