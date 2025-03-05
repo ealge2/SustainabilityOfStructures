@@ -280,7 +280,7 @@ class RectangularConcrete(SupStrucRectangular):
             mu = -mus
         else:
             [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
-            print("sigen of moment resistance has to be 'neg' or 'pos'")
+            print("sign of moment resistance has to be 'neg' or 'pos'")
         return mu, x, a_s, qs_klasse
 
     @staticmethod
@@ -450,9 +450,9 @@ class SupStrucRibbedConcrete(Section):
 #.....................................................................................
 class RibbedConcrete(SupStrucRibbedConcrete):
     #defines properties of a rectangular, reinforced concrete section
-    #di_xw, n_xw = diameter and number of longitudinal reinforcement in rib
-    def __init__(self, concrete_type, rebar_type, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_xw, n_xw, di_bw, s_bw,
-                 di_pb_bw, s_pb_bw, n_bw=0, n_pb_bw=2,
+    #di_x_w, n_x_w = diameter and number of longitudinal reinforcement in rib
+    def __init__(self, concrete_type, rebar_type, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w,
+                 di_pb_bw, s_pb_bw, n_pb_bw=2,
                  phi=2.0, c_nom=0.03, xi=0.02):
         section_type = "rc_rib"
         super().__init__(section_type, b, b_w, h, h_f, l0, phi)
@@ -460,20 +460,20 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         self.rebar_type = rebar_type
         self.c_nom = c_nom
         self.bw = [[di_xu, s_xu], [di_xo, s_xo]]  # Slab reinforcement
-        self.bw_bg = [di_bw, s_bw, n_bw]  # Slab shear reinforcement
-        self.bw_r = [di_xw, n_xw]  # Longitudinal reinforcement in rib
+        self.bw_bg = [0, 0.15, 0]  # Allow for no slab shear reinforcement
+        self.bw_r = [di_x_w, n_x_w]  # Longitudinal reinforcement in rib
         self.bw_bg_r = [di_pb_bw, s_pb_bw, n_pb_bw]  # Shear reinforcement in rib
         mr_slab = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  # cracking moment
         mr_pb = self.iy / (self.h - self.z_s) * 1.3 * self.concrete_type.fctm  # cracking moment
-        self.mr_p, self.mr_n = mr_slab, mr_slab
+        self.mr_p, self.mr_n = mr_slab, -mr_slab
         self.mr_pb_p = mr_pb
-        self.mr_pb_n = mr_pb
+        self.mr_pb_n = -mr_pb
         [self.d, self.ds, self.d_PB, self.ds_PB] = self.calc_d()
-        [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
-        [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
-        [self.mu_PB_max, self.x_PB_p, self.as_PB_p, self.qs_class_PB_p] = self.calc_mu_pb('pos')
-        [self.mu_PB_min, self.x_PB_n, self.as_PB_n, self.qs_class_PB_n] = self.calc_mu_pb('neg')
-        self.roh, self.rohs, self.roh_PB = self.as_p / self.d, self.as_n / self.ds, self.as_PB_p / self.d_PB
+        [self.mu_max_slab, self.x_p, self.as_p, self.qs_class_p_slab] = self.calc_mu('pos')
+        [self.mu_min_slab, self.x_n, self.as_n, self.qs_class_n_slab] = self.calc_mu('neg')
+        [self.mu_max, self.x_PB_p, self.as_PB_p, self.qs_class_p] = self.calc_mu_pb('pos')
+        [self.mu_min, self.x_PB_n, self.as_PB_n, self.qs_class_n] = self.calc_mu_pb('neg')
+        self.roh_slab, self.rohs, self.roh = self.as_p / self.d, self.as_n / self.ds, self.as_PB_p / self.d_PB
         [self.vu_p, self.vu_n, self.as_bw] = self.calc_shear_resistance('Platte')  #Platte "Querrichtung"
         [self.vu_PB_p, self.vu_PB_n, self.as_PB_bw] = self.calc_shear_resistance(
             'Plattenbalken')  #Rippe Plattenbalken "Längsrichtung"
@@ -487,7 +487,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
                      + self.concrete_type.cost2)
         self.ei_b = self.ei1  #!!!!!!!ANPASSEN AUF PB
         self.xi = xi  # XXXXXXX preset value is an assumption. Has to be verified with literature. XXXXXXX
-        self.ei2 = self.ei1 / self.f_w_ger(self.roh_PB, self.rohs, 0, self.h, self.d_PB)  #!!!!!ANPASSEN AUF PB
+        self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d_PB)  #!!!!!ANPASSEN AUF PB
 
     def calc_d(self):
         d = self.h - self.c_nom - self.bw[0][0] / 2  # Statische Höhe 1. Lage Platte
@@ -512,7 +512,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
             mu = -mus
         else:
             [mu, x, a_s, qs_klasse] = [0, 0, 0, 0]
-            print("sigen of moment resistance has to be 'neg' or 'pos'")
+            print("sign of moment resistance has to be 'neg' or 'pos'")
 
         return mu, x, a_s, qs_klasse
 
@@ -538,7 +538,6 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         # units input: [m, m, m, m, N/m^2, N/m^2]
         a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
         omega = a_s * fsd / (d * b * fcd) # [-]
-
         mu = a_s * fsd * d * (1 - omega / 2)  # [Nm]
         x = omega * d / 0.85  # [m]
         if x / d <= 0.35 and mu >= mr:
@@ -585,7 +584,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         x_p, x_PB_p = self.x_p, self.x_PB_p
         x_n, x_PB_n = self.x_n, self.x_PB_n
         as_bw = np.pi * di ** 2 / 4 * n / s
-        as_PB_bw = np.pi * di ** 2 / 4 * n / s
+        as_PB_bw = np.pi * di_r ** 2 / 4 * n_r / s_r
 
         if bauteil == 'Platte':
             if d_installation < d / 6:  #SIA 262 4.3.3.2.8
@@ -643,7 +642,6 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         return f
 
 
-
 # .....................................................................................
 class SupStrucRibWood(Section):
     def __init__(self, section_type, b, h, a, t2, t3, n, n_inf):
@@ -662,14 +660,12 @@ class SupStrucRibWood(Section):
         self.iy, self.iy_inf = self.calc_moment_of_inertia()
         self.w = self.calc_weight()
 
-    #
     def calc_area(self):
         # in: width b and bw [m], height h and h_f[m]
         # out: area [m2]
         a_brutt = self.b * self.h / self.a + 1 * self.t2 + 1 * self.t3
         return a_brutt
 
-    #
     def calc_bef(self, sign='comp', l_0=10, ):
         # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
         # out: effective width b_eff
@@ -731,6 +727,7 @@ class RibWood(SupStrucRibWood):
         self.phi_1 = phi_1
         self.phi_2 = phi_2
         self.phi_3 = phi_3
+        self.phi = phi_1
 
         n, n_inf = self.calc_n()
         super().__init__(section_type, b, h, a, t2, t3, n, n_inf)
@@ -747,10 +744,10 @@ class RibWood(SupStrucRibWood):
         self.g0k = self.calc_weight(wood_type_1.weight)
         self.ei1 = self.wood_type_1.Emmean * self.iy  # elastic stiffness [Nm^2], Zeitpunkt t = 0
 
-    #     self.co2 = self.a_brutt * self.wood_type.GWP * self.wood_type.density  # [kg_CO2_eq/m]
+        self.co2 = self.b*self.h * self.wood_type_1.GWP * self.wood_type_1.density +self.t2 * self.wood_type_2.GWP * self.wood_type_2.density + self.t3 * self.wood_type_3.GWP * self.wood_type_3.density # [kg_CO2_eq/m]
         self.cost = self.b * self.h / self.a * self.wood_type_1.cost + (self.t2 + self.t3)  * self.wood_type_2.cost
-    #     self.ei_b = ei_b  # stiffness perpendicular to direction of span
-    #     self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
+        self.ei_b = ei_b  # stiffness perpendicular to direction of span
+        self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
 
     def calc_n(self):
         n1 = self.wood_type_1.Emmean / self.wood_type_1.Emmean  # Wertigkeit Rippe
@@ -797,10 +794,10 @@ class RibWood(SupStrucRibWood):
 
     # FEHLT: Rollschubnachweis!!
 
-    @staticmethod
-    def calc_vu(ty, b,h ):
-        vu  = ty * b * h
-        return vu
+    #@staticmethod
+    #def calc_vu(ty, b,h ):
+    #    vu  = ty * b * h
+    #    return vu
 
     @staticmethod
     def fire_resistance(member):
@@ -929,9 +926,10 @@ class Member1D:
             self.fire[3] = 1
         self.fire_resistance = []
 
-        # calculation of deflections (uncracked plus cracked for concrete sections)
+        # calculation of deflections uncracked (plus cracked for concrete sections self.section.section_type[0:2] = rc))
         section_material = self.section.section_type[0:2]
         unit_def = self.system.alpha_w * self.system.l_tot ** 4 / self.section.ei1  # deflection for q = 1, phi = 0
+
         if self.requirements.install == "ductile":
             self.w_install = unit_def * (self.q_freq + self.q_per * (self.section.phi - 1))
             if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
@@ -942,6 +940,7 @@ class Member1D:
                                                                                    0, self.section.h, self.section.d)
                         - self.q_per
                 )
+
         elif self.requirements.install == "brittle":
             self.w_install = unit_def * (self.q_rare + self.q_per * (self.section.phi - 1))
             if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)

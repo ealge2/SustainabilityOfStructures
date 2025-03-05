@@ -17,7 +17,7 @@ concrete1.get_design_values()
 reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
 reinfsteel1.get_design_values()
 
-section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
+section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 1.0, 1500, 0.12, 0.3, 0.12, 0.01, 0.15, 0.01, 0.15, 0.01, 1, 0, 0.15, 0.01, 0.15)
 
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
