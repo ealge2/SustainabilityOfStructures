@@ -567,9 +567,9 @@ class RibbedConcrete(SupStrucRibbedConcrete):
 
     def calc_shear_resistance(self, bauteil='Platte', d_installation=0.0):
         # calculates shear resistance with d
-        di, di_r = self.bw_bg[0], self.bw_bg_r[0]  # diameter
-        s, s_r = self.bw_bg[1], self.bw_bg_r[1]  # spacing
-        n, n_r = self.bw_bg[2], self.bw_bg_r[2]  # number of stirrups per spacing
+        di_r = self.bw_bg_r[0]  # diameter
+        s_r = self.bw_bg_r[1]  # spacing
+        n_r = self.bw_bg_r[2]  # number of stirrups per spacing
         fck = self.concrete_type.fck
         fcd = self.concrete_type.fcd
         tcd = self.concrete_type.tcd
@@ -583,7 +583,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         ds, ds_PB = self.ds, self.ds_PB
         x_p, x_PB_p = self.x_p, self.x_PB_p
         x_n, x_PB_n = self.x_n, self.x_PB_n
-        as_bw = np.pi * di ** 2 / 4 * n / s
+        as_bw = 0
         as_PB_bw = np.pi * di_r ** 2 / 4 * n_r / s_r
 
         if bauteil == 'Platte':
