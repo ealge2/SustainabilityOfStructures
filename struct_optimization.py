@@ -21,6 +21,8 @@ class RandomDisplacementBounds(object):
 
         return xnew
 
+# OPTIMIZATION OF CROSS-SECTIONS FOR DEFINED MEMBERS
+# ----------------------------------------------------------------------------------------------------------------------
 def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h  # start value for height corresponds to 1/20 of system length
@@ -195,7 +197,6 @@ def wd_rqs_h(h, args):
         member.get_fire_resistance()
         penalty4 = max(member.requirements.t_fire - member.fire_resistance, 0)
         to_minimize = member.section.h * (1 + penalty1 + penalty2 + penalty3 + penalty4)
-
     else:
         to_minimize = 99
         print("criterion " + criterion + " is not defined")
@@ -216,3 +217,72 @@ def get_optimized_section(member, criterion, to_opt, max_iter):
         print("There is no optimization for the section type " + member.section.section_type + " available!")
         return member.section
 
+# OPTIMIZATION OF CROSS-SECTIONS REGARDING PERFORMANCE WITHIN A DEFINED GWP BUDGET
+# ----------------------------------------------------------------------------------------------------------------------
+def get_opt_sec(section, gwp_budget):
+    if section.section_type == "wd_rec":
+        # outer function for finding optimal wooden rectangular cross-section
+        h_0 = section.h
+        bnds = [(0.02, 10.0)]
+        minimal_h = minimize(wd_rec_crsc, h_0, args=[section, gwp_budget], bounds=bnds, method='Powell')
+        h_opt = minimal_h.x[0]
+        opt_section = struct_analysis.RectangularWood(section.wood_type, section.b, h_opt)
+        return opt_section
+
+    elif section.section_type == "rc_rec":
+        # get initial values
+        h_0 = section.h
+        di_xu0 = section.bw[0][0]
+        var0 = [h_0, di_xu0]
+
+        # define bounds of variables
+        bh = (0.06, 2.0)  # height between 6 cm and 2.0 m
+        bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
+        bounds = [bh, bdi_xu]
+
+        # definition of fixed values of cross-section
+        b = section.b
+        s_xu, di_xo, s_xo = section.bw[0][1], section.bw[1][0], section.bw[1][1]
+        di_bw, s_bw, n_bw = section.bw_bg[0], section.bw_bg[1], section.bw_bg[2]
+        phi, c_nom, xi, jnt_srch = section.phi, section.c_nom, section.xi, section.joint_surcharge
+        co, st = section.concrete_type, section.rebar_type
+        add_arg = [co, st, b, s_xu, di_xo, s_xo, di_bw, s_bw, n_bw, phi, c_nom, xi, jnt_srch, gwp_budget]
+
+        # optimize with basinhopping algorithm with bounds also implemented on both levels (inner and outer):
+        bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds]))
+        opt = basinhopping(rc_rec_crsc, var0, minimizer_kwargs={"args": (add_arg,), "bounds": bounds,
+                                                                "method": "Powell"},
+                           take_step=bounded_step)
+        h, di_xu = opt.x
+        opt_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw,
+                                                                n_bw, phi, c_nom, xi, jnt_srch)
+
+        return opt_section
+    else:
+        print("no optimization for section type " + section.section_type + " is defined yet within method get_opt_sec")
+        return section
+
+
+# inner function used for optimizing rectangular wooden section in terms of maximal bending moment and within gwp_budget
+def wd_rec_crsc(h, args):
+    s, gwp_budget = args
+    section_updated = struct_analysis.RectangularWood(s.wood_type, s.b, h)
+    penalty = 1e6*max(section_updated.co2-gwp_budget, 0)
+    to_minimize = penalty - section_updated.mu_max
+    return to_minimize
+
+# inner function for optimizing reinforced concrete section in terms of maximal bending moment and within gwp_budget
+def rc_rec_crsc(var, add_arg):
+    h, di_xu = var
+    concrete = add_arg[0]
+    reinfsteel = add_arg[1]
+    b = add_arg[2]
+    s_xu, di_xo, s_xo = add_arg[3:6]
+    di_bw, s_bw, n_bw = add_arg[6:9]
+    phi, c_nom, xi, jnt_srch = add_arg[9:13]
+    gwp_budget = add_arg[13]
+    section_updated = struct_analysis.RectangularConcrete(concrete, reinfsteel, b, h, di_xu, s_xu, di_xo, s_xo, di_bw,
+                                                          s_bw, n_bw, phi, c_nom, xi, jnt_srch)
+    penalty = 1e6*max(section_updated.co2-gwp_budget, 0)
+    to_minimize = penalty - section_updated.mu_max
+    return to_minimize

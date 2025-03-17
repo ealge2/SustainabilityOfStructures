@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon
 
-
+# PLOT DATASETS OF MEMBERS WITH DEFINED CROSS_SECTIONS AND VARIED MATERIALS
+# ----------------------------------------------------------------------------------------------------------------------
 def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requirements, crsec_type, mat_names,
                  g2k=0.75, qk=2.0, max_iter=50, idx_vrfctn=-1):
 
@@ -49,7 +50,6 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
-                # define content of plot-line
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
                 section_0 = []
@@ -176,7 +176,8 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
 
     return data_max, vrfctn_members
 
-
+# PLOT GEOMETRY OF SECTIONS
+# ----------------------------------------------------------------------------------------------------------------------
 def plot_section(section):
     # Create a figure and axis
     if section.section_type == "rc_rec":  # Rectangular Reinforced Concrete Cross-Section
@@ -238,7 +239,6 @@ def plot_rectangle_with_dimensions(width, height, color='black', hatch='*', offs
 
     return fig, ax, offset
 
-
 def plot_rebars_long(ax, section, offset, color='blue'):
     # get rebar positions
     rebar_positions = get_rebar_positions(section)
@@ -247,7 +247,6 @@ def plot_rebars_long(ax, section, offset, color='blue'):
         rebar = plt.Circle((x+offset, y+offset), di/2, color=color)
         ax.add_patch(rebar)
 
-
 def plot_stirrups(ax, section, offset, color='blue'):
     # get stirrup positions
     stirrup_positions = get_stirrup_positions(section)
@@ -255,7 +254,6 @@ def plot_stirrups(ax, section, offset, color='blue'):
     for (x1, y1, x2, y2) in stirrup_positions:
         stirrup = plt.Line2D([x1+offset, x2+offset], [y1+offset, y2+offset], color=color, linewidth=2)
         ax.add_line(stirrup)
-
 
 def get_rebar_positions(section):
     # create x and y coordinates of lower longitudinal reinforcement
@@ -310,3 +308,57 @@ def get_stirrup_positions(section):
             line_o = (xi, y_o, x_linspace[idx+1], y_o)
             stirrup_positions.append(line_o)
     return stirrup_positions
+
+
+# PLOT DATASETS OF CROSS_SECTION WITH VARIED MATERIALS IN M-CHI PLOT AND PLOT THE OPTIMIZED SECTIONS FOR VALIDATION
+# ----------------------------------------------------------------------------------------------------------------------
+def plot_section_dataset(database_name, crsec_type, mat_names, gwp_budget=100, max_iter=20):
+    # GENERATE INITIAL CROSS-SECTIONS
+    # Search database (table products, attribute material) for products,
+    # get prod_id of relevant materials from database and create initial cross-section for each product
+    to_plot = []
+    connection = sqlite3.connect(database_name)
+    cursor = connection.cursor()
+    for mat_name in mat_names:
+        inquiry = ("SELECT PRO_ID FROM products WHERE"
+                   " material=" + mat_name)
+        cursor.execute(inquiry)
+        result = cursor.fetchall()
+        for i, prod_id in enumerate(result):
+            # create materials for wooden cross-sections, derive corresponding design values
+            prod_id_str = "'" + str(prod_id[0]) + "'"
+            inquiry = ("SELECT mech_prop FROM products WHERE"
+                       " PRO_ID=" + prod_id_str)
+            cursor.execute(inquiry)
+            result = cursor.fetchall()
+            mech_prop = "'" + result[0][0] + "'"
+            if crsec_type == "wd_rec":
+                # create a Wood material object
+                timber = struct_analysis.Wood(mech_prop, database_name, prod_id_str)
+                timber.get_design_values()
+                # create initial wooden rectangular cross-section
+                section_0 = struct_analysis.RectangularWood(timber, 1.0, 0.12)
+            elif crsec_type == "rc_rec":
+                # create a Concrete material object
+                concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
+                concrete.get_design_values()
+                # create a Rebar material object
+                rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
+                # create initial wooden rectangular cross-section
+                section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
+                                                                0.014, 0.15, 0.01, 0.15,
+                                                                0, 0.15, 2)
+            else:
+                print("cross-section type is not defined inside function plot_dataset()")
+                section_0 = []
+
+            # OPTIMIZE INITIAL SECTION
+            # maximizing Mu by varying the geometry within the max allowed gwp-budget.
+            opt_section = struct_optimization.get_opt_sec(section_0, gwp_budget)
+            plot_m_chi(opt_section)
+            plot_section(opt_section)
+
+# plot m-chi relationship for a defined cross-section
+def plot_m_chi(section):
+    # XXXXXXXXXXXXXX TO DO XXXXXXXXXXXXXXXXXXX
+    plt.plot(5, 5)  # XXXXXXXX dummy values XXXXXXX
