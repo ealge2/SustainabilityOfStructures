@@ -65,7 +65,7 @@ EPD_timber = cursor.execute(
                     "AND Total_GWP IS NOT NULL "
                     "AND source NOT LIKE '%KBOB%' "
                     "AND source NOT LIKE '%Ecoinvent%' "
-                    "AND ï»¿EPD_ID NOT LIKE '%verifizierung%' "
+                    "AND EPD_ID NOT LIKE '%verifizierung%' "
                     ).fetchall()
 EPD_timber_values = [row[0] for row in EPD_timber]
 
@@ -108,6 +108,12 @@ KBOB_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
                                "AND source LIKE '%KBOB%' "
                                ).fetchall()
 KBOB_reinf_values = [row[0] for row in KBOB_reinf]
+
+reinf_min = min(EPD_reinf_values)
+reinf_max =max(EPD_reinf_values)
+
+print(reinf_min, reinf_max)
+
 
 #------------------------------------------------------------------------------------------------------------------------
 #extract values for steel
@@ -186,6 +192,11 @@ plt.show()
 '''# Plot a boxplot for EPD_timber_values and KBOB_timber_values
 plt.boxplot([EPD_timber_values, KBOB_timber_values])
 plt.show()'''
+
+
+
+
+
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot wood
@@ -298,4 +309,84 @@ plt.yticks(range(int(np.floor(min(hist_EPD))), int(np.ceil(max(hist_EPD)))+1))
 plt.axvline(KBOB_steel_values[0], color='tomato')
 plt.text(KBOB_steel_values[0]+0.5, max(hist_EPD)/2, 'KBOB Baustahl', rotation=90, color='tomato')
 
+plt.show()
+
+#-------------------------------------------------------------------------------
+# Determine bins for Betonstahl
+bins_reinf = np.histogram_bin_edges(EPD_reinf_values, bins='auto')
+bin_centers_reinf = 0.5 * (bins_reinf[:-1] + bins_reinf[1:])
+hist_EPD_reinf, _ = np.histogram(EPD_reinf_values, bins=bins_reinf)
+
+# Determine bins for Baustahl
+bins_steel = np.histogram_bin_edges(EPD_steel_values, bins='auto')
+bin_centers_steel = 0.5 * (bins_steel[:-1] + bins_steel[1:])
+hist_EPD_steel, _ = np.histogram(EPD_steel_values, bins=bins_steel)
+
+# Create the figure and subplots
+fig, axes = plt.subplots(2, 1, figsize=(8, 10))  # Two rows, one column
+
+# Subplot for Betonstahl
+axes[0].scatter(bin_centers_reinf, hist_EPD_reinf, alpha=0.7, color='steelblue', edgecolor='black', label='EPD Emissions')
+axes[0].axvline(KBOB_reinf_values[0], color='tomato')
+axes[0].text(KBOB_reinf_values[0]+0.5, max(hist_EPD_reinf)/2, 'KBOB Bewehrung', rotation=90, color='tomato')
+axes[0].set_title('Betonstahl')
+axes[0].set_xlabel('Total GWP [kg CO2-eq/t]')
+axes[0].set_ylabel('#')
+axes[0].legend(loc='upper right')
+axes[0].grid(alpha=0.5)
+
+# Subplot for Baustahl
+axes[1].scatter(bin_centers_steel, hist_EPD_steel, alpha=0.7, color='cornflowerblue', edgecolor='black', label='EPD Emissions')
+axes[1].axvline(KBOB_steel_values[0], color='tomato')
+axes[1].text(KBOB_steel_values[0]+0.5, max(hist_EPD_steel)/2, 'KBOB Baustahl', rotation=90, color='tomato')
+axes[1].set_title('Baustahl')
+axes[1].set_xlabel('Total GWP [kg CO2-eq/t]')
+axes[1].set_ylabel('#')
+axes[1].legend(loc='upper right')
+axes[1].grid(alpha=0.5)
+
+# Adjust layout
+plt.tight_layout()
+
+# Show the plots
+plt.show()
+
+
+
+
+#--------------------------------------------------------------------------------
+
+
+# Example data
+data = {  # Data points for each material
+    'Wood': EPD_timber_values,
+    'Concrete': EPD_concrete_values,
+    'Reinf': EPD_reinf_values,
+    'Steel': EPD_steel_values,
+}
+
+# Create x-axis positions for each material
+materials = list(data.keys())
+x_positions = []
+
+# Assign x positions for each material's data points
+for i, material in enumerate(materials):
+    x_positions.extend([i + 1] * len(data[material]))
+
+# Flatten the y values
+y_values = [value for values in data.values() for value in values]
+
+# Create the scatter plot
+plt.scatter(x_positions, y_values, color='blue', label='Data Points')
+
+# Customize the x-axis
+plt.xticks(range(1, len(materials) + 1), materials)
+plt.xlabel('Materials')
+plt.ylabel('Values')
+plt.title('Scatter Plot of Values for Different Materials')
+
+# Add grid for better visualization
+plt.grid(alpha=0.5)
+
+# Show the plot
 plt.show()
