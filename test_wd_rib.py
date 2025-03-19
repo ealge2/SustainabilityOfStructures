@@ -17,7 +17,7 @@ timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood materi
 timber1.get_design_values()
 
 # create wooden rectangular cross-section
-section = struct_analysis.RibWood(timber1, timber1, timber1, 0.12, 0.42, 0.625, 0.05, 0.04)
+section = struct_analysis.RibWood(timber1, timber1, timber1, 6.25,0.12, 0.26, 0.625, 0.027, 0.027)
 
 
 # create floor structure for solid wooden cross-section
@@ -44,7 +44,24 @@ system = struct_analysis.BeamSimpleSup(length)
 # create wooden member
 member = struct_analysis.Member1D(section, system, bodenaufbau_wd, requirements, g2k, qk)
 
-print(member.f1)
+print("bc_ef = ", section.bc_ef, "[m]")
+print("bt_ef = ", section.bt_ef, "[m]")
+print("n =", section.n)
+print("n_inf =", section.n_inf)
+print("z_s = ", section.z_s)
+print("iy= ", section.iy)
+print("iy_inf= ", section.iy_inf)
+
+print("g1k  =", member.g1k)
+print("g0k =", member.g0k)
+print("gk =", member.gk)
+
+print("ei =", round(section.ei1/.625,5))
+print("E =", section.wood_type_1.Emmean)
+print("E =", section.wood_type_2.Emmean)
+print("E =", section.wood_type_3.Emmean)
+
+print("f1 =", member.f1, "[Hz]")
 print(member.a_ed)
 print(section.mu_max)
 print(member.section.vu_p, member.section.vu_n)
