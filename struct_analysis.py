@@ -641,6 +641,26 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         f = (1 - 20 * rohs) / (10 * roh ** 0.7) * (0.75 + 0.1 * phi) * (h / d) ** 3
         return f
 
+    @staticmethod
+    def fire_resistance(section):
+        # fire resistance of 1-D load-bearing plates according to SIA 262, Tab.16
+        c_nom = section.c_nom
+        h = section.h
+        b = section.b
+        if c_nom >= 0.04 and h >= 0.15 and b >= 0.4:
+            resistance = 180
+        elif c_nom >= 0.03 and h >= 0.12 and b >= 0.3:
+            resistance = 120
+        elif c_nom >= 0.03 and h >= 0.1 and b >= 0.2:
+            resistance = 90
+        elif c_nom >= 0.02 and h >= 0.08 and b >= 0.15:
+            resistance = 60
+        elif c_nom >= 0.02 and h >= 0.06 and b >= 0.1:
+            resistance = 30
+        else:
+            resistance = 0
+        return resistance
+
 
 # .....................................................................................
 class SupStrucRibWood(Section):
@@ -707,7 +727,7 @@ class SupStrucRibWood(Section):
 
     #     #def calc_strength_elast(self, fy, ty):
     #     #def calc_strength_plast(self, fy, ty):
-    #
+
     def calc_weight(self, spec_weight=5):
         #  in: specific weight [N/m^3]
         #  out: weight of cross section per m length [N/m]
@@ -1079,6 +1099,8 @@ class Member1D:
             fire_resistance = RectangularConcrete.fire_resistance(self.section)
         elif self.section.section_type == "wd_rec":
             fire_resistance = RectangularWood.fire_resistance(self)
+        elif self.section.section_type == "rc_rib":
+            fire_resistance = RibbedConcrete.fire_resistance(self.section)
         else:
             print("fire resistance for is not defined for that cross-section type.")
             fire_resistance = None
