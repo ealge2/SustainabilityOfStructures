@@ -421,8 +421,8 @@ class SupStrucRibbedConcrete(Section):
 
     def calc_center_of_gravity(self):
         # in: Geometry effective width b_eff [m], slab height h_f [m], rib width b_w [m], rib height h_w [m]
-        # out: center of gravity z_s [m]
-        z_s = (self.b_eff * self.h_f ** 2 / 2 + self.b_w * self.h_w ** 2 / 2) / (
+        # out: center of gravity z_s [m], z = 0: OK Slab
+        z_s = (self.b_eff * self.h_f ** 2 / 2 + self.b_w * self.h_w * (self.h_f +self.h_w/2)) / (
                     self.b_eff * self.h_f + self.b_w * self.h_w)
         return z_s
 
@@ -432,7 +432,7 @@ class SupStrucRibbedConcrete(Section):
         i_01 = self.b_eff * self.h_f ** 3 / 12
         as_01 = self.b_eff * self.h_f * abs(self.z_s - self.h_f / 2) ** 2
         i_02 = self.b_w * self.h_w ** 3 / 12
-        as_02 = self.b_w * self.h_w * abs(self.z_s - self.h_w / 2) ** 2
+        as_02 = self.b_w * self.h_w * abs(self.z_s - (self.h_f + self.h_w/2)) ** 2
         iy = i_01 + i_02 + as_01 + as_02
         return iy
 
@@ -490,8 +490,8 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d_PB)  #!!!!!ANPASSEN AUF PB
 
     def calc_d(self):
-        d = self.h - self.c_nom - self.bw[0][0] / 2  # Statische Höhe 1. Lage Platte
-        ds = self.h - self.c_nom - self.bw[1][0] / 2  # Statische Höhe 4. Lage Platte
+        d = self.h_f - self.c_nom - self.bw[0][0] / 2  # Statische Höhe 1. Lage Platte
+        ds = self.h_f - self.c_nom - self.bw[1][0] / 2  # Statische Höhe 4. Lage Platte
         d_PB = self.h - self.c_nom - self.bw_bg_r[0] - self.bw_r[
             0] / 2  # Nur eine Lage Längsbewehrung implementiert. ACHTUNG: Check implementieren, ob genug Platz für Längsbewehrung vorhanden!!
         ds_PB = self.h - self.c_nom - self.bw[1][0]  # Mittlere statische Höhe 3./4. Lage Platte
