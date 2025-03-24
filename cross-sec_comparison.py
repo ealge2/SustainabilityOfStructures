@@ -13,9 +13,6 @@ import matplotlib.pyplot as plt
 database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
-# max. number of iterations per optimization. Higher value leads to better results
-max_iter = 10  # XXXXXXXXXXX is the value used ? XXXXXXXXXXX
-
 #  define content of plot
 gwp_budget = 100  # kg Co2-eq/m2
 
@@ -23,7 +20,15 @@ gwp_budget = 100  # kg Co2-eq/m2
 # define cross-section types
 cross_section_types = ["wd_rec", "rc_rec"]
 
-# define materials for which date is searched in the database (table products, attribute material)
+# Create a figure and axis for M-Chi relationship
+fig, ax = plt.subplots()
+
+# ADD LABELS, LEGEND AND AXIS LIMITS AND GRID TO THE PLOTS
+plt.xlabel('Chi [1/m]')
+plt.ylabel("m [kNm/m]")
+plt.grid()
+
+# define materials to search for data in the database (table products, attribute material)
 for cross_section_type in cross_section_types:
     if cross_section_type[0:2] == "wd":
         mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
@@ -33,16 +38,7 @@ for cross_section_type in cross_section_types:
     else:
         mat_names = []
         print("relevant materials for cross-section type " + cross_section_type + " are not defined yet")
-    plot_datasets.plot_section_dataset(database_name, cross_section_type, mat_names, gwp_budget, max_iter)
-
-
-# DEFINE LABELS OF PLOT
-plotted_data = [["m", "[kNm/m]"]]
-
-# ADD LABELS, LEGEND AND AXIS LIMITS AND GRID TO THE PLOTS
-plt.xlabel('Chi [1/m]')
-plt.ylabel("m [kNm/m]")
-plt.grid()
+    plot_datasets.plot_section_dataset(database_name, cross_section_type, mat_names, ax, gwp_budget)
 
 # SHOW FIGURE
 plt.show()

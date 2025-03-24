@@ -312,19 +312,21 @@ def get_stirrup_positions(section):
 
 # PLOT DATASETS OF CROSS_SECTION WITH VARIED MATERIALS IN M-CHI PLOT AND PLOT THE OPTIMIZED SECTIONS FOR VALIDATION
 # ----------------------------------------------------------------------------------------------------------------------
-def plot_section_dataset(database_name, crsec_type, mat_names, gwp_budget=100, max_iter=20):
+def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50):
     # GENERATE INITIAL CROSS-SECTIONS
     # Search database (table products, attribute material) for products,
     # get prod_id of relevant materials from database and create initial cross-section for each product
     to_plot = []
     connection = sqlite3.connect(database_name)
     cursor = connection.cursor()
+    mat_nr = -1
     for mat_name in mat_names:
         inquiry = ("SELECT PRO_ID FROM products WHERE"
                    " material=" + mat_name)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         for i, prod_id in enumerate(result):
+            mat_nr += 1  # number for annotation in plot
             # create materials for wooden cross-sections, derive corresponding design values
             prod_id_str = "'" + str(prod_id[0]) + "'"
             inquiry = ("SELECT mech_prop FROM products WHERE"
@@ -355,10 +357,55 @@ def plot_section_dataset(database_name, crsec_type, mat_names, gwp_budget=100, m
             # OPTIMIZE INITIAL SECTION
             # maximizing Mu by varying the geometry within the max allowed gwp-budget.
             opt_section = struct_optimization.get_opt_sec(section_0, gwp_budget)
-            plot_m_chi(opt_section)
+
+            # add M-Chi relationship to plot
+            plot_m_chi(opt_section, ax, mat_nr)
+
+            # plot cross-section
             plot_section(opt_section)
+            plt.title(f'#{mat_nr}')
+
 
 # plot m-chi relationship for a defined cross-section
-def plot_m_chi(section):
-    # XXXXXXXXXXXXXX TO DO XXXXXXXXXXXXXXXXXXX
-    plt.plot(5, 5)  # XXXXXXXX dummy values XXXXXXX
+def plot_m_chi(section, ax, i):
+    # add M-Chi relationship to plot
+    if section.section_type[0:2] == "wd":
+        color = "tab:brown"  # color for wood
+        chi_u_p, chi_u_n = section.mu_max/section.ei1, section.mu_min/section.ei1
+        x = [chi_u_n, 0, chi_u_p]
+        y = [section.mu_min, 0, section.mu_max]
+    elif section.section_type[0:2] == "rc":
+        color = "tab:green"  # color for reinforced concrete
+        chi_r1_p, chi_r1_n = section.mr_p / section.ei1, section.mr_n / section.ei1
+        chi_r2_p, chi_r2_n = section.mr_p / section.ei2, section.mr_n / section.ei2
+        chi_y_p, chi_y_n = section.mu_max / section.ei2, section.mu_min / section.ei2
+        chi_u_p, chi_u_n = section.concrete_type.ec2d/section.x_p, -section.concrete_type.ec2d/section.x_n
+        if section.mr_p <= section.mu_max and section.mr_n >= section.mu_min:  # ductile behavior in both directions
+            x = [chi_u_n, chi_y_n, chi_r2_n, chi_r1_n, 0, chi_r1_p, chi_r2_p, chi_y_p, chi_u_p]
+            y = [section.mu_min, section.mu_min, section.mr_n, section.mr_n,  0, section.mr_p, section.mr_p,
+                 section.mu_max, section.mu_max]
+        elif section.mr_p <= section.mu_max and section.mr_n < section.mu_min:  # ductile behavior only for pos. moments
+            x = [chi_r1_n, chi_r1_n, 0, chi_r1_p, chi_r2_p, chi_y_p, chi_u_p]
+            y = [0, section.mr_n, 0, section.mr_p, section.mr_p,
+                 section.mu_max, section.mu_max]
+        elif section.mr_p > section.mu_max and section.mr_n >= section.mu_min:  # ductile behavior only for neg. moments
+            x = [chi_u_n, chi_y_n, chi_r2_n, chi_r1_n, 0, chi_r1_p, chi_r1_p]
+            y = [section.mu_min, section.mu_min, section.mr_n, section.mr_n, 0, section.mr_p, 0]
+        else:  # no ductile behavior
+            x = [chi_r1_n, chi_r1_n, 0, chi_r1_p, chi_r1_p]
+            y = [0, section.mr_n, 0, section.mr_p, 0]
+    else:
+        print("M-Chi plot is not defined for sections of type " + section.section_type)
+        x, y = 0, 0
+        color = "tab:black"
+    y_mod = [yi/1e3 for yi in y]  # modify unit of moment from Nm/m to kNm/m
+    ax.plot(x, y_mod, color=color)  # plot m-Chi relationship with unit of moment: kNm/m
+    ax.annotate(f'#{i}', xy=(x[-1], y_mod[-1]), xytext=(x[-1]*1.1, y_mod[-1]),
+                 arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
+                 fontsize=9, color='black', va='center')
+
+
+# plt.annotate(f'#{i}', xy=(ver_x, ver_y),
+#                          xytext=(ver_x + 0.05*lengths[-1], ver_y),
+#                          arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
+#                          fontsize=9, color='black', va='center')

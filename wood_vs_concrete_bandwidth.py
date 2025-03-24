@@ -12,13 +12,13 @@ database_name = "dummy_sustainability.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # Index of verified length
 idx_vrc = 6
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 30
+max_iter = 20
 
 #  define content of plot
 criteria = ["ENV"]
@@ -75,17 +75,15 @@ vrfctn_members.append(vrfctn_members_new)
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
 
-# ADD LABELS, LEGEND AND AXIS LIMITS AND GRID TO THE PLOTS
+# ADD LABELS, LEGEND, AXIS LIMITS AND GRID TO THE PLOTS
 for idx, info in enumerate(plotted_data):
     plt.subplot(3, 2, idx + 1)
     plt.xlabel('l [m]')
-#    plt.title(info[0])
     plt.ylabel(info[0] + " " + info[1])
     if idx % 2 == 0:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx+1])))
     else:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
-    # plt.legend()
     plt.grid()
 
 # plot cross-section of members for verification
