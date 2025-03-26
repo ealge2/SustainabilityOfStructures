@@ -213,6 +213,10 @@ def get_optimized_section(member, criterion, to_opt, max_iter):
     elif member.section.section_type == "wd_rec":
         # available criterion arguments: "ULS", "SLS1", "SLS2"
         return opt_gzt_wd_rqs(member, criterion=criterion)
+    elif member.section.section_type == "rc_rib":               #Added lua: does not work yet
+        # available to_opt arguments: "GWP", "h"
+        # available criterion arguments: "ULS", "SLS1", "SLS2"
+        return opt_rc_rec(member, to_opt, criterion, max_iter)
     else:
         print("There is no optimization for the section type " + member.section.section_type + " available!")
         return member.section

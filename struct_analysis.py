@@ -456,7 +456,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
     #di_x_w, n_x_w = diameter and number of longitudinal reinforcement in rib
     def __init__(self, concrete_type, rebar_type, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w,
                  di_pb_bw, s_pb_bw, n_pb_bw=2,
-                 phi=2.0, c_nom=0.03, xi=0.02):
+                 phi=2.0, c_nom=0.03, xi=0.02, jnt_srch=0.25):
         section_type = "rc_rib"
         super().__init__(section_type, b, b_w, h, h_f, l0, phi)
         self.concrete_type = concrete_type
@@ -481,7 +481,9 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         [self.vu_PB_p, self.vu_PB_n, self.as_PB_bw] = self.calc_shear_resistance(
             'Plattenbalken')  #Rippe Plattenbalken "Längsrichtung"
         self.g0k = self.calc_weight(concrete_type.weight)
-        a_s_tot = self.as_p + self.as_n + self.as_bw + self.as_PB_p + self.as_PB_n + self.as_PB_bw
+        a_s_stat = self.as_p + self.as_n + self.as_bw + self.as_PB_p + self.as_PB_n + self.as_PB_bw
+        self.joint_surcharge = jnt_srch
+        a_s_tot = a_s_stat * (1 + self.joint_surcharge)
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         co2_concrete = (self.a_brutt - a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
         self.ei1 = self.concrete_type.Ecm * self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
@@ -1089,7 +1091,7 @@ class Member1D:
             eil = self.section.ei1
         m = self.m
  #       print("m =", m)
-        f1 = kf2 * np.pi / (2 * l_rech ** 2) * (eil / m) ** 0.5  # HBT, Seite 46
+        f1 = kf2 * np.pi / (2 * l_rech ** 2) * (eil / m) ** 0.5  # HBT, Seite 46    #FEHLER WARNUNG IN COMPARISON ULS SLS
         return f1
 
     def calc_vib1(self, f0=700):
@@ -1118,7 +1120,7 @@ class Member1D:
             eil = self.section.ei2
         else:
             eil = self.section.ei1
-        ve_ed = 364 / (self.bm_rech * (self.m ** 3 * eil * 1e6) ** 0.25)
+        ve_ed = 364 / (self.bm_rech * (self.m ** 3 * eil * 1e6) ** 0.25)        #FEHLER WARNUNG IN COMPARISON ULS SLS
         return wf_ed, ve_ed
 
     def get_fire_resistance(self):
