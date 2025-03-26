@@ -24,6 +24,8 @@ section = struct_analysis.RibbedConcrete(concrete1, rebar1, 16, 5.0, 0.40, 1.20,
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                                  ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False]]
+print(type(bodenaufbau))
+
 bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau, database_name)
 
 requirements = struct_analysis.Requirements()
@@ -54,7 +56,8 @@ print ("fcd = ", section.concrete_type.fcd)
 print ("fctm = ", section.concrete_type.fctm)
 print("As = ", section.as_PB_p)
 
-print("Mu_max = ", round(section.mu_max_slab), "[Nm]")
+print("Mu_max_slab = ", round(section.mu_max_slab), "[Nm]")
+print("Vu_slab_p = ", round(section.vu_p), "[N]")
 print("Mr = ",  round(section.mr_p), "[Nm]")
 print("Mu_PB_max = ", round(section.mu_max), "[Nm]")
 print("Mu_PB_min = ", round(section.mu_min), "[Nm]")
@@ -94,3 +97,4 @@ print("w_app_ger = ", round(member.w_app_ger,5))
 
 
 print("1. EF = ", member.f1)
+

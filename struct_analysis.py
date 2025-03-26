@@ -713,6 +713,8 @@ class SupStrucRibWood(Section):
     def calc_moment_of_inertia(self):
         # in: Geometry b, h, t2, bt_ef, t3, bc_ef, zs
         # out: moment of inertia I_y [m^4]
+
+        #z=0: Oberkante obere Beplankung
         z_s1 = self.t3 + self.h/2
         z_s2 = self.t3+self.h + self.t2/2
         z_s3 = self. t3/2
@@ -764,9 +766,9 @@ class RibWood(SupStrucRibWood):
         n, n_inf = self.calc_n()
         super().__init__(section_type, b, h, a, t2, t3, n, n_inf)
 
-        mu1_rand, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o = self.calc_mu()
-        print("mu1_rand, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o =", mu1_rand, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
-        mu_el = max(mu1_rand, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
+        mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o = self.calc_mu()
+        print("mu1_rand_u, muq_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o =", mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
+        mu_el = max(mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
         self.mu_max, self.mu_min = [mu_el, -mu_el]
         vu_el = self.calc_vu()
         self.vu_p, self.vu_n = vu_el, vu_el
@@ -788,7 +790,7 @@ class RibWood(SupStrucRibWood):
 
         factor = 2/3 #Dreischichtplatte 9/9/9 oder 10/10/10
 
-        n1 = self.wood_type_1.Emmean / self.wood_type_1.Emmean  # Wertigkeit Rippe
+        n1 = self.wood_type_1.Emmean / self.wood_type_1.Emmean          # Wertigkeit Rippe
         n2 = self.wood_type_2.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung unten           EMMEAN reduzieren!
         n3 = self.wood_type_3.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung oben            EMMEAN reduzieren!
         n = [n1, n2, n3]
@@ -809,21 +811,27 @@ class RibWood(SupStrucRibWood):
         fy2 = 8600000  #self.wood_type_2.fcd      #Festigkeiten für 3S Platten reduzieren
         fy3 = 5900000  #self.wood_type_3.ftd      #Festigkeiten für 3S Platten reduzieren
 
-        mu1_rand = min(self.mu_unsigned(fy1, self.iy, self.h / 2, self.n[0]),  # z = +- h/2
-                       self.mu_unsigned(fy1, self.iy_inf, self.h / 2, self.n_inf[0]))
-        mu2_rand_o = min(self.mu_unsigned(fy2, self.iy, (self.h / 2), self.n[1]),  # z = h/2
-                         self.mu_unsigned(fy2, self.iy_inf, (self.h / 2), self.n_inf[1]))
-        mu2_rand_u = min(self.mu_unsigned(fy2, self.iy, (self.h / 2 + self.t2), self.n[1]),  # z = h/2 + t2
-                         self.mu_unsigned(fy2, self.iy_inf, (self.h / 2 + self.t2), self.n_inf[1]))
-        mu3_rand_o = min(self.mu_unsigned(fy3, self.iy, (self.h / 2 + self.t3), self.n[2]),  # z = - h/2 - t3
-                         self.mu_unsigned(fy3, self.iy_inf, (self.h / 2 + self.t3), self.n_inf[2]))
-        mu3_rand_u = min(self.mu_unsigned(fy3, self.iy, self.h / 2, self.n[2]),  # z = - h/2
-                         self.mu_unsigned(fy3, self.iy_inf, self.h / 2, self.n_inf[2]))
-        return mu1_rand, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o
+        mu1_rand_o = min(self.mu_unsigned(fy1, self.iy, (self.z_s - self.t3), self.n[0]),  # z = zs -t3
+                       self.mu_unsigned(fy1, self.iy_inf, (self.z_s - self.t3), self.n_inf[0]))
+        mu1_rand_u = min(self.mu_unsigned(fy1, self.iy, (self.h + self.t3 - self.z_s), self.n[0]),  # z = h + t3 -zs
+                       self.mu_unsigned(fy1, self.iy_inf,(self.h + self.t3 - self.z_s), self.n_inf[0]))
+
+
+        mu2_rand_o = min(self.mu_unsigned(fy2, self.iy, (self.t3 + self.h - self.z_s ), self.n[1]),  # z = t3 + h - zs
+                         self.mu_unsigned(fy2, self.iy_inf, (self.t3 + self.h - self.z_s ), self.n_inf[1]))
+        mu2_rand_u = min(self.mu_unsigned(fy2, self.iy, (self.t3 + self.h + self.t2- self.z_s ), self.n[1]),  # z = t3 + h + t2 - zs
+                         self.mu_unsigned(fy2, self.iy_inf, (self.t3 + self.h + self.t2- self.z_s ), self.n_inf[1]))
+
+        mu3_rand_o = min(self.mu_unsigned(fy3, self.iy, self.z_s, self.n[2]),  # z = zs
+                         self.mu_unsigned(fy3, self.iy_inf, self.z_s, self.n_inf[2]))
+        mu3_rand_u = min(self.mu_unsigned(fy3, self.iy, (self.z_s - self.t3), self.n[2]),  # z = zs -t3
+                         self.mu_unsigned(fy3, self.iy_inf, (self.z_s - self.t3), self.n_inf[2]))
+        return mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o
 
     @staticmethod
     def mu_unsigned(fy, iy, z, n):
         mu = fy * iy / z / n
+        print("z=", z)
         return mu
 
     def calc_vu(self):
@@ -863,6 +871,7 @@ class RibWood(SupStrucRibWood):
     #     b_fire = max(section.b - d_ef * (fire[1] + fire[3]), 0)
     #     rem_sec = RectangularWood(section.wood_type, b_fire, h_fire)
     #     return rem_sec
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -917,12 +926,12 @@ class FloorStruc:  # create a floor structure
 class BeamSimpleSup:
     def __init__(self, length):
         self.l_tot = length
-        self.li_max = self.l_tot  # max span (used for calculation of admissible deflections)
-        self.alpha_m = [0, 1 / 8]  # Faktor zur Berechung des Momentes unter verteilter Last
-        self.alpha_v = [0, 1 / 2]  # Faktor zur Berechung der Querkarft unter verteilter Last
-        self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
-        self.alpha_w = 5 / 384  # Faktor zur Berechung der Durchbiegung unter verteilter Last
-        self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
+        self.li_max = self.l_tot    # max span (used for calculation of admissible deflections)
+        self.alpha_m = [0, 1 / 8]   # Faktor zur Berechung des Momentes unter verteilter Last
+        self.alpha_v = [0, 1 / 2]   # Faktor zur Berechung der Querkarft unter verteilter Last
+        self.qs_cl_erf = [3, 3]     # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
+        self.alpha_w = 5 / 384      # Faktor zur Berechung der Durchbiegung unter verteilter Last
+        self.kf2 = 1.0              # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
         self.alpha_w_f_cd = 1 / 48  # Faktor zur Berechung der Durchbiegung unter Einzellast
 
 

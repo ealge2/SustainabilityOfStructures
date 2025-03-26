@@ -97,6 +97,9 @@ EPD_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
                       ).fetchall()
 EPD_reinf_values = [row[0] for row in EPD_reinf]
 
+
+print(EPD_reinf_values)
+
 KBOB_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
                                "WHERE product_name LIKE '%Betonstahl%' "
                                "AND source LIKE '%KBOB%' "
@@ -187,4 +190,36 @@ plt.title('Betonstahl')
 plt.legend()
 plt.axvline(KBOB_reinf_values, color = 'r')
 plt.text(775, 3, 'KBOB Betonstahl', rotation=90, color = 'r')
+plt.show()
+
+
+
+#---------------
+emissions_reinf = cursor.execute(
+    "SELECT source, A1toA3_GWP FROM products "
+    "WHERE product_name LIKE '%Betonstahl%' "
+    "AND A1toA3_GWP IS NOT NULL "
+    "AND A1toA3_GWP != 0"
+).fetchall()
+
+# Creating a list with each entry as (source, A1toA3_GWP)
+emissions_list = [(entry[0], entry[1]) for entry in emissions_reinf]
+
+# Example print statement to visualize the output
+print(emissions_list)
+
+
+# Unpacking the emissions_list into two separate lists
+sources, gwps = zip(*emissions_list)
+
+# Create a horizontal bar plot
+plt.barh(sources, gwps, color='lightsteelblue')
+
+# Add labels and title
+plt.xlabel('A1-A3 GWP [kg CO2-eq/t]')
+plt.ylabel("source")
+plt.title("Betonstahl")
+
+# Show the plot
+plt.tight_layout()
 plt.show()
