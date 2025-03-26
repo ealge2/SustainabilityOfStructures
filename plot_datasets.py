@@ -350,6 +350,8 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
+
+## XXXXXXXXXXX neuen Querschnittstyp initialisieren
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
                 section_0 = []

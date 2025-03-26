@@ -262,6 +262,8 @@ def get_opt_sec(section, gwp_budget):
         opt_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw,
                                                                 n_bw, phi, c_nom, xi, jnt_srch)
 
+## XXXXXXXXXXX neuen Querschnittstyp für optimierung vorbereiten. Für mehrere parameter: basinhopping methode.
+
         return opt_section
     else:
         print("no optimization for section type " + section.section_type + " is defined yet within method get_opt_sec")
@@ -291,3 +293,6 @@ def rc_rec_crsc(var, add_arg):
     penalty = 1e6*max(section_updated.co2-gwp_budget, 0)
     to_minimize = penalty - section_updated.mu_max
     return to_minimize
+
+## XXXXXXXXXXX neue funktion (returnwert wird minimiert)
+
