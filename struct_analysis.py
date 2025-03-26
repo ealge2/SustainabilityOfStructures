@@ -232,7 +232,7 @@ class RectangularWood(SupStrucRectangular, Section):
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
     def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bw=0.0, s_bw=0.15, n_bw=0,
-                 phi=2.0, c_nom=0.03, xi=0.02, jnt_srch=0.25):
+                 phi=2.0, c_nom=0.02, xi=0.02, jnt_srch=0.25):
         # create a rectangular concrete object
         section_type = "rc_rec"
         super().__init__(section_type, b, h, phi)
@@ -242,7 +242,7 @@ class RectangularConcrete(SupStrucRectangular):
         self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
         self.bw_bg = [di_bw, s_bw, n_bw]
         mr = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  # cracking moment
-        self.mr_p, self.mr_n = mr, mr
+        self.mr_p, self.mr_n = mr, -mr
         [self.d, self.ds] = self.calc_d()
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
@@ -294,8 +294,11 @@ class RectangularConcrete(SupStrucRectangular):
             return mu, x, a_s, 1
         elif x / d <= 0.5 and mu >= mr:
             return mu, x, a_s, 2
-        else:
-            return mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
+        else:  # zero resistance for x/d>0.5
+            epsilon = 1.0e-3
+            shift = 0.5
+            factor = 1 - 0.5 * (1 + 2 / np.pi * np.arctan((x/d - shift) / epsilon))
+            return factor*mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
     def calc_shear_resistance(self, d_installation=0.0):
         # calculates shear resistance with d
@@ -1085,7 +1088,7 @@ class Member1D:
         else:
             eil = self.section.ei1
         m = self.m
-        print("m =", m)
+ #       print("m =", m)
         f1 = kf2 * np.pi / (2 * l_rech ** 2) * (eil / m) ** 0.5  # HBT, Seite 46
         return f1
 
