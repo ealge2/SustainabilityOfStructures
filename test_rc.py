@@ -56,5 +56,3 @@ print(member.qk_zul_gzt)
 print("Feuerwiderstand:")
 member.get_fire_resistance()
 print(member.fire_resistance)
-
-

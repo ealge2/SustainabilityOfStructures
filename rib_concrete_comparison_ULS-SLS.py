@@ -17,7 +17,7 @@ concrete1.get_design_values()
 reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
 reinfsteel1.get_design_values()
 
-section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 1.0, 1500, 0.12, 0.3, 0.12, 0.01, 0.15, 0.01, 0.15, 0.01, 1, 0, 0.15, 0.01, 0.15)
+section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 4, 1, 0.12, 0.3, 0.2, 0.01, 0.15, 0.01, 0.15, 0.01, 2, 0, 0.15, 0.01)
 
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
@@ -43,7 +43,7 @@ plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-e
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 100
+max_iter = 15
 member_list = []
 legend = []
 # create plot data
@@ -77,6 +77,8 @@ for i, members in enumerate(member_list):
         color = "tab:green"  # color for reinforced concrete
     elif sec_typ == "wd_rec":
         color = "tab:brown"  # color for wood
+    elif sec_typ == "rc_rib":
+        color = "tab:green"  # color for wood
     else:
         color = "k"
     # set linestyle
@@ -127,10 +129,17 @@ for idx, member in enumerate(v_members):
     print("Section Nr. " + str(idx) + " :")
     print(member.section.section_type)
     print("h:")
-    print(member.section.h)
+    print(round(member.section.h, 4), 'm')
+    print("b_w:")
+    print(round(member.section.b_w, 4), 'm')
+    print("b:")
+    print(round(member.section.b, 4), 'm')
+    print("di_r:")
+    print(round(member.section.bw_r[0], 4), 'm')
+
     print("admissible load:")
     member.calc_qk_zul_gzt()
-    print(member.qk_zul_gzt)
+    print(round(member.qk_zul_gzt, 4), 'kN/m2')
     print("load:")
     print(member.qk)
     print("co2 of section:")

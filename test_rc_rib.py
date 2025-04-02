@@ -65,6 +65,8 @@ print("Mr_PB = ",  round(section.mr_pb_p), "[Nm]")
 print("Vu_PB_p = ", round(section.vu_PB_p), "[N]")
 print("Vu_PB_n = ", round(section.vu_PB_n), "[N]")
 
+print("g0k= ", section.g0k)
+
 print()
 print("Querschnittsklasse", section.qs_class_p, section.qs_class_n, section.qs_class_p_slab, section.qs_class_n_slab)
 print("qu = ", member.qu, "[N/m]")
@@ -93,6 +95,7 @@ print("w_use = ", round(member.w_use,5))
 print("w_use_ger = ", round(member.w_use_ger,5))
 print("w_app = ", round(member.w_app,5))
 print("w_app_ger = ", round(member.w_app_ger,5))
+
 
 
 

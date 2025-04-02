@@ -4,7 +4,8 @@ import numpy as np
 import statistics
 
 # create or open database sustainability
-connection = sqlite3.connect('data.db')
+#connection = sqlite3.connect('data.db')
+connection = sqlite3.connect('database_250326.db')
 # create cursor object
 cursor = connection.cursor()
 
@@ -13,7 +14,7 @@ cursor = connection.cursor()
 
 emissions_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
+                    "WHERE material_0 LIKE '%concrete%' "
                     "AND A1toA3_GWP IS NOT NULL "
                     "AND A1toA3_GWP != 0 "
                     ).fetchall()
@@ -21,33 +22,33 @@ emissions_concrete_values = [row[0] for row in emissions_concrete]
 
 EPD_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
+                    "WHERE material_0 LIKE '%concrete%' "
                     "AND A1toA3_GWP IS NOT NULL "
-                    "AND source NOT LIKE '%Betonsortenrechner%' "
-                    "AND source NOT LIKE '%Ecoinvent%' "
-                    "AND source NOT LIKE '%KBOB%' "
+                    "AND 'source [string]' NOT LIKE '%Betonsortenrechner%' "
+                    "AND 'source [string]' NOT LIKE '%Ecoinvent%' "
+                    "AND 'source [string]' NOT LIKE '%KBOB%' "
                     ).fetchall()
 EPD_concrete_values = [row[0] for row in EPD_concrete]
 
 KBOB_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND source LIKE '%KBOB%' "
+                    "WHERE material_0 LIKE '%concrete%' "
+                    "AND 'source [string]' LIKE '%KBOB%' "
                     ).fetchall()
 KBOB_concrete_values = [row[0] for row in KBOB_concrete]
 
 Ecoinvent_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND source LIKE '%Ecoinvent%' "
+                    "WHERE material_0 LIKE '%concrete%' "
+                    "AND 'source [string]' LIKE '%Ecoinvent%' "
                     "AND A1toA3_GWP != 0 "
                     ).fetchall()
 Ecoinvent_concrete_values = [row[0] for row in Ecoinvent_concrete]
 
 Betonsortenrechner_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND source LIKE '%Betonsortenrechner%' "
+                    "WHERE material_0 LIKE '%concrete%' "
+                    "AND 'source [string]' LIKE '%Betonsortenrechner%' "
                     ).fetchall()
 Betonsortenrechner_concrete_values = [row[0] for row in Betonsortenrechner_concrete]
 
@@ -55,25 +56,25 @@ Betonsortenrechner_concrete_values = [row[0] for row in Betonsortenrechner_concr
 #extract values for wood
 emissions_timber = cursor.execute(
                     "SELECT Total_GWP FROM products "
-                    "WHERE material LIKE '%timber%' "
+                    "WHERE material_0 LIKE '%timber%' "
                     "AND Total_GWP IS  NOT NULL "
-                    "AND source NOT LIKE '%Studiengemeinschaft%' "
+                    "AND 'source [string]' NOT LIKE '%Studiengemeinschaft%' "
                     ).fetchall()
 emissions_timber_values = [row[0] for row in emissions_timber]
 
 EPD_timber = cursor.execute(
                     "SELECT Total_GWP FROM products "
-                    " WHERE material LIKE '%timber%' "
+                    " WHERE material_0 LIKE '%timber%' "
                     "AND Total_GWP IS NOT NULL "
-                    "AND source NOT LIKE '%KBOB%' "
+                    "AND 'source [string]' NOT LIKE '%KBOB%' "
                     "AND EPD_ID NOT LIKE '%verifizierung%' "
                     ).fetchall()
 EPD_timber_values = [row[0] for row in EPD_timber]
 
 KBOB_timber = cursor.execute(
                     "SELECT Total_GWP FROM products "
-                    "WHERE material LIKE '%timber%' "
-                    "AND source LIKE '%KBOB%' "
+                    "WHERE material_0 LIKE '%timber%' "
+                    "AND 'source [string]' LIKE '%KBOB%' "
                     ).fetchall()
 KBOB_timber_values = [row[0] for row in KBOB_timber]
 
@@ -84,16 +85,16 @@ print(emissions_timber_values)
 #extract values for reinforcement
 
 emissions_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
-                           " WHERE product_name LIKE '%Betonstahl%' "
+                           " WHERE 'product_name [string]' LIKE '%Betonstahl%' "
                            "AND A1toA3_GWP IS NOT NULL "
                            "AND A1toA3_GWP != 0 "
                            ).fetchall()
 emissions_reinf_values = [row[0] for row in emissions_reinf]
 
 EPD_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
-                      "WHERE product_name LIKE '%Betonstahl%' "
+                      "WHERE 'product_name [string]' LIKE '%Betonstahl%' "
                       "AND A1toA3_GWP IS NOT NULL "
-                      "AND source NOT LIKE '%KBOB%' "
+                      "AND 'source [string]' NOT LIKE '%KBOB%' "
                       ).fetchall()
 EPD_reinf_values = [row[0] for row in EPD_reinf]
 
@@ -101,8 +102,8 @@ EPD_reinf_values = [row[0] for row in EPD_reinf]
 print(EPD_reinf_values)
 
 KBOB_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
-                               "WHERE product_name LIKE '%Betonstahl%' "
-                               "AND source LIKE '%KBOB%' "
+                               "WHERE 'product_name [string]' LIKE '%Betonstahl%' "
+                               "AND 'source [string]' LIKE '%KBOB%' "
                                ).fetchall()
 KBOB_reinf_values = [row[0] for row in KBOB_reinf]
 
@@ -130,7 +131,7 @@ plt.xlabel('A1-A3 GWP [kg CO2-eq/t]')
 plt.ylabel('#')
 plt.title('Beton')
 plt.legend()
-plt.axvline(KBOB_concrete_values, color = 'r')
+#plt.axvline(KBOB_concrete_values, color = 'r')
 plt.text(90, .1, 'KBOB Hochbaubeton', rotation=90, color = 'r')
 plt.show()
 
@@ -159,10 +160,10 @@ plt.xlabel('Total GWP [kg CO2-eq/t]')
 plt.ylabel('#')
 plt.title('Holz')
 plt.legend()
-plt.axvline(KBOB_timber_values[0], color = 'r')
-plt.text(255, 3, 'KBOB BSH CH', rotation=90, color = 'r')
-plt.axvline(KBOB_timber_values[1], color = 'r')
-plt.text(345, 3, 'KBOB BSH', rotation=90, color = 'r')
+#plt.axvline(KBOB_timber_values[0], color = 'r')
+#plt.text(255, 3, 'KBOB BSH CH', rotation=90, color = 'r')
+#plt.axvline(KBOB_timber_values[1], color = 'r')
+#plt.text(345, 3, 'KBOB BSH', rotation=90, color = 'r')
 plt.show()
 
 
@@ -188,38 +189,38 @@ plt.xlabel('A1-A3 GWP [kg CO2-eq/t]')
 plt.ylabel('#')
 plt.title('Betonstahl')
 plt.legend()
-plt.axvline(KBOB_reinf_values, color = 'r')
-plt.text(775, 3, 'KBOB Betonstahl', rotation=90, color = 'r')
+#plt.axvline(KBOB_reinf_values, color = 'r')
+#plt.text(775, 3, 'KBOB Betonstahl', rotation=90, color = 'r')
 plt.show()
 
 
 
-#---------------
-emissions_reinf = cursor.execute(
-    "SELECT source, A1toA3_GWP FROM products "
-    "WHERE product_name LIKE '%Betonstahl%' "
-    "AND A1toA3_GWP IS NOT NULL "
-    "AND A1toA3_GWP != 0"
-).fetchall()
-
-# Creating a list with each entry as (source, A1toA3_GWP)
-emissions_list = [(entry[0], entry[1]) for entry in emissions_reinf]
-
-# Example print statement to visualize the output
-print(emissions_list)
-
-
-# Unpacking the emissions_list into two separate lists
-sources, gwps = zip(*emissions_list)
-
-# Create a horizontal bar plot
-plt.barh(sources, gwps, color='lightsteelblue')
-
-# Add labels and title
-plt.xlabel('A1-A3 GWP [kg CO2-eq/t]')
-plt.ylabel("source")
-plt.title("Betonstahl")
-
-# Show the plot
-plt.tight_layout()
-plt.show()
+# #---------------
+# emissions_reinf = cursor.execute(
+#     "SELECT 'source [string]', A1toA3_GWP FROM products "
+#     "WHERE 'product_name [string]' LIKE '%Betonstahl%' "
+#     "AND A1toA3_GWP IS NOT NULL "
+#     "AND A1toA3_GWP != 0"
+# ).fetchall()
+#
+# # Creating a list with each entry as (source, A1toA3_GWP)
+# emissions_list = [(entry[0], entry[1]) for entry in emissions_reinf]
+#
+# # Example print statement to visualize the output
+# print(emissions_list)
+#
+#
+# # Unpacking the emissions_list into two separate lists
+# sources, gwps = zip(*emissions_list)
+#
+# # Create a horizontal bar plot
+# plt.barh(sources, gwps, color='lightsteelblue')
+#
+# # Add labels and title
+# plt.xlabel('A1-A3 GWP [kg CO2-eq/t]')
+# plt.ylabel("source")
+# plt.title("Betonstahl")
+#
+# # Show the plot
+# plt.tight_layout()
+# plt.show()
