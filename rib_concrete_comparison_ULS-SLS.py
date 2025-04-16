@@ -17,7 +17,7 @@ concrete1.get_design_values()
 reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
 reinfsteel1.get_design_values()
 
-section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 4, 1, 0.25, 0.5, 0.18, 0.01, 0.15, 0.01, 0.15, 0.016, 2, 0.01, 0.15, 2)
+section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 4, 2.5, 0.14, 0.5, 0.18, 0.01, 0.15, 0.01, 0.15, 0.016, 2, 0.01, 0.15, 2)
 
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
@@ -32,7 +32,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] #13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc]]
@@ -49,6 +49,7 @@ legend = []
 # create plot data
 for i in to_plot:
     for criterion in criteria:
+        print(criterion)
         for optimum in optima:
             members = []
             for length in lengths:
@@ -120,7 +121,7 @@ plt.show()
 
 #  VALIDATION
 #  isolate cross-sections for verification
-validation_idx = 6  # index of length in length-list, corresponding optimal members are separated for further validation
+validation_idx = 4  # index of length in length-list, corresponding optimal members are separated for further validation
 v_members = [member[validation_idx] for member in member_list]
 
 # print some properties of the optimal members, which are useful for manual validation
@@ -143,11 +144,10 @@ for idx, member in enumerate(v_members):
         print(member.section.bw[0])
     print("Admissible deflections (ductile installations):")
     print(member.w_app_adm)
-    print("Cracking moment vs. moment")
-    print(member.section.mr_p, member.mkd_p)
     print("Calculated deflections (ductile installations):")
-    print(member.w_app, member.w_app_ger)
+    print(round(member.w_app,4), round(member.w_app_ger,4))
     print(member.a_ed)
+    print("Cracking moment vs. moment: ",round(member.section.mr_p,4), round(member.mkd_p,4))
     print("fire resistance:")
     member.get_fire_resistance()
     print(member.fire_resistance)

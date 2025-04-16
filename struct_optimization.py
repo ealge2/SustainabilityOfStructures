@@ -161,8 +161,8 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
     # define bounds of variables
     bh = (0.3, 2)  # height between 6 cm and 1.0 m
     bdi_x_w = (0.01, 0.04)  # diameter of rebars between 6 mm and 40 mm
-    bb_w = (0.12, 0.3)  # rib width between 12 and 60 cm
-    bb = (1, 1.5) # rib spacing between 0.5 and 2.5 m
+    bb_w = (0.14, 0.4)  # rib width between 12 and 60 cm
+    bb = (1, 2.5) # rib spacing between 0.5 and 2.5 m
     bounds = [bh, bdi_x_w, bb_w, bb]
 
     # definition of fixed values of cross-section
@@ -182,6 +182,8 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
                                                                             "method": "Powell"}, take_step=bounded_step)
     h, di_x_w, b_w, b = opt.x
     optimized_section = struct_analysis.RibbedConcrete(co, st, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w, di_pb_bw, s_pb_bw, n_pb_bw, phi, c_nom, xi, jnt_srch)
+    print(l0,round(b,5),round(b_w,5), round(h,5))
+
     return optimized_section
 
 # inner function for optimizing reinforced concrete section for criteria ULS or SLS1 in terms of GWP or height
