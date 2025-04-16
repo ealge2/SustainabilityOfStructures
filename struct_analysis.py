@@ -947,6 +947,7 @@ class Member1D:
         self.system = system
         self.floorstruc = floorstruc
         self.requirements = requirements
+        self.li_max = self.system.li_max
         self.g0k = self.section.g0k
         self.g1k = self.floorstruc.gk_area
         self.g2k = g2k

@@ -12,17 +12,22 @@ database_name = "dummy_sustainability_1.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # create materials for reinforced concrete cross-section, derive corresponding design values
-concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)
-concrete1.get_design_values()
-reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
-reinfsteel1.get_design_values()
+# create material for wooden cross-section, derive corresponding design values
+timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+timber1.get_design_values()
+timber2 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+timber2.get_design_values()
+timber3 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+timber3.get_design_values()
 
-section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 4, 1, 0.25, 0.5, 0.18, 0.01, 0.15, 0.01, 0.15, 0.016, 2, 0.01, 0.15, 2)
+section_wd0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
 
-bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
-                       ["'Unterlagsboden Zement, 85 mm'", False, False],
-                       ["'Glaswolle'", 0.03, False]]
-bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau_rcdecke, database_name)
+# create floor structure for solid wooden cross-section
+bodenaufbau_holzrippendecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+                                 ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
+                                 ["'Kies gebrochen'", 0.12, False]]
+bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_holzrippendecke, database_name)
+# create floor structure for solid reinforced concrete cross-section
 
 # define loads on member
 g2k = 0.75e3  # n.t. Einbauten
@@ -35,7 +40,7 @@ req = struct_analysis.Requirements()
 lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] #13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
-to_plot = [[section_rc0, bodenaufbau_rc]]
+to_plot = [[section_wd0, bodenaufbau_wd]]
 criteria = ["ULS", "SLS1", "SLS2", "FIRE", "ENV"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
@@ -79,6 +84,8 @@ for i, members in enumerate(member_list):
         color = "tab:brown"  # color for wood
     elif sec_typ == "rc_rib":
         color = "tab:green"  # color for reinforced concrete
+    elif sec_typ == "wd_rib":
+        color = "tab:brown"  # color for wood
     else:
         color = "k"
     # set linestyle
