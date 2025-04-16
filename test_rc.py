@@ -9,7 +9,7 @@ import struct_optimization  # file with code for structural optimization
 
 # INPUT
 # create dummy-database
-database_name = "dummy_sustainability.db"  # define database name
+database_name = "dummy_sustainability_1.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # create material for reinforced concrete cross-section, derive corresponding design values
@@ -52,7 +52,7 @@ print(member.qu)
 print(member.section.vu_p, member.section.vu_n)
 
 member.calc_qk_zul_gzt()
-print(member.qk_zul_gzt)
+print("qk_zul_gzt =", member.qk_zul_gzt)
 print("Feuerwiderstand:")
 member.get_fire_resistance()
 print(member.fire_resistance)

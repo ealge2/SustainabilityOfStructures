@@ -19,7 +19,7 @@ rebar1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)  # create
 rebar1.get_design_values()
 
 # create reinforced concrete rectangular cross-section
-section = struct_analysis.RibbedConcrete(concrete1, rebar1, 16, 5.0, 0.40, 1.20, 0.18, 0.012, 0.15, 0.012, 0.15, 0.03, 7, 0.01, 0.15, 2, 2, 0.03 )
+section = struct_analysis.RibbedConcrete(concrete1, rebar1, 16, 2.0, 0.40, 1.20, 0.18, 0.012, 0.15, 0.012, 0.15, 0.03, 7, 0.01, 0.15, 2, 2, 0.03 )
 
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -97,7 +97,7 @@ print("w_app = ", round(member.w_app,5))
 print("w_app_ger = ", round(member.w_app_ger,5))
 
 
-
+print("qk_zul_GZT", member.qk_zul_gzt)
 
 print("1. EF = ", member.f1)
 
