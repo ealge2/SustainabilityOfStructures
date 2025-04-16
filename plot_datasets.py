@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon
+from scipy.interpolate import interp1d
+
 
 # PLOT DATASETS OF MEMBERS WITH DEFINED CROSS_SECTIONS AND VARIED MATERIALS
 # ----------------------------------------------------------------------------------------------------------------------
@@ -320,6 +322,8 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
     connection = sqlite3.connect(database_name)
     cursor = connection.cursor()
     mat_nr = -1
+    x_values = []
+    y_values = []
     for mat_name in mat_names:
         inquiry = ("SELECT PRO_ID FROM products WHERE"
                    " material=" + mat_name)
@@ -361,15 +365,31 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
             opt_section = struct_optimization.get_opt_sec(section_0, gwp_budget)
 
             # add M-Chi relationship to plot
-            plot_m_chi(opt_section, ax, mat_nr)
+            x_values, y_values = plot_m_chi(opt_section, ax, mat_nr, x_values, y_values)
 
             # plot cross-section
             plot_section(opt_section)
             plt.title(f'#{mat_nr}')
+    ## Add envelope of dataset to plot
+    # Define a common x-axis for interpolation
+    common_x = sorted(set(np.concatenate(x_values)))
+    # Interpolate y-values onto the common x-axis
+    interpolated_y_values = []
+    for x, y in zip(x_values, y_values):
+        f = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate")
+        interpolated_y_values.append(f(common_x))
+
+    # Calculate the envelope (upper and lower bounds)
+    y_lower = np.min(interpolated_y_values, axis=0)
+    y_upper = np.max(interpolated_y_values, axis=0)
+
+    # Fill the area between the envelope
+    ax.fill_between(common_x, y_lower, y_upper, color='gray', alpha=0.3, label='Envelope')
+
 
 
 # plot m-chi relationship for a defined cross-section
-def plot_m_chi(section, ax, i):
+def plot_m_chi(section, ax, i, x_values, y_values):
     # add M-Chi relationship to plot
     if section.section_type[0:2] == "wd":
         color = "tab:brown"  # color for wood
@@ -405,6 +425,10 @@ def plot_m_chi(section, ax, i):
     ax.annotate(f'#{i}', xy=(x[-1], y_mod[-1]), xytext=(x[-1]*1.1, y_mod[-1]),
                  arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
                  fontsize=9, color='black', va='center')
+    x_values.append(x)
+    y_values.append(y_mod)
+    return x_values, y_values
+    ## Define and plot envelope
 
 
 # plt.annotate(f'#{i}', xy=(ver_x, ver_y),
