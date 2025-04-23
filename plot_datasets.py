@@ -147,6 +147,8 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             color = "tab:green"  # color for reinforced concrete
         elif sec_typ == "wd_rec":
             color = "tab:brown"  # color for wood
+        elif sec_typ == "rc_rib":
+            color = "tab:green"  # color for wood
         else:
             color = "k"
         # set linestyle
@@ -218,13 +220,14 @@ def plot_section(section):
     elif section.section_type == "rc_rib": #Betonrippenquerschnitte
         fig, ax, offset = plot_rib_with_dimensions(section.b, section.b_w, section.h, section.h_f, 'green', 'x')
         legend = (f'{section.concrete_type.mech_prop}, prod_ID:{section.concrete_type.prod_id} \n'
+              f'length = {section.l0} \n'
               f'{section.rebar_type.mech_prop}, prod_ID:{section.rebar_type.prod_id} \n'
               f'di_r = {section.bw_r[0]:.3f} \n'
               f'di_xu / s_xu = {section.bw[0][0]:.3f} / {section.bw[0][1]} \n'
               #f'di_stir / s_stir / n = {section.bw_bg[0]} / {section.bw_bg[1]} / {section.bw_bg[2]}\n'
               f'c_nom = {100 * section.c_nom:.1f} cm \n'
               f'x/d = {section.x_p / section.d:.2f} \n'
-              f'h, hf, hr, b, bw = {section.h:.2f}, {section.h_f:.2f}, {section.h_r:.2f}, {section.b:.2f}, {section.b_w:.2f} \n'
+              f'h, hf, hw, b, bw = {section.h:.2f}, {section.h_f:.2f}, {section.h_w:.2f}, {section.b:.2f}, {section.b_w:.2f} \n'
               f'GWP = {section.co2:.0f} kg/m^2')
 
     else:
@@ -432,7 +435,7 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 print("cross-section type is not defined inside function plot_dataset()")
                 section_0 = []
 
-            # OPTIMIZE INITIAL SECTION
+            #
             # maximizing Mu by varying the geometry within the max allowed gwp-budget.
             opt_section = struct_optimization.get_opt_sec(section_0, gwp_budget)
 

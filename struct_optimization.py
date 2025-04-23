@@ -152,20 +152,20 @@ def rc_rqs(var, add_arg):
 #.......................................................................................................................
 def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
     # definition of initial values for variables, which are going to be optimized
-    h0 = m.section.h  # start value for height corresponds to 1/20 of system length
+    h_w0 = m.section.h-m.section.h_f  # start value for height corresponds to 1/20 of system length
     h_f0 = m.section.h_f
     di_x_w0 = m.section.bw_r[0]  # start value for rebar diameter 40 mm
     b_w0 = m.section.b_w
     b0 = m.section.b
-    var0 = [h0, h_f0, di_x_w0, b_w0, b0]
+    var0 = [h_w0, h_f0, di_x_w0, b_w0, b0]
 
     # define bounds of variables
-    bh = (0.14, 2)  # height between 6 cm and 1.0 m
-    bh_f = (0.14,0.25)
+    bh_f = (0.14,0.5)
+    bh_w = (0.15, 2)  # height between 6 cm and 1.0 m
     bdi_x_w = (0.01, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bb_w = (0.14, 0.4)  # rib width between 12 and 60 cm
-    bb = (1, 2.5) # rib spacing between 0.5 and 2.5 m
-    bounds = [bh, bh_f, bdi_x_w, bb_w, bb]
+    bb = (0.5, 2.5) # rib spacing between 0.5 and 2.5 m
+    bounds = [bh_w, bh_f, bdi_x_w, bb_w, bb]
 
     # definition of fixed values of cross-section
     l0 = m.li_max
@@ -181,9 +181,9 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
     bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds]))
     opt = basinhopping(rc_rib_rqs, var0, niter=max_iter, T=1, minimizer_kwargs={"args": (add_arg,), "bounds": bounds,
                                                                             "method": "Powell"}, take_step=bounded_step)
-    h, h_f, di_x_w, b_w, b = opt.x
-    optimized_section = struct_analysis.RibbedConcrete(co, st, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w, di_pb_bw, s_pb_bw, n_pb_bw, phi, c_nom, xi, jnt_srch)
-    print(l0,round(b,5),round(b_w,5), round(h,5), round(h_f,5), di_x_w)
+    h_w, h_f, di_x_w, b_w, b = opt.x
+    optimized_section = struct_analysis.RibbedConcrete(co, st, l0, b, b_w, h_f+h_w, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w, di_pb_bw, s_pb_bw, n_pb_bw, phi, c_nom, xi, jnt_srch)
+    print(l0,round(b,5),round(b_w,5), round(h_w,5), round(h_f,5), di_x_w)
 
     return optimized_section
 
@@ -192,7 +192,7 @@ def rc_rib_rqs(var, add_arg):
     # input: variables, which have to be optimized, additional info about cross-section and system, optimizing option
     # output: if criterion == GWP -> co2 of cross-section, punished by delta 10*(qk_zul-qk)
     # output: if criterion == h -> height of cross-section, punished by delta 1*(qk_zul-qk)
-    h, h_f, di_x_w, b_w, b = var
+    h_w, h_f, di_x_w, b_w, b = var
     system = add_arg[0]
     concrete = add_arg[1]
     reinfsteel = add_arg[2]
@@ -207,7 +207,7 @@ def rc_rib_rqs(var, add_arg):
     qk = add_arg[17]
 
     # create section
-    section = struct_analysis.RibbedConcrete(concrete, reinfsteel, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w, di_pb_bw, s_pb_bw, n_pb_bw)
+    section = struct_analysis.RibbedConcrete(concrete, reinfsteel, l0, b, b_w, h_f+h_w, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w, di_pb_bw, s_pb_bw, n_pb_bw)
 
      # create member
     member = struct_analysis.Member1D(section, system, floorstruc, criteria, g2k, qk)

@@ -18,7 +18,7 @@ concrete1.get_design_values()
 reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
 reinfsteel1.get_design_values()
 
-section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
+section_rc0 = struct_analysis.RibbedConcrete(concrete1, reinfsteel1, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 4, 0.01, 0.15, 2)
 
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
@@ -33,7 +33,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]#, 15, 16, 17, 18, 19, 20]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc]]
@@ -44,7 +44,7 @@ plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-e
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 15
+max_iter = 10
 member_list = []
 legend = []
 # create plot data
@@ -172,6 +172,3 @@ for i, mem in enumerate(vrfctn_members[0]):
     plt.title(f'#{vrfctn_members[1][i]}')
 
 plt.show()
-
-
-#änderung

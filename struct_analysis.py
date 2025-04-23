@@ -559,7 +559,9 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         mu_PB = a_s * fsd * d * (1 - omega / 2)  # [Nm]
         x = omega * d / 0.85
         if x > h_f:
-            return print("Druckzonenhöhe > Plattenhöhe")
+            #print("Druckzonenhöhe > Plattenhöhe")
+            mu_PB = 0
+            return mu_PB, x, a_s, 99
         else:
             pass
 
