@@ -161,10 +161,10 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
 
     # define bounds of variables
     bh_f = (0.14,0.5)
-    bh_w = (0.15, 2)  # height between 6 cm and 1.0 m
+    bh_w = (0.10, 2)  # height between 6 cm and 1.0 m
     bdi_x_w = (0.01, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bb_w = (0.14, 0.4)  # rib width between 12 and 60 cm
-    bb = (0.5, 2.5) # rib spacing between 0.5 and 2.5 m
+    bb = (0.2, 2.5) # rib spacing between 0.5 and 2.5 m
     bounds = [bh_w, bh_f, bdi_x_w, bb_w, bb]
 
     # definition of fixed values of cross-section
@@ -220,8 +220,10 @@ def rc_rib_rqs(var, add_arg):
         d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
                       member.w_app - member.w_app_adm]
     else:
-        d1, d2, d3 = [member.w_install_ger - member.w_install_adm, member.w_use_ger - member.w_use_adm,
-                      member.w_app_ger - member.w_app_adm]
+        d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
+                      member.w_app - member.w_app_adm]
+        #d1, d2, d3 = [member.w_install_ger - member.w_install_adm, member.w_use_ger - member.w_use_adm,
+        #              member.w_app_ger - member.w_app_adm]
     penalty2 = 1e5 * max(d1, d2, d3, 0)
 
     # define penalty3, if SLS2 (vibrations) are not fulfilled

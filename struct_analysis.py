@@ -255,7 +255,7 @@ class RectangularConcrete(SupStrucRectangular):
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         co2_concrete = (self.a_brutt - a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
         self.ei1 = self.concrete_type.Ecm * self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
-        self.co2 = co2_rebar + co2_concrete
+        self.co2 = (co2_rebar + co2_concrete)
         self.cost = (a_s_tot * self.rebar_type.cost + (self.a_brutt - a_s_tot) * self.concrete_type.cost
                      + self.concrete_type.cost2)
         self.ei_b = self.ei1
@@ -487,7 +487,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         co2_concrete = (self.a_brutt - a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
         self.ei1 = self.concrete_type.Ecm * self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
-        self.co2 = co2_rebar + co2_concrete
+        self.co2 = (co2_rebar + co2_concrete)/self.b
         self.cost = (a_s_tot * self.rebar_type.cost + (self.a_brutt - a_s_tot) * self.concrete_type.cost
                      + self.concrete_type.cost2)
         self.ei_b = self.ei1  #!!!!!!!ANPASSEN AUF PB
