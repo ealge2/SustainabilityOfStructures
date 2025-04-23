@@ -172,3 +172,6 @@ for i, mem in enumerate(vrfctn_members[0]):
     plt.title(f'#{vrfctn_members[1][i]}')
 
 plt.show()
+
+
+#änderung
