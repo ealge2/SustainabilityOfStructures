@@ -5,6 +5,7 @@ import create_dummy_database  # file for creating a "dummy database", as long as
 import struct_analysis  # file with code for structural analysis
 import struct_optimization  # file with code for structural optimization
 import matplotlib.pyplot as plt
+import plot_datasets  # file with code for plotting results in a standardized way
 
 # INPUT
 # create dummy-database
@@ -154,3 +155,20 @@ for idx, member in enumerate(v_members):
     print(" ")
 
 print("Do manual verification of the data in v_members")
+
+
+# define materials for which date is searched in the database (table products, attribute material)
+mat_names = ["'ready_mixed_concrete'"]
+# retrieve data from database, find optimal cross-sections and plot results
+data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req,
+                                                      "rc_rib", mat_names, g2k, qk, max_iter)
+
+
+# plot cross-section of members for verification
+for i, mem in enumerate(vrfctn_members[0]):
+    section = mem.section
+    plot_datasets.plot_section(section)
+    # Show the plot
+    plt.title(f'#{vrfctn_members[1][i]}')
+
+plt.show()

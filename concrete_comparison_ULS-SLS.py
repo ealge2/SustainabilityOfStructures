@@ -5,6 +5,7 @@ import create_dummy_database  # file for creating a "dummy database", as long as
 import struct_analysis  # file with code for structural analysis
 import struct_optimization  # file with code for structural optimization
 import matplotlib.pyplot as plt
+import plot_datasets  # file with code for plotting results in a standardized way
 
 # INPUT
 # create dummy-database
@@ -153,3 +154,4 @@ for idx, member in enumerate(v_members):
     print(" ")
 
 print("Do manual verification of the data in v_members")
+

@@ -100,4 +100,7 @@ print("w_app_ger = ", round(member.w_app_ger,5))
 print("qk_zul_GZT", member.qk_zul_gzt)
 
 print("1. EF = ", member.f1)
+print("a_ed = ", member.a_ed)
+print("wf_ed = ", member.wf_ed)
+print("v_ed = ", member.ve_ed)
 

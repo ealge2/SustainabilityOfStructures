@@ -52,6 +52,20 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
+
+
+            elif crsec_type == "rc_rib":
+                # create a Concrete material object
+                concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
+                concrete.get_design_values()
+                # create a Rebar material object
+                rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
+                # create initial wooden rectangular cross-section
+                section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
+
+
+
+
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
                 section_0 = []
@@ -200,6 +214,19 @@ def plot_section(section):
         fig, ax, offset = plot_rectangle_with_dimensions(section.b, section.h, 'brown', '/')
         legend = (f'{section.wood_type.mech_prop}, prod_ID:{section.wood_type.prod_id} \n'
                   f'GWP = {section.co2:.0f} kg/m^2')
+
+    elif section.section_type == "rc_rib": #Betonrippenquerschnitte
+        fig, ax, offset = plot_rib_with_dimensions(section.b, section.b_w, section.h, section.h_f, 'green', 'x')
+        legend = (f'{section.concrete_type.mech_prop}, prod_ID:{section.concrete_type.prod_id} \n'
+              f'{section.rebar_type.mech_prop}, prod_ID:{section.rebar_type.prod_id} \n'
+              f'di_r = {section.bw_r[0]:.3f} \n'
+              f'di_xu / s_xu = {section.bw[0][0]:.3f} / {section.bw[0][1]} \n'
+              #f'di_stir / s_stir / n = {section.bw_bg[0]} / {section.bw_bg[1]} / {section.bw_bg[2]}\n'
+              f'c_nom = {100 * section.c_nom:.1f} cm \n'
+              f'x/d = {section.x_p / section.d:.2f} \n'
+              f'h, hf, hr, b, bw = {section.h:.2f}, {section.h_f:.2f}, {section.h_r:.2f}, {section.b:.2f}, {section.b_w:.2f} \n'
+              f'GWP = {section.co2:.0f} kg/m^2')
+
     else:
         print("no plot for specified section_type defined jet")
         fig, ax = plt.subplots()
@@ -240,6 +267,43 @@ def plot_rectangle_with_dimensions(width, height, color='black', hatch='*', offs
     ax.set_ylim(0, height+4*offset)
 
     return fig, ax, offset
+
+def plot_rib_with_dimensions(b, bw, h, hf, color='black', hatch='*', offset=0.1):
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Define the rectangle with hatching (lower-left corner at (x, y), width, and height)
+    rect_flange = patches.Rectangle((offset, offset+h-hf), b, hf, linewidth=1, edgecolor=color, facecolor='none',
+                             hatch=hatch, fill=False)
+    rect_rib = patches.Rectangle((offset+b/2-bw/2, offset), bw, h-hf, linewidth=1, edgecolor=color, facecolor='none',
+                             hatch=hatch, fill=False)
+
+    # Add the rectangle to the plot
+    ax.add_patch(rect_flange)
+    ax.add_patch(rect_rib)
+
+    # # Add dimension annotations
+    # ax.annotate(f'b = {width:.2f} m', xy=(offset + width / 2, 0.05), xytext=(offset + width / 2, 0.06), ha='center')
+    # ax.annotate(f'h = {height:.2f} m', xy=(0.02, offset + height / 2), xytext=(0.01, offset + height / 2),
+    #             va='center', rotation='vertical')
+
+    # Draw arrows for dimensions
+    # ax.annotate('', xy=(0.1, 0.05), xytext=(0.1 + width, 0.05), arrowprops=dict(arrowstyle='|-|', color='black'))
+    # ax.annotate('', xy=(0.05, 0.1), xytext=(0.05, 0.1 + height), arrowprops=dict(arrowstyle='|-|', color='black'))
+
+    # Hide the x and y axes
+    ax.axis('off')
+
+    # Set the aspect of the plot to be equal
+    ax.set_aspect('equal')
+
+    # Set the limits of the plot
+    ax.set_xlim(0, b + 2 * offset)
+    ax.set_ylim(0, h + 4 * offset)
+
+    return fig, ax, offset
+
+
 
 def plot_rebars_long(ax, section, offset, color='blue'):
     # get rebar positions
@@ -354,6 +418,14 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
+            elif crsec_type == "rc_rib":
+                # create a Concrete material object
+                concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
+                concrete.get_design_values()
+                # create a Rebar material object
+                rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
+                # create initial wooden rectangular cross-section
+                section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
 
 ## XXXXXXXXXXX neuen Querschnittstyp initialisieren
             else:
