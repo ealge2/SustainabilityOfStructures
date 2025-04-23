@@ -774,7 +774,7 @@ class RibWood(SupStrucRibWood):
         super().__init__(section_type, b, h, a, t2, t3, n, n_inf)
 
         mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o = self.calc_mu()
-        print("mu1_rand_u, muq_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o =", mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
+        #print("mu1_rand_u, muq_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o =", mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
         mu_el = max(mu1_rand_u, mu1_rand_o, mu2_rand_u, mu2_rand_o, mu3_rand_u, mu3_rand_o)
         self.mu_max, self.mu_min = [mu_el, -mu_el]
         vu_el = self.calc_vu()
@@ -784,7 +784,7 @@ class RibWood(SupStrucRibWood):
         self.g0k = self.calc_weight(wood_type_1.weight)
         self.ei1 = self.wood_type_1.Emmean * self.iy  # elastic stiffness [Nm^2], Zeitpunkt t = 0
 
-        self.co2 = self.b*self.h * self.wood_type_1.GWP * self.wood_type_1.density +self.t2 * self.wood_type_2.GWP * self.wood_type_2.density + self.t3 * self.wood_type_3.GWP * self.wood_type_3.density # [kg_CO2_eq/m]
+        self.co2 = (self.b*self.h * self.wood_type_1.GWP * self.wood_type_1.density)/self.a +self.t2 * self.wood_type_2.GWP * self.wood_type_2.density + self.t3 * self.wood_type_3.GWP * self.wood_type_3.density # [kg_CO2_eq/m]
         self.cost = self.b * self.h / self.a * self.wood_type_1.cost + (self.t2 + self.t3)  * self.wood_type_2.cost
         self.ei_b = ei_b  # stiffness perpendicular to direction of span
         self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
@@ -814,7 +814,7 @@ class RibWood(SupStrucRibWood):
         #Nachweise nach SIA 5.3.5 Tafelelemente (Biegeelemente)-----PRÜFEN
 
         fy1 = self.wood_type_1.fmd
-        print("fy1= ", fy1)
+        #print("fy1= ", fy1)
         fy2 = 8600000  #self.wood_type_2.fcd      #Festigkeiten für 3S Platten reduzieren
         fy3 = 5900000  #self.wood_type_3.ftd      #Festigkeiten für 3S Platten reduzieren
 
@@ -838,7 +838,6 @@ class RibWood(SupStrucRibWood):
     @staticmethod
     def mu_unsigned(fy, iy, z, n):
         mu = fy * iy / z / n
-        print("z=", z)
         return mu
 
     def calc_vu(self):
@@ -1135,7 +1134,7 @@ class Member1D:
         elif self.section.section_type == "rc_rib":
             fire_resistance = RibbedConcrete.fire_resistance(self.section)
         else:
-            print("fire resistance for is not defined for that cross-section type.")
+            #print("fire resistance for is not defined for that cross-section type.")
             fire_resistance = None
         self.fire_resistance = fire_resistance
 

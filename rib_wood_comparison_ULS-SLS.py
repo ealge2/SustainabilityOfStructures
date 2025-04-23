@@ -5,6 +5,7 @@ import create_dummy_database  # file for creating a "dummy database", as long as
 import struct_analysis  # file with code for structural analysis
 import struct_optimization  # file with code for structural optimization
 import matplotlib.pyplot as plt
+import plot_datasets  # file with code for plotting results in a standardized way
 
 # INPUT
 # create dummy-database
@@ -20,7 +21,7 @@ timber2.get_design_values()
 timber3 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
 timber3.get_design_values()
 
-section_wd0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
+section_wd0 = struct_analysis.RibWood(timber1, timber2, timber3, 8, 0.12, 0.18, 0.625, 0.027, 0.027)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau_holzrippendecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -37,7 +38,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] #13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
 to_plot = [[section_wd0, bodenaufbau_wd]]
@@ -48,12 +49,13 @@ plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-e
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 15
+max_iter = 75
 member_list = []
 legend = []
 # create plot data
 for i in to_plot:
     for criterion in criteria:
+        print(criterion)
         for optimum in optima:
             members = []
             for length in lengths:
@@ -135,25 +137,16 @@ for idx, member in enumerate(v_members):
     print(legend[idx])
     print("Section Nr. " + str(idx) + ":", member.section.section_type)
     print("h:    ", round(member.section.h, 4), 'm')
-    print("b_w:  ", round(member.section.b_w, 4), 'm')
     print("b:    ", round(member.section.b, 4), 'm')
-    print("di_r: ", round(member.section.bw_r[0], 4), 'm')
     print("l:", member.li_max)
 
     print("admissible load:", member.calc_qk_zul_gzt(), round(member.qk_zul_gzt, 4), 'kN/m2')
     print("load:", round(member.qk,4))
     print("co2 of section:", member.section.co2)
-    if member.section.section_type == "rc_rec":
-        print("x/d:")
-        print(member.section.x_p/member.section.d)
-        print("di_xu:")
-        print(member.section.bw[0])
     print("Admissible deflections (ductile installations):")
     print(member.w_app_adm)
-    print("Cracking moment vs. moment")
-    print(member.section.mr_p, member.mkd_p)
     print("Calculated deflections (ductile installations):")
-    print(member.w_app, member.w_app_ger)
+    print(member.w_app)
     print(member.a_ed)
     print("fire resistance:")
     member.get_fire_resistance()
@@ -161,3 +154,17 @@ for idx, member in enumerate(v_members):
     print(" ")
 
 print("Do manual verification of the data in v_members")
+
+# # retrieve data from database, find optimal cross-sections and plot results
+# mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
+#
+# data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd, req,
+#                                                       "wd_rib", mat_names, g2k, qk, max_iter)
+# # plot cross-section of members for verification
+# for i, mem in enumerate(vrfctn_members[0]):
+#     section = mem.section
+#     plot_datasets.plot_section(section)
+#     # Show the plot
+#     plt.title(f'#{vrfctn_members[1][i]}')
+#
+# plt.show()
