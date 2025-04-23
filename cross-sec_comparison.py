@@ -7,10 +7,10 @@ import create_dummy_database  # file for creating a "dummy database", as long as
 import struct_analysis  # file with code for structural analysis
 import plot_datasets  # file with code for plotting results in a standardized way
 import matplotlib.pyplot as plt
-
 #  INPUT
+
 # create dummy-database
-database_name = "dummy_sustainability.db"  # define database name
+database_name = "dummy_sustainability_1.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 #  define content of plot

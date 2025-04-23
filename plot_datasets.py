@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import Polygon
 from scipy.interpolate import interp1d
+from scipy.spatial import ConvexHull
+
 
 
 # PLOT DATASETS OF MEMBERS WITH DEFINED CROSS_SECTIONS AND VARIED MATERIALS
@@ -52,6 +54,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
+                color = "tab:green"
 
 
             elif crsec_type == "rc_rib":
@@ -411,6 +414,7 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 timber.get_design_values()
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RectangularWood(timber, 1.0, 0.12)
+                color = "tab:brown"
             elif crsec_type == "rc_rec":
                 # create a Concrete material object
                 concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
@@ -421,6 +425,7 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
+                color = "tab:green"
             elif crsec_type == "rc_rib":
                 # create a Concrete material object
                 concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
@@ -429,11 +434,13 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
-
+                color = "tab:green"
 ## XXXXXXXXXXX neuen Querschnittstyp initialisieren
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
                 section_0 = []
+                color = "tab:grey"
+
 
             #
             # maximizing Mu by varying the geometry within the max allowed gwp-budget.
@@ -445,21 +452,43 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
             # plot cross-section
             plot_section(opt_section)
             plt.title(f'#{mat_nr}')
+
+    # ## Add envelope of dataset to plot
+    # # Combine x and y into a single array for ConvexHull
+    # x = [item for sublist in x_values for item in sublist]
+    # y = [item for sublist in y_values for item in sublist]
+    # points = np.column_stack((x, y))
+    # # points = [item for sublist in points_nested for item in sublist]
+    # print(points.shape)
+    # hull = ConvexHull(points)
+    #
+    # # Plot the envelope area (convex hull)
+    # for simplex in hull.simplices:
+    #     ax.plot(points[simplex, 0], points[simplex, 1], 'r-')
+#
+#     # Fill the hull area
+#     hull_vertices = points[hull.vertices]
+#     ax.fill(hull_vertices[:, 0], hull_vertices[:, 1], color, alpha=0.3, label="Envelope")
+
     ## Add envelope of dataset to plot
     # Define a common x-axis for interpolation
     common_x = sorted(set(np.concatenate(x_values)))
     # Interpolate y-values onto the common x-axis
-    interpolated_y_values = []
+    interpolated_y_values_min = []
+    interpolated_y_values_max = []
     for x, y in zip(x_values, y_values):
-        f = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate")
-        interpolated_y_values.append(f(common_x))
+        f1 = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate")
+        f2 = interp1d(x, y, kind='linear', bounds_error=False, fill_value=(0, 0))
+        ########## XXXXXXXXXXXXXXXX ToDO: Fix the code for negative commen_x values. XXXXXXXXXXXXXXXXXXX
+        interpolated_y_values_min.append(f1(common_x))
+        interpolated_y_values_max.append(f2(common_x))
 
     # Calculate the envelope (upper and lower bounds)
-    y_lower = np.min(interpolated_y_values, axis=0)
-    y_upper = np.max(interpolated_y_values, axis=0)
+    y_lower = np.min(interpolated_y_values_min, axis=0)
+    y_upper = np.max(interpolated_y_values_max, axis=0)
 
     # Fill the area between the envelope
-    ax.fill_between(common_x, y_lower, y_upper, color='gray', alpha=0.3, label='Envelope')
+    ax.fill_between(common_x, y_lower, y_upper, color=color, alpha=0.3, label='Envelope')
 
 
 
@@ -479,7 +508,7 @@ def plot_m_chi(section, ax, i, x_values, y_values):
         chi_u_p, chi_u_n = section.concrete_type.ec2d/section.x_p, -section.concrete_type.ec2d/section.x_n
         if section.mr_p <= section.mu_max and section.mr_n >= section.mu_min:  # ductile behavior in both directions
             x = [chi_u_n, chi_y_n, chi_r2_n, chi_r1_n, 0, chi_r1_p, chi_r2_p, chi_y_p, chi_u_p]
-            y = [section.mu_min, section.mu_min, section.mr_n, section.mr_n,  0, section.mr_p, section.mr_p,
+            y = [section.mu_min, section.mu_min, section.mr_n, section.mr_n, 0, section.mr_p, section.mr_p,
                  section.mu_max, section.mu_max]
         elif section.mr_p <= section.mu_max and section.mr_n < section.mu_min:  # ductile behavior only for pos. moments
             x = [chi_r1_n, chi_r1_n, 0, chi_r1_p, chi_r2_p, chi_y_p, chi_u_p]
