@@ -476,14 +476,23 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
     # Interpolate y-values onto the common x-axis
     interpolated_y_values_min = []
     interpolated_y_values_max = []
+    # y_test = []
     for x, y in zip(x_values, y_values):
+        # define interpolation functions with different rules, when x is out of range
         f1 = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate")
         f2 = interp1d(x, y, kind='linear', bounds_error=False, fill_value=(0, 0))
-        ########## XXXXXXXXXXXXXXXX ToDO: Fix the code for negative commen_x values. XXXXXXXXXXXXXXXXXXX
-        interpolated_y_values_min.append(f1(common_x))
-        interpolated_y_values_max.append(f2(common_x))
+        a = []
+        b = []
+        for xi in common_x:
+            if xi >= 0:  # apply interpolation functions withe rules for positive x_values
+                a.append(float(f1(xi)))
+                b.append(float(f2(xi)))
+            else:  # apply interpolation functions withe rules for negative x_values
+                b.append(float(f1(xi)))
+                a.append(float(f2(xi)))
+        interpolated_y_values_min.append(a)
+        interpolated_y_values_max.append(b)
 
-    # Calculate the envelope (upper and lower bounds)
     y_lower = np.min(interpolated_y_values_min, axis=0)
     y_upper = np.max(interpolated_y_values_max, axis=0)
 
