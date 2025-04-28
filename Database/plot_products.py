@@ -17,6 +17,7 @@ emissions_concrete = cursor.execute(
                     "WHERE material_0 LIKE '%concrete%' "
                     "AND A1toA3_GWP IS NOT NULL "
                     "AND A1toA3_GWP != 0 "
+                    "AND type LIKE '%ready mixed concrete%' "
                     ).fetchall()
 emissions_concrete_values = [row[0] for row in emissions_concrete]
 
@@ -24,9 +25,11 @@ EPD_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
                     "WHERE material_0 LIKE '%concrete%' "
                     "AND A1toA3_GWP IS NOT NULL "
+                    "AND A1toA3_GWP != 0 "
                     "AND 'source [string]' NOT LIKE '%Betonsortenrechner%' "
                     "AND 'source [string]' NOT LIKE '%Ecoinvent%' "
                     "AND 'source [string]' NOT LIKE '%KBOB%' "
+                    "AND type LIKE '%ready mixed concrete%' "
                     ).fetchall()
 EPD_concrete_values = [row[0] for row in EPD_concrete]
 
@@ -48,6 +51,7 @@ Ecoinvent_concrete_values = [row[0] for row in Ecoinvent_concrete]
 Betonsortenrechner_concrete = cursor.execute(
                     "SELECT A1toA3_GWP FROM products "
                     "WHERE material_0 LIKE '%concrete%' "
+                    "AND A1toA3_GWP != 0 "
                     "AND 'source [string]' LIKE '%Betonsortenrechner%' "
                     ).fetchall()
 Betonsortenrechner_concrete_values = [row[0] for row in Betonsortenrechner_concrete]

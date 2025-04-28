@@ -4,137 +4,153 @@ import numpy as np
 import statistics
 
 # create or open database sustainability
-connection = sqlite3.connect('data.db')
+connection = sqlite3.connect('database_250326.db')
 # create cursor object
 cursor = connection.cursor()
 #------------------------------------------------------------------------------------------------------------------------
 #extract values for concrete
 emissions_concrete = cursor.execute(
-                    "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
+                    "SELECT Total_GWP FROM products "
+                    "WHERE type LIKE '%ready mixed concrete%' "
                     "AND A1toA3_GWP IS NOT NULL "
                     "AND A1toA3_GWP != 0 "
+                    "AND type LIKE '%ready mixed concrete%' "
                     ).fetchall()
 emissions_concrete_values = [row[0] for row in emissions_concrete]
 
 EPD_concrete = cursor.execute(
-                    "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND A1toA3_GWP IS NOT NULL "
-                    "AND source NOT LIKE '%Betonsortenrechner%' "
-                    "AND source NOT LIKE '%Ecoinvent%' "
-                    "AND source NOT LIKE '%KBOB%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE type LIKE '%ready mixed concrete%'
+                    AND A1toA3_GWP IS NOT NULL
+                    AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                    AND "source [string]" NOT LIKE '%Ecoinvent%'
+                    AND "source [string]" NOT LIKE '%KBOB%'
+                    """).fetchall()
 EPD_concrete_values = [row[0] for row in EPD_concrete]
 
 KBOB_concrete = cursor.execute(
-                    "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND source LIKE '%KBOB%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE type LIKE '%ready mixed concrete%'
+                    AND "source [string]" LIKE '%KBOB%'
+                    """).fetchall()
 KBOB_concrete_values = [row[0] for row in KBOB_concrete]
 
+
 Ecoinvent_concrete = cursor.execute(
-                    "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND source LIKE '%Ecoinvent%' "
-                    "AND A1toA3_GWP != 0 "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE type LIKE '%ready mixed concrete%'
+                    AND "source [string]" LIKE '%Ecoinvent%'
+                    AND A1toA3_GWP != 0
+                    """).fetchall()
 Ecoinvent_concrete_values = [row[0] for row in Ecoinvent_concrete]
 
 Betonsortenrechner_concrete = cursor.execute(
-                    "SELECT A1toA3_GWP FROM products "
-                    "WHERE material LIKE '%concrete%' "
-                    "AND source LIKE '%Betonsortenrechner%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE type LIKE '%ready mixed concrete%'
+                    AND "source [string]" LIKE '%Betonsortenrechner%'
+                    """).fetchall()
 Betonsortenrechner_concrete_values = [row[0] for row in Betonsortenrechner_concrete]
 
+print(EPD_concrete_values)
+print(np.quantile(EPD_concrete_values, 0.1))
 #------------------------------------------------------------------------------------------------------------------------
 #extract values for wood
 emissions_timber = cursor.execute(
-                    "SELECT Total_GWP FROM products "
-                    "WHERE material LIKE '%timber%' "
-                    "AND Total_GWP IS  NOT NULL "
-                    "AND source NOT LIKE '%Studiengemeinschaft%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE material_0 LIKE '%timber%'
+                    AND Total_GWP IS  NOT NULL
+                    AND "source [string]" NOT LIKE '%Studiengemeinschaft%'
+                    """).fetchall()
 emissions_timber_values = [row[0] for row in emissions_timber]
 
 EPD_timber = cursor.execute(
-                    "SELECT Total_GWP FROM products "
-                    " WHERE material LIKE '%timber%' "
-                    "AND Total_GWP IS NOT NULL "
-                    "AND source NOT LIKE '%KBOB%' "
-                    "AND source NOT LIKE '%Ecoinvent%' "
-                    "AND EPD_ID NOT LIKE '%verifizierung%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE material_0 LIKE '%timber%'
+                    AND Total_GWP IS NOT NULL
+                    AND "source [string]" NOT LIKE '%KBOB%'
+                    AND "source [string]" NOT LIKE '%Ecoinvent%'
+                    AND EPD_ID NOT LIKE '%verifizierung%'
+                    """).fetchall()
 EPD_timber_values = [row[0] for row in EPD_timber]
 
 
 Ecoinvent_timber = cursor.execute(
-                    "SELECT Total_GWP FROM products "
-                    " WHERE material LIKE '%timber%' "
-                    "AND Total_GWP IS NOT NULL "
-                    "AND source LIKE '%Ecoinvent%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE material_0 LIKE '%timber%'
+                    AND Total_GWP IS NOT NULL
+                    AND "source [string]" LIKE '%Ecoinvent%'
+                    """).fetchall()
 Ecoinvent_timber_values = [row[0] for row in Ecoinvent_timber]
 
 
 KBOB_timber = cursor.execute(
-                    "SELECT Total_GWP FROM products "
-                    "WHERE material LIKE '%timber%' "
-                    "AND source LIKE '%KBOB%' "
-                    ).fetchall()
+                    """
+                    SELECT Total_GWP FROM products
+                    WHERE material_0 LIKE '%timber%'
+                    AND "source [string]" LIKE '%KBOB%'
+                    """).fetchall()
 KBOB_timber_values = [row[0] for row in KBOB_timber]
 
 #------------------------------------------------------------------------------------------------------------------------
 #extract values for reinforcement
 
-emissions_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
-                           " WHERE product_name LIKE '%Betonstahl%' "
-                           "AND A1toA3_GWP IS NOT NULL "
-                           "AND A1toA3_GWP != 0 "
-                           ).fetchall()
+emissions_reinf = cursor.execute("""
+                        SELECT Total_GWP FROM products
+                        WHERE type LIKE '%steel reinforcing bar%'
+                        AND Total_GWP IS NOT NULL
+                        AND A1toA3_GWP != 0
+                        """).fetchall()
 emissions_reinf_values = [row[0] for row in emissions_reinf]
 
-EPD_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
-                      "WHERE product_name LIKE '%Betonstahl%' "
-                      "AND A1toA3_GWP IS NOT NULL "
-                      "AND source NOT LIKE '%KBOB%' "
-                      ).fetchall()
+EPD_reinf = cursor.execute("""
+                      SELECT Total_GWP FROM products
+                      WHERE type LIKE '%steel reinforcing bar%'
+                      AND Total_GWP IS NOT NULL
+                      AND "source [string]" NOT LIKE '%KBOB%'
+                      """).fetchall()
 EPD_reinf_values = [row[0] for row in EPD_reinf]
 
-KBOB_reinf = cursor.execute("SELECT A1toA3_GWP FROM products "
-                               "WHERE product_name LIKE '%Betonstahl%' "
-                               "AND source LIKE '%KBOB%' "
-                               ).fetchall()
+KBOB_reinf = cursor.execute(
+                            """
+                            SELECT Total_GWP FROM products
+                            WHERE type LIKE '%steel reinforcing bar%'
+                            AND "source [string]" LIKE '%KBOB%'
+                            """).fetchall()
 KBOB_reinf_values = [row[0] for row in KBOB_reinf]
 
 reinf_min = min(EPD_reinf_values)
 reinf_max =max(EPD_reinf_values)
 
-print(reinf_min, reinf_max)
-
-
 #------------------------------------------------------------------------------------------------------------------------
 #extract values for steel
-emissions_steel = cursor.execute("SELECT A1toA3_GWP FROM products "
-                           " WHERE product_name LIKE '%Baustahl%' "
-                           "AND A1toA3_GWP IS NOT NULL "
-                           "AND A1toA3_GWP != 0 "
-                           ).fetchall()
+emissions_steel = cursor.execute("""
+                        SELECT Total_GWP FROM products
+                        WHERE type LIKE '%structural steel profile%'
+                        AND Total_GWP IS NOT NULL
+                        AND Total_GWP != 0
+                        """).fetchall()
 emissions_steel_values = [row[0] for row in emissions_steel]
 
-EPD_steel = cursor.execute("SELECT A1toA3_GWP FROM products "
-                      "WHERE product_name LIKE '%Baustahl%' "
-                      "AND A1toA3_GWP IS NOT NULL "
-                      "AND source NOT LIKE '%KBOB%' "
-                      ).fetchall()
+EPD_steel = cursor.execute("""
+                        SELECT Total_GWP FROM products
+                        WHERE type LIKE '%structural steel profile%'
+                        AND Total_GWP IS NOT NULL
+                        AND "source [string]" NOT LIKE '%KBOB%'
+                        """).fetchall()
 EPD_steel_values = [row[0] for row in EPD_reinf]
 
-KBOB_steel = cursor.execute("SELECT A1toA3_GWP FROM products "
-                               "WHERE product_name LIKE '%Baustahl%' "
-                               "AND source LIKE '%KBOB%' "
-                               ).fetchall()
+KBOB_steel = cursor.execute("""
+                        SELECT A1toA3_GWP FROM products
+                        WHERE type LIKE '%structural steel profile%'
+                        AND "source [string]" LIKE '%KBOB%'
+                        """).fetchall()
 KBOB_steel_values = [row[0] for row in KBOB_steel]
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -178,13 +194,24 @@ plt.scatter(bin_centers_EPD, hist_EPD, alpha=0.7, label='EPD Emissions', color='
 plt.xlabel('Total GWP [kg CO2-eq/t]')
 plt.ylabel('#')
 plt.title('Beton')
-plt.legend(loc='upper right')
+plt.legend(loc='upper left')
 
 
 # Add vertical lines and text for KBOB values
-plt.axvline(KBOB_concrete_values[0], color='tomato')
+plt.axvline(KBOB_concrete_values[0], linestyle='--', alpha=0.7, color='tomato')
 plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
 
+# Add vertical lines and text for KBOB values
+plt.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+# Add vertical lines and text for KBOB values
+plt.axvline(np.quantile(EPD_concrete_values,0.1), linestyle='--', alpha=0.7, color='blue')
+
+plt.axvline(np.quantile(EPD_concrete_values,0.9), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+plt.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color='blue', alpha=0.1)
 
 
 plt.show()
@@ -192,11 +219,6 @@ plt.show()
 '''# Plot a boxplot for EPD_timber_values and KBOB_timber_values
 plt.boxplot([EPD_timber_values, KBOB_timber_values])
 plt.show()'''
-
-
-
-
-
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot wood
@@ -232,7 +254,7 @@ plt.scatter(bin_centers_EPD, hist_EPD, alpha=0.7, label='EPD Emissions', color='
 plt.xlabel('Total GWP [kg CO2-eq/t]')
 plt.ylabel('#')
 plt.title('Holz')
-plt.legend(loc='upper right')
+plt.legend(loc='upper left')
 
 # Set y-axis to display only integer values
 plt.yticks(range(int(np.floor(min(hist_EPD))), int(np.ceil(max(hist_EPD)))+1))
@@ -242,6 +264,19 @@ plt.axvline(KBOB_timber_values[0], color='tomato')
 plt.text(KBOB_timber_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH CH', rotation=90, color='tomato')
 plt.axvline(KBOB_timber_values[1], color='coral')
 plt.text(KBOB_timber_values[1]+0.5, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH', rotation=90, color='darkorange')
+
+# Add vertical lines and text for KBOB values
+plt.axvline(statistics.mean(EPD_timber_values), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+# Add vertical lines and text for KBOB values
+plt.axvline(np.quantile(EPD_timber_values,0.1), linestyle='--', alpha=0.7, color='blue')
+
+plt.axvline(np.quantile(EPD_timber_values,0.9), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+plt.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_timber_values,0.1), np.quantile(EPD_timber_values,0.9), color='blue', alpha=0.1)
+
 
 plt.show()
 
@@ -279,6 +314,18 @@ plt.text(KBOB_reinf_values[0]+0.5, max(hist_EPD)/2, 'KBOB Bewehrung', rotation=9
 plt.axvline(368, color='blue')
 plt.text(368+0.5, max(hist_EPD)/2, 'Stahl Gerlafingen', rotation=90, color='blue')
 
+# Add vertical lines and text for KBOB values
+plt.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+# Add vertical lines and text for KBOB values
+plt.axvline(np.quantile(EPD_reinf_values,0.1), linestyle='--', alpha=0.7, color='blue')
+
+plt.axvline(np.quantile(EPD_reinf_values,0.9), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+plt.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color='blue', alpha=0.1)
+
 plt.show()
 #------------------------------------------------------------------------------------------------------------------------
 #plot steel
@@ -308,6 +355,20 @@ plt.yticks(range(int(np.floor(min(hist_EPD))), int(np.ceil(max(hist_EPD)))+1))
 # Add vertical lines and text for KBOB values
 plt.axvline(KBOB_steel_values[0], color='tomato')
 plt.text(KBOB_steel_values[0]+0.5, max(hist_EPD)/2, 'KBOB Baustahl', rotation=90, color='tomato')
+
+# Add vertical lines and text for KBOB values
+plt.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+# Add vertical lines and text for KBOB values
+plt.axvline(np.quantile(EPD_steel_values,0.1), linestyle='--', alpha=0.7, color='blue')
+
+plt.axvline(np.quantile(EPD_steel_values,0.9), linestyle='--', alpha=0.7, color='blue')
+#plt.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton', rotation=90, color='tomato')
+
+plt.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color='blue', alpha=0.1)
+
+
 
 plt.show()
 
