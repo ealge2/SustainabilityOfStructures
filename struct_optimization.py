@@ -161,10 +161,10 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
 
     # define bounds of variables
     bh_f = (0.14,0.5)
-    bh_w = (0.15, 2)  # height between 6 cm and 1.0 m
+    bh_w = (0.10, 2)  # height between 6 cm and 1.0 m
     bdi_x_w = (0.01, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bb_w = (0.14, 0.4)  # rib width between 12 and 60 cm
-    bb = (0.5, 2.5) # rib spacing between 0.5 and 2.5 m
+    bb = (0.2, 2.5) # rib spacing between 0.5 and 2.5 m
     bounds = [bh_w, bh_f, bdi_x_w, bb_w, bb]
 
     # definition of fixed values of cross-section
@@ -220,8 +220,10 @@ def rc_rib_rqs(var, add_arg):
         d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
                       member.w_app - member.w_app_adm]
     else:
-        d1, d2, d3 = [member.w_install_ger - member.w_install_adm, member.w_use_ger - member.w_use_adm,
-                      member.w_app_ger - member.w_app_adm]
+        d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
+                      member.w_app - member.w_app_adm]
+        #d1, d2, d3 = [member.w_install_ger - member.w_install_adm, member.w_use_ger - member.w_use_adm,
+        #              member.w_app_ger - member.w_app_adm]
     penalty2 = 1e5 * max(d1, d2, d3, 0)
 
     # define penalty3, if SLS2 (vibrations) are not fulfilled
@@ -344,48 +346,52 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=10):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h
     b0 = m.section.b
-    var0 = [h0, b0]
+    t20 = m.section.t2
+    var0 = [b0, h0, t20]
 
     #define bounds of variables
-    bh = (0.1, 0.5)
+    bh = (0.1, 1)
     bb = (0.08, 0.26)
-    bounds = [bh, bb]
+    bt2 = (0.027, 0.08)
+    bounds = [bb, bh,bt2]
 
     #definition of fixed values of cross-section
-    l0 = m.section.l0
+    l0 = m.li_max
     a = m.section.a
     t2 = m.section.t2
     t3 = m.section.t3
 
     ti1, ti2, ti3 = m.section.wood_type_1, m.section.wood_type_2, m.section.wood_type_3
 
-    add_arg = [m.system, ti1, ti2, ti3, l0, a, t2, t3, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk]
+    add_arg = [m.system, ti1, ti2, ti3, l0, a, t3, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk]
 
 # optimize with basinhopping algorithm with bounds also implemented on both levels (inner and outer):
     bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds]))
     opt = basinhopping(wd_rib_rqs, var0, niter=max_iter, T=1, minimizer_kwargs={"args": (add_arg,), "bounds": bounds,
                                                                             "method": "Powell"}, take_step=bounded_step)
-    b, h = opt.x
+
+    b, h, t2 = opt.x
     optimized_section = struct_analysis.RibWood(ti1, ti2, ti3, l0, b, h, a, t2, t3)
+    print(l0, b, h, t2)
     return optimized_section
 
 #inner function for optimizing wood sections for criteria ULS or SLS in terms of GWP or height
 def wd_rib_rqs(var, add_arg):
-    h, b = var
+    b, h, t2 = var
     system = add_arg[0]
     timber1 = add_arg[1]
     timber2 = add_arg[2]
     timber3 = add_arg[3]
     l0 = add_arg[4]
     a = add_arg[5]
-    t2 = add_arg[6]
-    t3 = add_arg[7]
-    floorstruc = add_arg[8]
-    criteria = add_arg[9]
-    to_opt = add_arg[10]
-    criterion = add_arg[11]
-    g2k = add_arg[12]
-    qk = add_arg[13]
+    #t2 = add_arg[6]
+    t3 = add_arg[6]
+    floorstruc = add_arg[7]
+    criteria = add_arg[8]
+    to_opt = add_arg[9]
+    criterion = add_arg[10]
+    g2k = add_arg[11]
+    qk = add_arg[12]
 
     # create section
     section = struct_analysis.RibWood(timber1, timber2, timber3, l0, b, h, a, t2, t3)
@@ -473,7 +479,7 @@ def get_optimized_section(member, criterion, to_opt, max_iter):
     elif member.section.section_type == "wd_rib":
         # available to_opt arguments: "GWP", "h"
         # available criterion arguments: "ULS", "SLS1", "SLS2"
-        return opt_wd_rib(member, criterion=criterion)
+        return opt_wd_rib(member, to_opt, criterion, max_iter)
     else:
         print("There is no optimization for the section type " + member.section.section_type + " available!")
         return member.section
@@ -560,12 +566,11 @@ def get_opt_sec(section, gwp_budget):
         return opt_section
 
     elif section.section_type == "wd_rib":
-        print("wood rib is not implemented yet")
-
         # get initial values
         h_0 = section.h
         b_0 = section.b
         var0 = [h_0, b_0]
+        print("wd-rib not yet defined for this plot")
 
 ## XXXXXXXXXXX neuen Querschnittstyp für optimierung vorbereiten. Für mehrere parameter: basinhopping methode.
 

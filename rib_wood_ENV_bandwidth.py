@@ -15,7 +15,7 @@ create_dummy_database.create_database(database_name)  # create database
 lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 20
+max_iter = 75
 
 #  define content of plot
 criteria = ["ENV"]
@@ -40,7 +40,7 @@ mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
 
 # retrieve data from database, find optimal cross-sections and plot results
 data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd, req,
-                                                      "wd_rec", mat_names, g2k, qk, max_iter)
+                                                      "wd_rib", mat_names, g2k, qk, max_iter)
 
 # define legend of plots
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
