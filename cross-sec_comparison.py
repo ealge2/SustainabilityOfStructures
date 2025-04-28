@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 #  INPUT
 
 # create dummy-database
-database_name = "dummy_sustainability.db"  # define database name
+database_name = "dummy_database.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 #  define content of plot
-gwp_budget = 100  # kg Co2-eq/m2
+gwp_budget = 50  # kg Co2-eq/m2
 
 # DEFINE CONTENT OF PLOT
 # define cross-section types
