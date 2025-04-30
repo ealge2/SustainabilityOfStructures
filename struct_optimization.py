@@ -183,7 +183,7 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
                                                                             "method": "Powell"}, take_step=bounded_step)
     h_w, h_f, di_x_w, b_w, b = opt.x
     optimized_section = struct_analysis.RibbedConcrete(co, st, l0, b, b_w, h_f+h_w, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w, di_pb_bw, s_pb_bw, n_pb_bw, phi, c_nom, xi, jnt_srch)
-    print(l0,round(b,5),round(b_w,5), round(h_w,5), round(h_f,5), di_x_w)
+    #print(l0,round(b,5),round(b_w,5), round(h_w,5), round(h_f,5), di_x_w)
 
     return optimized_section
 

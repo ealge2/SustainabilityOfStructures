@@ -39,7 +39,7 @@ lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 to_plot = [[section_rc0, bodenaufbau_rc]]
 criteria = ["ULS", "SLS1", "SLS2", "FIRE", "ENV"]
 optima = ["GWP"]
-plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
+plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO$_2$-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
 
 # ANALYSIS

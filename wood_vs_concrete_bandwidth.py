@@ -64,6 +64,7 @@ vrfctn_members.append(vrfctn_members_new)
 # CREATE AND PLOT DATASET FOR RECTANGULAR REINFORCED CONCRETE CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
+print(mat_names)
 # retrive data from database, find optimal cross-sections and plot results
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc,
                                                               req, "rc_rec", mat_names, g2k, qk, max_iter,
