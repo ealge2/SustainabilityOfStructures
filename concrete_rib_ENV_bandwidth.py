@@ -13,10 +13,11 @@ database_name = "dummy_sustainability_1.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+#lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 75
+max_iter = 25
 
 #  define content of plot
 criteria = ["ENV"]
@@ -36,6 +37,7 @@ req = struct_analysis.Requirements()
 
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
+print(mat_names)
 # retrieve data from database, find optimal cross-sections and plot results
 data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc, req,
                                                       "rc_rib", mat_names, g2k, qk, max_iter)
