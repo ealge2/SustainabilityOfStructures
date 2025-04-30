@@ -18,6 +18,7 @@
 # - Bodenaufbauschicht
 # - Bodenaufbau
 # - Rechteckquerschnitte
+# - Anforderungen
 
 import sqlite3  # import modul for SQLite
 import numpy as np
@@ -47,13 +48,13 @@ class Wood:
         cursor.execute(inquiry)
         result = cursor.fetchall()
         self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
-        self.get_design_values()
+        self.fmd = self.get_design_values()
 
     def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values
         if self.mech_prop[1:3] == "GL":
             gamma_m = 1.5  # SIA 265, 2.2.5: reduzierter Sicherheitsbeiwert für BSH
-
-        self.fmd = self.fmk * eta_m * eta_t * eta_w / gamma_m  # SIA 265, 2.2.2, Formel (3)
+        fmd = self.fmk * eta_m * eta_t * eta_w / gamma_m  # SIA 265, 2.2.2, Formel (3)
+        return fmd
 
 
 class ReadyMixedConcrete:
@@ -79,13 +80,14 @@ class ReadyMixedConcrete:
         result = cursor.fetchall()
         self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
         self.dmax = dmax
-        self.get_design_values()
+        self.fcd, self.tcd, self.ec2d = self.get_design_values()
 
     def get_design_values(self, gamma_c=1.5, eta_t=1):  # calculate design values
         eta_fc = min((30e6 / self.fck) ** (1 / 3), 1)  # SIA 262, 4.2.1.2, Formel (26)
-        self.fcd = self.fck * eta_fc * eta_t / gamma_c  # SIA 262, 2.3.2.3, Formel (2)
-        self.tcd = 0.3 * eta_t * 1e6 * (self.fck * 1e-6) ** 0.5 / gamma_c  # SIA 262, 2.3.2.4, Formel (3)
-        self.ec2d = 0.003  # SIA 262, 4.2.4, Tabelle 8
+        fcd = self.fck * eta_fc * eta_t / gamma_c  # SIA 262, 2.3.2.3, Formel (2)
+        tcd = 0.3 * eta_t * 1e6 * (self.fck * 1e-6) ** 0.5 / gamma_c  # SIA 262, 2.3.2.4, Formel (3)
+        ec2d = 0.003  # SIA 262, 4.2.4, Tabelle 8
+        return fcd, tcd, ec2d
 
 
 class SteelReinforcingBar:
@@ -109,10 +111,11 @@ class SteelReinforcingBar:
         cursor.execute(inquiry)
         result = cursor.fetchall()
         self.prod_id, self.density, self.GWP, self.cost = result[0]
-        self.get_design_values()
+        self.fsd = self.get_design_values()
 
     def get_design_values(self, gamma_s=1.15):  # calculate design values
-        self.fsd = self.fsk / gamma_s  # SIA 262, 2.3.2.5, Formel (4)
+        fsd = self.fsk / gamma_s  # SIA 262, 2.3.2.5, Formel (4)
+        return fsd
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -121,6 +124,10 @@ class Section:
     # contains fundamental section properties like section type weight, resistance and stiffness
     def __init__(self, section_type):
         self.section_type = section_type
+        # The following properties are defined in the specific cross-section classes. However, it could make sense to
+        # provide them in this more general parent class.
+        #
+        # properties:
         # self.mu_max = float
         # self.mu_min = float
         # self.vu = float
