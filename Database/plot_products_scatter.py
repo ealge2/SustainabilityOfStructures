@@ -156,12 +156,11 @@ KBOB_steel_values = [row[0] for row in KBOB_steel]
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot concrete
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Create subplots
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10), sharey=True)
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))#, sharey=True)
 
 # Combine all datasets to determine the range for bins
 all_data_concrete = Ecoinvent_concrete_values + Betonsortenrechner_concrete_values + EPD_concrete_values
@@ -192,22 +191,29 @@ hist_EPD = hist_EPD[non_zero_EPD]
 
 # Create the scatter plots
 ax1.scatter(bin_centers_EPD, hist_EPD, alpha=0.7, label='EPD Emissions', color='forestgreen', edgecolor='black')
-plt.scatter(bin_centers_Ecoinvent, hist_Ecoinvent, alpha=0.3, label='Ecoinvent', color='gray', edgecolor='black')
-plt.scatter(bin_centers_Betonsortenrechner, hist_Betonsortenrechner, alpha=0.3, label='Betonsortenrechner', color='plum', edgecolor='black')
+ax1.scatter(bin_centers_Ecoinvent, hist_Ecoinvent, alpha=0.3, label='Ecoinvent', color='gray', edgecolor='black')
+ax1.scatter(bin_centers_Betonsortenrechner, hist_Betonsortenrechner, alpha=0.3, label='Betonsortenrechner', color='plum', edgecolor='black')
+
+# Set y-axis to display only integer values
+ymin = 0
+ymax = 11
+ax1.set_yticks(range(ymin, ymax))
+ax1.set_ylim(ymin,ymax)
 
 
-ax1.set_xlabel('Total GWP [kg CO2-eq/t]')
+ax1.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax1.set_ylabel('#')
 ax1.set_title('Beton')
-ax1.legend(loc='upper left')
-
+ax1.legend(loc='upper right')
 
 # Add vertical lines and text for KBOB values
 ax1.axvline(KBOB_concrete_values[0], linestyle='--', alpha=0.5, color='tomato')
-ax1.text(KBOB_concrete_values[0]+0.5, max(max(hist_Ecoinvent), max(hist_Betonsortenrechner), max(hist_EPD))/2, 'KBOB Hochbaubeton',alpha=0.5, rotation=90, color='tomato')
+ax1.text(KBOB_concrete_values[0]+0.5, max(hist_EPD)/2, 'KBOB Hochbaubeton',alpha=0.5, rotation=90, color='tomato')
 
-ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.7, color='forestgreen')
-ax1.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color='forestgreen', alpha=0.05)
+ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.6, color='forestgreen')
+ax1.text(statistics.mean(EPD_concrete_values)+0.5, ymin+0.5, r'$\mu$', color = 'forestgreen', alpha = 0.6)
+ax1.fill_betweenx([ymin, ymax], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color='forestgreen', alpha=0.05)
+ax1.text(np.quantile(EPD_concrete_values, 0.1)+2, ymax-0.5, '90 %', color = 'forestgreen', alpha=0.5)
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot wood
@@ -234,31 +240,38 @@ bin_centers_EPD = bin_centers[non_zero_EPD]
 
 hist_Ecoinvent = hist_Ecoinvent[non_zero_Ecoinvent]
 hist_EPD = hist_EPD[non_zero_EPD]
+print(hist_EPD)
 
 # Create the scatter plots
-ax2.scatter(bin_centers_EPD, hist_EPD, alpha=0.7, label='EPD Emissions', color='peru', edgecolor='black')
+colors = ['white' if epd < 0 else 'peru' for epd in bin_centers_EPD]
+ax2.scatter(bin_centers_EPD, hist_EPD, alpha=0.7, label='EPD Emissions',
+            c=colors, edgecolor='black')
+
+#ax2.scatter(bin_centers_EPD, hist_EPD, alpha=0.7, label='EPD Emissions', color='peru', edgecolor='black')
 ax2.scatter(bin_centers_Ecoinvent, hist_Ecoinvent, alpha=0.3, label='Ecoinvent Emissions', color='gray', edgecolor='black')
 
-
-ax2.set_xlabel('Total GWP [kg CO2-eq/t]')
+ax2.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax2.set_ylabel('#')
 ax2.set_title('Holz')
-ax2.legend(loc='upper left')
+ax2.legend(loc='upper right')
 
-# Set y-axis to display only integer values
-ax2.set_yticks(range(int(np.floor(min(hist_EPD))), int(np.ceil(max(hist_EPD)))+1))
-ax2.set_ylim(0,10)
+ax2.set_yticks(range(ymin, ymax))
+ax2.set_ylim(ymin,ymax)
+
+ax2.set_xlim(-300)
 
 # Add vertical lines and text for KBOB values
 ax2.axvline(KBOB_timber_values[0], linestyle='--', alpha= 0.5, color='tomato')
-ax2.text(KBOB_timber_values[0]+10, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH CH', rotation=90, alpha=0.5, color='tomato')
+ax2.text(KBOB_timber_values[0]+15, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH CH', rotation=90, alpha=0.5, color='tomato')
 ax2.axvline(KBOB_timber_values[1], linestyle='--', alpha=0.5, color='coral')
-ax2.text(KBOB_timber_values[1]+10, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH', rotation=90, alpha = 0.5, color='darkorange')
+ax2.text(KBOB_timber_values[1]+15, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH', rotation=90, alpha = 0.5, color='darkorange')
 
+EPD_timber_values_pos = [x for x in EPD_timber_values if x >= 0]
 
-ax2.axvline(statistics.mean(EPD_timber_values), linestyle='--', alpha=0.7, color='peru')
-
-ax2.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_timber_values,0.1), np.quantile(EPD_timber_values,0.9), color='peru', alpha=0.1)
+ax2.axvline(statistics.mean(EPD_timber_values_pos), linestyle='--', alpha=0.6, color='peru')
+ax2.text(statistics.mean(EPD_timber_values_pos)+15, ymin+0.5, r'$\mu$', color = 'peru', alpha = 0.6)
+ax2.fill_betweenx([ymin, ymax], np.quantile(EPD_timber_values_pos,0.1), np.quantile(EPD_timber_values_pos,0.9), color='peru', alpha=0.1)
+ax2.text(np.quantile(EPD_timber_values_pos, 0.1)+20, ymax-0.5, '90 %', color = 'peru', alpha=0.5)
 
 #------------------------------------------------------------------------------------------------------------------------
 #Betonstahl
@@ -276,15 +289,22 @@ hist_EPD, _ = np.histogram(EPD_reinf_values, bins=bins)
 
 
 # Create the scatter plot for EPD values
-ax3.scatter(bin_centers, hist_EPD, alpha=0.7, label='EPD Emissions', color='steelblue', edgecolor='black')
 
-ax3.set_xlabel('Total GWP [kg CO2-eq/t]')
+colors = ['red' if epd < 0 else 'steelblue' for epd in hist_EPD]
+
+ax3.scatter(bin_centers, hist_EPD, alpha=0.7, label='EPD Emissions',
+            color=colors, edgecolor='black')
+
+# ax3.scatter(bin_centers, hist_EPD_pos, alpha=0.7, label='EPD Emissions', color='steelblue', edgecolor='black')
+# ax3.scatter(bin_centers, hist_EPD_neg, alpha=0.2, label='EPD Emissions', color='steelblue', edgecolor='black')
+
+ax3.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax3.set_ylabel('#')
 ax3.set_title('Betonstahl')
-ax3.legend(loc='upper left')
+ax3.legend(loc='upper right')
 
-# Set y-axis to display only integer values
-ax3.set_yticks(range(int(np.floor(min(hist_EPD))), int(np.ceil(max(hist_EPD)))+1))
+ax3.set_yticks(range(ymin, ymax))
+ax3.set_ylim(ymin,ymax)
 
 # Add vertical lines and text for KBOB values
 ax3.axvline(KBOB_reinf_values[0], linestyle='--', alpha = 0.5, color='tomato')
@@ -294,9 +314,10 @@ ax3.axvline(368, color='blue')
 ax3.text(368+0.5, max(hist_EPD)/2, 'Stahl Gerlafingen', rotation=90, color='blue')
 
 # Add vertical lines and text for KBOB values
-ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.7, color='blue')
-
-ax3.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color='blue', alpha=0.1)
+ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.6, color='blue')
+ax3.text(statistics.mean(EPD_reinf_values)+15, ymin+0.5, r'$\mu$', color = 'blue', alpha = 0.6)
+ax3.fill_betweenx([ymin, ymax], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color='blue', alpha=0.1)
+ax3.text(np.quantile(EPD_reinf_values, 0.1)+10, ymax-0.5, '90 %', color = 'blue', alpha=0.5)
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot steel
@@ -315,23 +336,26 @@ hist_EPD, _ = np.histogram(EPD_steel_values, bins=bins)
 # Create the scatter plot for EPD values
 ax4.scatter(bin_centers, hist_EPD, alpha=0.7, label='EPD Emissions', color='deepskyblue', edgecolor='black')
 
+ax4.set_yticks(range(ymin, ymax))
+ax4.set_ylim(ymin,ymax)
+
+
 ax4.set_xlabel('Total GWP [kg CO2-eq/t]')
 ax4.set_ylabel('#')
 ax4.set_title('Baustahl')
-ax4.legend(loc='upper left')
+ax4.legend(loc='upper right')
 
-# Set y-axis to display only integer values
-ax4.set_yticks(range(int(np.floor(min(hist_EPD))), int(np.ceil(max(hist_EPD)))+1))
+
 
 # Add vertical lines and text for KBOB values
 ax4.axvline(KBOB_steel_values[0], linestyle='--', alpha = 0.5, color='tomato')
 ax4.text(KBOB_steel_values[0]+10, max(hist_EPD)/2, 'KBOB Baustahl', rotation=90, alpha=0.5, color='tomato')
 
 # Add vertical lines and text for KBOB values
-ax4.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.7, color='deepskyblue')
-
-ax4.fill_betweenx([0, plt.ylim()[1]], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color='deepskyblue', alpha=0.1)
-
+ax4.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.6, color='deepskyblue')
+ax4.text(statistics.mean(EPD_steel_values)+15, ymin+0.5, r'$\mu$', color = 'deepskyblue', alpha = 0.6)
+ax4.fill_betweenx([ymin, ymax], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color='deepskyblue', alpha=0.1)
+ax4.text(np.quantile(EPD_steel_values, 0.1)+10, ymax-0.5, '90 %', color = 'deepskyblue', alpha=0.5)
 
 plt.show()
 
@@ -353,7 +377,7 @@ ax1.plot(x, y, 'r.', alpha=0.5)
 
 # Adding titles and labels
 ax1.set_xlabel('Gruppe')
-ax1.set_ylabel('Total GWP [kg CO2-eq/t]')
+ax1.set_ylabel('Total GWP [kg CO$_2$-eq/t]')
 ax1.set_title('Beton')
 
 # Customizing x-axis labels
