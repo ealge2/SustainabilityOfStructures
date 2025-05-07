@@ -21,7 +21,7 @@ timber2.get_design_values()
 timber3 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
 timber3.get_design_values()
 
-section_wd0 = struct_analysis.RibWood(timber1, timber2, timber3, 8, 0.12, 0.18, 0.625, 0.027, 0.027)
+section_wd0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau_holzrippendecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -49,7 +49,7 @@ plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-e
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 100
+max_iter = 200
 member_list = []
 legend = []
 # create plot data

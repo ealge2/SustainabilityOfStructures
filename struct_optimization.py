@@ -150,7 +150,7 @@ def rc_rqs(var, add_arg):
 
 #OPTIMIZATION OF RIB CONCRETE CROSS-SECTIONS
 #.......................................................................................................................
-def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=50):
+def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     # definition of initial values for variables, which are going to be optimized
     h_w0 = m.section.h-m.section.h_f  # start value for height corresponds to 1/20 of system length
     h_f0 = m.section.h_f
@@ -342,7 +342,7 @@ def wd_rqs_h(h, args):
         print("criterion has to be 'ULS', 'SLS1', 'SLS2' or ENV")
     return to_minimize
 
-def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=50):
+def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=200):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h
     b0 = m.section.b
@@ -352,7 +352,7 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=50):
     #define bounds of variables
     bh = (0.1, 1)
     bb = (0.08, 0.26)
-    bt2 = (0.027, 0.08)
+    bt2 = (0.027, 0.1)
     bounds = [bb, bh,bt2]
 
     #definition of fixed values of cross-section
@@ -395,7 +395,6 @@ def wd_rib_rqs(var, add_arg):
 
     # create section
     section = struct_analysis.RibWood(timber1, timber2, timber3, l0, b, h, a, t2, t3)
-
 
     # create member
     member = struct_analysis.Member1D(section, system, floorstruc, criteria, g2k, qk)
