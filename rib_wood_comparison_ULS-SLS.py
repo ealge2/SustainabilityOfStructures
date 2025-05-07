@@ -38,7 +38,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 #  define content of plot
 to_plot = [[section_wd0, bodenaufbau_wd]]
@@ -49,7 +49,7 @@ plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-e
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 75
+max_iter = 100
 member_list = []
 legend = []
 # create plot data

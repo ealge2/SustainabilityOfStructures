@@ -24,7 +24,7 @@ EPD_concrete = cursor.execute(
                     SELECT Total_GWP FROM products
                     WHERE type LIKE '%ready mixed concrete%'
                     AND A1toA3_GWP IS NOT NULL
-                    AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                    AND NOT LIKE '%Betonsortenrechner%'
                     AND "source [string]" NOT LIKE '%Ecoinvent%'
                     AND "source [string]" NOT LIKE '%KBOB%'
                     """).fetchall()
@@ -214,7 +214,7 @@ ax1.text(KBOB_concrete_values[0]+0.5, max(hist_EPD)/2, 'KBOB Hochbaubeton',alpha
 ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.6, color='forestgreen')
 ax1.text(statistics.mean(EPD_concrete_values)+0.5, ymax-1, r'$\mu$', color = 'forestgreen', alpha = 0.6)
 ax1.fill_betweenx([ymin, ymax], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color='grey', alpha=0.1, zorder=1)
-ax1.text(np.quantile(EPD_concrete_values, 0.1)+2, ymax-1, '90 %', color = 'forestgreen', alpha=0.5)
+ax1.text(np.quantile(EPD_concrete_values, 0.1)+2, ymax-1, '80 %', color = 'forestgreen', alpha=0.5)
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot wood
@@ -272,7 +272,7 @@ EPD_timber_values_pos = [x for x in EPD_timber_values if x >= 0]
 ax2.axvline(statistics.mean(EPD_timber_values_pos), linestyle='--', alpha=0.6, color='peru')
 ax2.text(statistics.mean(EPD_timber_values_pos)+15, ymax-1, r'$\mu$', color = 'peru', alpha = 0.6)
 ax2.fill_betweenx([ymin, ymax], np.quantile(EPD_timber_values_pos,0.1), np.quantile(EPD_timber_values_pos,0.9), color='grey', alpha=0.1, zorder=1)
-ax2.text(np.quantile(EPD_timber_values_pos, 0.1)+20, ymax-1, '90 %', color = 'peru', alpha=0.5)
+ax2.text(np.quantile(EPD_timber_values_pos, 0.1)+20, ymax-1, '80 %', color = 'peru', alpha=0.5)
 
 #------------------------------------------------------------------------------------------------------------------------
 #Betonstahl
@@ -318,7 +318,7 @@ ax3.text(368+10, 4, 'Stahl Gerlafingen', rotation=90, color='grey')
 ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.6, color='blue')
 ax3.text(statistics.mean(EPD_reinf_values)+15, ymax-1, r'$\mu$', color = 'blue', alpha = 0.6)
 ax3.fill_betweenx([ymin, ymax], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color='grey', alpha=0.1, zorder=1)
-ax3.text(np.quantile(EPD_reinf_values, 0.1)+10, ymax-1, '90 %', color = 'blue', alpha=0.5)
+ax3.text(np.quantile(EPD_reinf_values, 0.1)+10, ymax-1, '80 %', color = 'blue', alpha=0.5)
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot steel
@@ -359,7 +359,7 @@ ax4.text(KBOB_steel_values[0]+10, max(hist_EPD)/2, 'KBOB Baustahl', rotation=90,
 ax4.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.6, color='lightskyblue')
 ax4.text(statistics.mean(EPD_steel_values)+15, ymax-1, r'$\mu$', color = 'lightskyblue', alpha = 0.6)
 ax4.fill_betweenx([ymin, ymax], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color='grey', alpha=0.1, zorder=1)
-ax4.text(np.quantile(EPD_steel_values, 0.1)+10, ymax-1, '90 %', color = 'lightskyblue', alpha=0.5)
+ax4.text(np.quantile(EPD_steel_values, 0.1)+10, ymax-1, '80 %', color = 'lightskyblue', alpha=0.5)
 
 plt.show()
 

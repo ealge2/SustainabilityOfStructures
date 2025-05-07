@@ -8,7 +8,7 @@ connection = sqlite3.connect('database_250326.db')
 cursor = connection.cursor()
 
 
-cursor.execute("DROP TABLE products")
+
 
 # safe changes in database
 connection.commit()

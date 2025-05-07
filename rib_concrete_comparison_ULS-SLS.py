@@ -44,7 +44,7 @@ plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO$_2
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 50
+max_iter = 200
 member_list = []
 legend = []
 # create plot data
