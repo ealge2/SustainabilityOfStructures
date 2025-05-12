@@ -26,13 +26,23 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     connection = sqlite3.connect(database_name)
     cursor = connection.cursor()
     for mat_name in mat_names:
+        # ToDo
+        # inquiry = ("""
+        #         SELECT PRO_ID FROM products
+        #         WHERE  "material [string]" LIKE """ + mat_name
+        # )
         inquiry = ("SELECT PRO_ID FROM products WHERE"
-                   " material="+mat_name)
+                   " material=" + mat_name)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         for i, prod_id in enumerate(result):
             # create materials for wooden cross-sections, derive corresponding design values
             prod_id_str = "'" + str(prod_id[0]) + "'"
+            # ToDo
+            # inquiry = ("""
+            #         SELECT mech_prop FROM products
+            #         WHERE  PRO_ID LIKE """ + prod_id_str
+            # )
             inquiry = ("SELECT mech_prop FROM products WHERE"
                        " PRO_ID=" + prod_id_str)
             cursor.execute(inquiry)

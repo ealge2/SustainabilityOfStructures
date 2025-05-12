@@ -150,7 +150,7 @@ def rc_rqs(var, add_arg):
 
 #OPTIMIZATION OF RIB CONCRETE CROSS-SECTIONS
 #.......................................................................................................................
-def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=15):
+def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=50):
     # definition of initial values for variables, which are going to be optimized
     h_w0 = m.section.h-m.section.h_f  # start value for height corresponds to 1/20 of system length
     h_f0 = m.section.h_f
