@@ -14,7 +14,7 @@ from scipy.spatial import ConvexHull
 # PLOT DATASETS OF MEMBERS WITH DEFINED CROSS_SECTIONS AND VARIED MATERIALS
 # ----------------------------------------------------------------------------------------------------------------------
 def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requirements, crsec_type, mat_names,
-                 g2k=0.75, qk=2.0, max_iter=50, idx_vrfctn=-1):
+                 g2k=0.75, qk=2.0, max_iter=100, idx_vrfctn=-1):
 
     if idx_vrfctn == -1:
         idx_vrfctn = random.randint(0, len(lengths)-1)
@@ -76,6 +76,16 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
 
+            elif crsec_type == "wd_rib":
+                # create a Wood material object
+                timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+                timber1.get_design_values()
+                timber2 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+                timber2.get_design_values()
+                timber3 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+                timber3.get_design_values()
+                # create initial wooden rectangular cross-section
+                section_0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
 
 
 
@@ -104,8 +114,10 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 member_list.append(members)
                 if i[0].section_type[0:2] == "rc":
                     material_lg = i[0].concrete_type.mech_prop + " + " + i[0].rebar_type.mech_prop
-                elif i[0].section_type[0:2] == "wd":
+                elif i[0].section_type == "wd":
                     material_lg = i[0].wood_type.mech_prop
+                elif i[0].section_type == "wd_rib":
+                    material_lg = i[0].wood_type_1.mech_prop
                 else:
                     material_lg = "error: section material is not defined"
                 legend.append([i[0].section_type, material_lg, criterion, optimum])
@@ -162,6 +174,9 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             color = "tab:brown"  # color for wood
         elif sec_typ == "rc_rib":
             color = "tab:green"  # color for wood
+        elif sec_typ == "wd_rib":
+            color = "tab:brown"  # color for wood
+
         else:
             color = "k"
         # set linestyle
@@ -243,6 +258,13 @@ def plot_section(section):
               f'h, hf, hw, b, bw = {section.h:.2f}, {section.h_f:.2f}, {section.h_w:.2f}, {section.b:.2f}, {section.b_w:.2f} \n'
               f'GWP = {section.co2:.0f} kg/m^2')
 
+    elif section.section_type == "wd_rib": #Betonrippenquerschnitte
+        fig, ax, offset = plot_wd_rib_with_dimensions(section.b, section.h, section.a, section.t2, section.t3, 'brown', 'x')
+        legend = (f'{section.wood_type_1.mech_prop}, prod_ID:{section.wood_type_1.prod_id} \n'
+              f'length = {section.l0} \n'
+              f'h, b, a, t2, t3 = {section.h:.2f}, {section.b:.2f}, {section.a:.2f}, {section.t2:.2f}, {section.t3:.2f} \n'
+              f'GWP = {section.co2:.0f} kg/m^2')
+
     else:
         print("no plot for specified section_type defined jet")
         fig, ax = plt.subplots()
@@ -279,7 +301,7 @@ def plot_rectangle_with_dimensions(width, height, color='black', hatch='*', offs
     ax.set_aspect('equal')
 
     # Set the limits of the plot
-    ax.set_xlim(0, width+2*offset)
+    ax.set_xlim(0, width+5*offset)
     ax.set_ylim(0, height+4*offset)
 
     return fig, ax, offset
@@ -289,14 +311,18 @@ def plot_rib_with_dimensions(b, bw, h, hf, color='black', hatch='*', offset=0.1)
     fig, ax = plt.subplots()
 
     # Define the rectangle with hatching (lower-left corner at (x, y), width, and height)
-    rect_flange = patches.Rectangle((offset, offset+h-hf), b, hf, linewidth=1, edgecolor=color, facecolor='none',
+    rect_flange = patches.Rectangle((offset, offset+h-hf), 2*b, hf, linewidth=1, edgecolor=color, facecolor='none',
                              hatch=hatch, fill=False)
-    rect_rib = patches.Rectangle((offset+b/2-bw/2, offset), bw, h-hf, linewidth=1, edgecolor=color, facecolor='none',
+    rect_rib1 = patches.Rectangle((offset+b/2-bw/2, offset), bw, h-hf, linewidth=1, edgecolor=color, facecolor='none',
                              hatch=hatch, fill=False)
+    rect_rib2 = patches.Rectangle((offset + 3*b / 2 - bw / 2, offset), bw, h - hf, linewidth=1, edgecolor=color,
+                                 facecolor='none',
+                                 hatch=hatch, fill=False)
 
     # Add the rectangle to the plot
     ax.add_patch(rect_flange)
-    ax.add_patch(rect_rib)
+    ax.add_patch(rect_rib1)
+    ax.add_patch(rect_rib2)
 
     # # Add dimension annotations
     # ax.annotate(f'b = {width:.2f} m', xy=(offset + width / 2, 0.05), xytext=(offset + width / 2, 0.06), ha='center')
@@ -314,12 +340,53 @@ def plot_rib_with_dimensions(b, bw, h, hf, color='black', hatch='*', offset=0.1)
     ax.set_aspect('equal')
 
     # Set the limits of the plot
-    ax.set_xlim(0, b + 2 * offset)
+    ax.set_xlim(0, b + 10 * offset)
     ax.set_ylim(0, h + 4 * offset)
 
     return fig, ax, offset
 
+def plot_wd_rib_with_dimensions(b, h, a, t2, t3, color='black', hatch='--', offset=0.1):
+    # Create a figure and axis
+    fig, ax = plt.subplots()
 
+    # Define the rectangle with hatching (lower-left corner at (x, y), width, and height)
+    rect_flange2 = patches.Rectangle((offset, offset), 2*a, t2, linewidth=1, edgecolor=color, facecolor='none',
+                             hatch='--', fill=False)
+    rect_flange3 = patches.Rectangle((offset, offset + t2+h), 2*a, t3, linewidth=1, edgecolor=color, facecolor='none',
+                                     hatch='--', fill=False)
+    rect_rib1 = patches.Rectangle((offset+a/2, offset+t2), b, h, linewidth=1, edgecolor=color, facecolor='none',
+                             hatch='-', fill=False)
+    rect_rib2 = patches.Rectangle((offset+3*a/2, offset+t2), b, h, linewidth=1, edgecolor=color, facecolor='none',
+                             hatch='-', fill=False)
+
+
+    # Add the rectangle to the plot
+    ax.add_patch(rect_flange2)
+    ax.add_patch(rect_flange3)
+    ax.add_patch(rect_rib1)
+    ax.add_patch(rect_rib2)
+
+    # Add dimension annotations
+    ax.annotate(f'b_Rippe = {b:.2f} m', xy=(offset + b, 0.05), xytext=(offset + b / 2, 0.06), ha='center')
+    ax.annotate(f'b = {b:.2f} m', xy=(offset + b/2, 0.05), xytext=(offset + 3*b / 2, -0.16), ha='center')
+    ax.annotate(f'h = {h:.2f} m', xy=(0.02, offset + h / 2), xytext=(0.01, offset + h / 2),
+                va='center', rotation='vertical')
+
+    # #Draw arrows for dimensions
+    # ax.annotate('', xy=(0.1, 0.05), xytext=(0.1 + width, 0.05), arrowprops=dict(arrowstyle='|-|', color='black'))
+    # ax.annotate('', xy=(0.05, 0.1), xytext=(0.05, 0.1 + height), arrowprops=dict(arrowstyle='|-|', color='black'))
+
+    # Hide the x and y axes
+    ax.axis('off')
+
+    # Set the aspect of the plot to be equal
+    ax.set_aspect('equal')
+
+    # Set the limits of the plot
+    ax.set_xlim(0, 2*a + 2 * offset)
+    ax.set_ylim(0, h+t2+t3 + 4 * offset)
+
+    return fig, ax, offset
 
 def plot_rebars_long(ax, section, offset, color='blue'):
     # get rebar positions

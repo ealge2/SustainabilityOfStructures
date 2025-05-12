@@ -17,7 +17,7 @@ create_dummy_database.create_database(database_name)  # create database
 lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 25
+max_iter = 100
 
 #  define content of plot
 criteria = ["ENV"]

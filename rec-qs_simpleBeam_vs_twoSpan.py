@@ -5,30 +5,45 @@ import create_dummy_database  # file for creating a "dummy database", as long as
 import struct_analysis  # file with code for structural analysis
 import struct_optimization  # file with code for structural optimization
 import matplotlib.pyplot as plt
-import plot_datasets  # file with code for plotting results in a standardized way
 
 # INPUT
 # create dummy-database
-database_name = "dummy_sustainability_1.db"  # define database name
+database_name = "dummy_sustainability_2.db"  # define database name
 create_dummy_database.create_database(database_name)  # create database
 
-# create materials for reinforced concrete cross-section, derive corresponding design values
+
+
+
 # create material for wooden cross-section, derive corresponding design values
 timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
 timber1.get_design_values()
-timber2 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
-timber2.get_design_values()
-timber3 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
-timber3.get_design_values()
 
-section_wd0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
 
+
+# create materials for reinforced concrete cross-section, derive corresponding design values
+concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)
+concrete1.get_design_values()
+reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
+reinfsteel1.get_design_values()
+"""
+# create initial wooden rectangular cross-section
+section_wd0 = struct_analysis.RectangularWood(timber1, 1.0, 0.1, xi=0.02)
+"""
+# create initial reinforced concrete rectangular cross-section
+section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
+
+"""
 # create floor structure for solid wooden cross-section
-bodenaufbau_holzrippendecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                                  ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
                                  ["'Kies gebrochen'", 0.12, False]]
-bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_holzrippendecke, database_name)
+bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_brettstappeldecke, database_name)
+"""
 # create floor structure for solid reinforced concrete cross-section
+bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+                       ["'Unterlagsboden Zement, 85 mm'", False, False],
+                       ["'Glaswolle'", 0.03, False]]
+bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau_rcdecke, database_name)
 
 # define loads on member
 g2k = 0.75e3  # n.t. Einbauten
@@ -38,34 +53,48 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 #  define content of plot
-to_plot = [[section_wd0, bodenaufbau_wd]]
-criteria = ["ULS", "SLS1", "SLS2", "FIRE", "ENV"]
+to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
+criteria = ["ULS", "ENV"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
                 ["cost_struct", "[CHF]"]]
 
 # ANALYSIS
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 200
+max_iter = 100
 member_list = []
 legend = []
 # create plot data
-for i in to_plot:
+
+for idx, i in enumerate(to_plot):
     for criterion in criteria:
-        print(criterion)
         for optimum in optima:
             members = []
             for length in lengths:
-                sys = struct_analysis.BeamSimpleSup(length)
-                member0 = struct_analysis.Member1D(i[0], sys, i[1], req, g2k, qk)
-                opt_section = struct_optimization.get_optimized_section(member0, criterion, optimum, max_iter)
-                opt_member = struct_analysis.Member1D(opt_section, sys, i[1], req, g2k, qk)
-                members.append(opt_member)
+
+                if idx == 0:
+                    sys = struct_analysis.BeamSimpleSup(length)
+                    SystemLegend = "Simple Beam"
+                elif idx  == 1:
+                    sys = struct_analysis.BeamTwoSpan(length)
+                    SystemLegend = "Two Span"
+                elif idx == 2:
+                    sys = struct_analysis.ContinuousSup(length)
+                    SystemLegend = "Continuously supported"
+                else:
+                     # Handle other cases if needed
+                    sys = None  # Placeholder, adjust as necessary
+
+                if sys is not None:
+                    member0 = struct_analysis.Member1D(i[0], sys, i[1], req, g2k, qk)
+                    opt_section = struct_optimization.get_optimized_section(member0, criterion, optimum, max_iter)
+                    opt_member = struct_analysis.Member1D(opt_section, sys, i[1], req, g2k, qk)
+                    members.append(opt_member)
             member_list.append(members)
-            legend.append([i[0].section_type, criterion, optimum])
+            legend.append([i[0].section_type, criterion, optimum, SystemLegend])
 
 # plot figures
 plt.figure(1)
@@ -78,16 +107,14 @@ for i, members in enumerate(member_list):
         plotdata[2].append(mem.section.co2)
         plotdata[3].append(mem.section.co2 + mem.floorstruc.co2)
         plotdata[4].append(mem.section.cost)
-    sec_typ, cri, opt = legend[i]
+    sec_typ, cri, opt, sys_leg = legend[i]
     # set line color
-    if sec_typ == "rc_rec":
-        color = "tab:green"  # color for reinforced concrete
-    elif sec_typ == "wd_rec":
-        color = "tab:brown"  # color for wood
-    elif sec_typ == "rc_rib":
-        color = "tab:green"  # color for reinforced concrete
-    elif sec_typ == "wd_rib":
-        color = "tab:brown"  # color for wood
+    if sys_leg == "Simple Beam":
+        color = "tab:green"  # color for simple beam
+    elif sys_leg == "Two Span":
+        color = "tab:blue"  # color for two span
+    elif sys_leg == "Continuously supported":
+        color = "tab:red"  # color for continuously supported beam
     else:
         color = "k"
     # set linestyle
@@ -108,7 +135,7 @@ for i, members in enumerate(member_list):
         linewidth = 1.0
     else:
         linewidth = 0.1
-    label = sec_typ + ", " + cri + ", optimized for " + opt
+    label = sys_leg + ", " + cri + ", optimized for " + opt
 #    for j, pl in enumerate(plotted_data):
     for idx, data in enumerate(plotdata):
         plt.subplot(3, 2, idx + 1)
@@ -129,42 +156,31 @@ plt.show()
 
 #  VALIDATION
 #  isolate cross-sections for verification
-validation_idx = 6  # index of length in length-list, corresponding optimal members are separated for further validation
+validation_idx = 3  # index of length in length-list, corresponding optimal members are separated for further validation
 v_members = [member[validation_idx] for member in member_list]
 
 # print some properties of the optimal members, which are useful for manual validation
 for idx, member in enumerate(v_members):
     print(legend[idx])
-    print("Section Nr. " + str(idx) + ":", member.section.section_type)
-    print("h:    ", round(member.section.h, 4), 'm')
-    print("b:    ", round(member.section.b, 4), 'm')
-    print("l:", member.li_max)
-
-    print("admissible load:", member.calc_qk_zul_gzt(), round(member.qk_zul_gzt, 4), 'kN/m2')
-    print("load:", round(member.qk,4))
-    print("co2 of section:", member.section.co2)
+    print("Section Nr. " + str(idx) + " :")
+    print(member.section.section_type)
+    print("h:")
+    print(member.section.h)
+    print("admissible load:")
+    member.calc_qk_zul_gzt()
+    print(member.qk_zul_gzt)
+    print("load:")
+    print(member.qk)
+    print("co2 of section:")
+    print(member.section.co2)
+    if member.section.section_type == "rc_rec":
+        print("x/d:")
+        print(member.section.x_p/member.section.d)
+        print("di_xu:")
+        print(member.section.bw[0])
     print("Admissible deflections (ductile installations):")
     print(member.w_app_adm)
     print("Calculated deflections (ductile installations):")
     print(member.w_app)
-    print(member.a_ed)
-    print("fire resistance:")
-    member.get_fire_resistance()
-    print(member.fire_resistance)
-    print(" ")
 
 print("Do manual verification of the data in v_members")
-
-# # retrieve data from database, find optimal cross-sections and plot results
-# mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
-#
-# data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd, req,
-#                                                       "wd_rib", mat_names, g2k, qk, max_iter)
-# # plot cross-section of members for verification
-# for i, mem in enumerate(vrfctn_members[0]):
-#     section = mem.section
-#     plot_datasets.plot_section(section)
-#     # Show the plot
-#     plt.title(f'#{vrfctn_members[1][i]}')
-#
-# plt.show()
