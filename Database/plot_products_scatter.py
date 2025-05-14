@@ -24,7 +24,7 @@ EPD_concrete = cursor.execute(
                     SELECT Total_GWP FROM products
                     WHERE type LIKE '%ready mixed concrete%'
                     AND A1toA3_GWP IS NOT NULL
-                    AND NOT LIKE '%Betonsortenrechner%'
+                    AND "source [string]" NOT LIKE '%Betonsortenrechner%'
                     AND "source [string]" NOT LIKE '%Ecoinvent%'
                     AND "source [string]" NOT LIKE '%KBOB%'
                     """).fetchall()
@@ -205,7 +205,7 @@ ax1.set_ylim(ymin,ymax)
 ax1.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax1.set_ylabel('#')
 ax1.set_title('Beton')
-ax1.legend(loc='upper right')
+#ax1.legend(loc='upper right')
 
 # Add vertical lines and text for KBOB values
 ax1.axvline(KBOB_concrete_values[0], linestyle='--', alpha=0.5, color='tomato')
@@ -254,7 +254,7 @@ ax2.scatter(EPD_timber_values, np.random.normal(2, 0.5, len(EPD_timber_values)),
 ax2.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax2.set_ylabel('#')
 ax2.set_title('Holz')
-ax2.legend(loc='upper right')
+#ax2.legend(loc='upper right')
 
 ax2.set_yticks(range(ymin, ymax))
 ax2.set_ylim(ymin,ymax)
@@ -302,7 +302,7 @@ ax3.scatter(EPD_reinf_values, np.random.normal(2, 0.5, len(EPD_reinf_values)), a
 ax3.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax3.set_ylabel('#')
 ax3.set_title('Betonstahl')
-ax3.legend(loc='upper right')
+#ax3.legend(loc='upper right')
 
 ax3.set_yticks(range(ymin, ymax))
 ax3.set_ylim(ymin,ymax)
@@ -344,10 +344,10 @@ ax4.set_yticks(range(ymin, ymax))
 ax4.set_ylim(ymin,ymax)
 
 
-ax4.set_xlabel('Total GWP [kg CO2-eq/t]')
+ax4.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
 ax4.set_ylabel('#')
 ax4.set_title('Baustahl')
-ax4.legend(loc='upper right')
+#ax4.legend(loc='upper right')
 
 
 
