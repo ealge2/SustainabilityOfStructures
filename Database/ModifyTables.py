@@ -1,7 +1,7 @@
 import sqlite3
 
 # create or open database sustainability
-connection = sqlite3.connect('data.db')
+connection = sqlite3.connect('../alt/data.db')
 # create cursor object
 cursor = connection.cursor()
 
