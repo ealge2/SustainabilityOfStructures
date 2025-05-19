@@ -145,7 +145,7 @@ EPD_steel = cursor.execute("""
                         AND Total_GWP IS NOT NULL
                         AND "source [string]" NOT LIKE '%KBOB%'
                         """).fetchall()
-EPD_steel_values = [row[0] for row in EPD_reinf]
+EPD_steel_values = [row[0] for row in EPD_steel]
 
 KBOB_steel = cursor.execute("""
                         SELECT A1toA3_GWP FROM products
@@ -332,6 +332,8 @@ bins = np.histogram_bin_edges(all_data_steel, bins='auto')
 
 # Calculate the bin centers
 bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# Calculate the bin centers
+bin_centers_EPD = 0.5 * (bins[:-1] + bins[1:])
 
 # Calculate the histogram for EPD_timber_values
 hist_EPD, _ = np.histogram(EPD_steel_values, bins=bins)

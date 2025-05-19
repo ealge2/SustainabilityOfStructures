@@ -342,7 +342,7 @@ def wd_rqs_h(h, args):
         print("criterion has to be 'ULS', 'SLS1', 'SLS2' or ENV")
     return to_minimize
 
-def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=200):
+def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h
     b0 = m.section.b
@@ -350,7 +350,7 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=200):
     var0 = [b0, h0, t20]
 
     #define bounds of variables
-    bh = (0.1, 1)
+    bh = (0.1, 2)
     bb = (0.08, 0.26)
     bt2 = (0.027, 0.1)
     bounds = [bb, bh,bt2]
