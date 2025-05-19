@@ -42,12 +42,18 @@ class Wood:
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            inquiry = "SELECT PRO_ID, density, GWP, cost, cost2 FROM products WHERE mech_prop=" + mech_prop
+            #inquiry = "SELECT PRO_ID, self.density, GWP, cost, cost2 FROM products WHERE mech_prop=" + mech_prop
+            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop=" + mech_prop
         else:
-            inquiry = "SELECT PRO_ID, density, GWP, cost, cost2 FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, self.density, GWP, cost, cost2 FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID=" + prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
-        self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
+        # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
+        self.prod_id, density, self.GWP, self.cost = result[0]
+        self.density = float(density)
+        self.cost = 0
+        self.cost2 = 0
         self.fmd = self.get_design_values()
 
     def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values
@@ -73,12 +79,24 @@ class ReadyMixedConcrete:
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            inquiry = "SELECT PRO_ID, density, GWP, cost, cost2 FROM products WHERE mech_prop=" + mech_prop
+            # inquiry = ("""
+            #         SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE "material [string]" LIKE """ + mech_prop
+            #            )
+            inquiry = ("""
+                                SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE "material [string]" LIKE """ + mech_prop
+                       )
         else:
-            inquiry = "SELECT PRO_ID, density, GWP, cost, cost2 FROM products WHERE PRO_ID=" + prod_id
+            # inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE PRO_ID LIKE """ + prod_id
+            #            )
+            inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID LIKE """ + prod_id
+                       )
         cursor.execute(inquiry)
         result = cursor.fetchall()
-        self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
+        # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
+        self.prod_id, density, self.GWP, self.cost = result[0]
+        self.density = float(density)
+        self.cost = 0
+        self.cost2 = 0
         self.dmax = dmax
         self.fcd, self.tcd, self.ec2d = self.get_design_values()
 
@@ -105,12 +123,15 @@ class SteelReinforcingBar:
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            inquiry = "SELECT PRO_ID, density, GWP, cost FROM products WHERE mech_prop=" + mech_prop
+            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop=" + mech_prop
         else:
-            inquiry = "SELECT PRO_ID, density, GWP, cost FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID=" + prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
-        self.prod_id, self.density, self.GWP, self.cost = result[0]
+        #self.prod_id, density, self.GWP, self.cost = result[0]
+        self.prod_id, density, self.GWP, self.cost = result[0]
+        self.density = float(density)
+        self.cost = 0
         self.fsd = self.get_design_values()
 
     def get_design_values(self, gamma_s=1.15):  # calculate design values

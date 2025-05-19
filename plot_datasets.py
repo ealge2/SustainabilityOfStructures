@@ -26,15 +26,25 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     connection = sqlite3.connect(database_name)
     cursor = connection.cursor()
     for mat_name in mat_names:
-        inquiry = ("SELECT PRO_ID FROM products WHERE"
-                   " material="+mat_name)
+        inquiry = ("""
+                SELECT PRO_ID FROM products
+                WHERE density IS NOT NULL
+                AND mech_prop IS NOT NULL
+                AND "material [string]" LIKE """ + mat_name
+        )
+        # inquiry = ("SELECT PRO_ID FROM products WHERE"
+        #            " material=" + mat_name)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         for i, prod_id in enumerate(result):
             # create materials for wooden cross-sections, derive corresponding design values
             prod_id_str = "'" + str(prod_id[0]) + "'"
-            inquiry = ("SELECT mech_prop FROM products WHERE"
-                       " PRO_ID=" + prod_id_str)
+            inquiry = ("""
+                    SELECT mech_prop FROM products
+                    WHERE  PRO_ID LIKE """ + prod_id_str
+            )
+            # inquiry = ("SELECT mech_prop FROM products WHERE"
+            #            " PRO_ID=" + prod_id_str)
             cursor.execute(inquiry)
             result = cursor.fetchall()
             mech_prop = "'" + result[0][0] + "'"
@@ -49,6 +59,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
                 concrete.get_design_values()
                 # create a Rebar material object
+                # ToDo integrate calculations with low and high value for rebar emissions
                 rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
@@ -63,6 +74,8 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 concrete.get_design_values()
                 # create a Rebar material object
                 rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
+                #ToDo integrate calculations with low and high value for rebar emissions
+
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
 

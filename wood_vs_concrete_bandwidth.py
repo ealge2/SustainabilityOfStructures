@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 
 #  INPUT
 # create dummy-database
-database_name = "dummy_sustainability.db"  # define database name
-create_dummy_database.create_database(database_name)  # create database
+database_name = "database_250514.db"  # define database name
+# create_dummy_database.create_database(database_name)  # create database
 
 # define system lengths for plot
-lengths = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+lengths = [4, 6, 8, 10, 12, 14]
 
 # Index of verified length
-idx_vrc = 6
+idx_vrc = 3
 
 # max. number of iterations per optimization. Higher value leads to better results
 max_iter = 20
@@ -53,7 +53,8 @@ vrfctn_members = []
 
 # CREATE AND PLOT DATASET FOR RECTANGULAR WOODEN CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
-mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
+#mat_names = ["'glue-laminated_timber'", "'solid_structural_timber_(kvh)'"]
+mat_names = ["'Glue_laminated_timber'", "'solid_structural_timber_(kvh)'"]
 # retrive data from database, find optimal cross-sections and plot results
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd,
                                                               req, "wd_rec", mat_names, g2k, qk, max_iter,
@@ -64,7 +65,6 @@ vrfctn_members.append(vrfctn_members_new)
 # CREATE AND PLOT DATASET FOR RECTANGULAR REINFORCED CONCRETE CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
 mat_names = ["'ready_mixed_concrete'"]
-print(mat_names)
 # retrive data from database, find optimal cross-sections and plot results
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc,
                                                               req, "rc_rec", mat_names, g2k, qk, max_iter,
