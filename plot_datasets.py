@@ -209,7 +209,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             # extract the x and y coordinates for plotting
             x, y = polygon.exterior.xy
             # plot area
-            plt.fill(x, y, alpha=0.05, facecolor=color)
+            plt.fill(x, y, alpha=0.03, facecolor=color)
             # plot lines
             plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label)
             data_max[idx] = max(data_max[idx], max(data))

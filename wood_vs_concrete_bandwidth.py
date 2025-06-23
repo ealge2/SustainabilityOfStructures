@@ -15,7 +15,7 @@ database_name = "database_250514.db"  # define database name
 lengths = [4, 6, 8]
 
 # Index of verified length
-idx_vrc = 3
+idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
 max_iter = 10
@@ -86,13 +86,13 @@ for idx, info in enumerate(plotted_data):
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
     plt.grid()
 
-# plot cross-section of members for verification
-for mem_group in vrfctn_members:
-    for i, mem in enumerate(mem_group[0]):
-        section = mem.section
-        plot_datasets.plot_section(section)
-        # Show the plot
-        plt.title(f'#{mem_group[1][i]}')
+# # plot cross-section of members for verification
+# for mem_group in vrfctn_members:
+#     for i, mem in enumerate(mem_group[0]):
+#         section = mem.section
+#         plot_datasets.plot_section(section)
+#         # Show the plot
+#         plt.title(f'#{mem_group[1][i]}')
 
 # SHOW FIGURE
 plt.show()
