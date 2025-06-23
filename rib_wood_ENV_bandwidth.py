@@ -43,12 +43,11 @@ data_max, vrfctn_members = plot_datasets.plot_dataset(lengths, database_name, cr
                                                       "wd_rib", mat_names, g2k, qk, max_iter)
 
 # define legend of plots
-plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
-                ["cost_struct", "[CHF]"]]
+plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"]]
 
 # add legends to plot and adjust axis to limits of retrieved data
 for idx, info in enumerate(plotted_data):
-    plt.subplot(3, 2, idx + 1)
+    plt.subplot(2, 2, idx + 1)
     plt.xlabel('l [m]')
 #    plt.title(info[0])
     plt.ylabel(info[0] + " " + info[1])
