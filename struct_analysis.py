@@ -83,7 +83,7 @@ class ReadyMixedConcrete:
             #         SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE "material [string]" LIKE """ + mech_prop
             #            )
             inquiry = ("""
-                                SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE "material [string]" LIKE """ + mech_prop
+                                SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop LIKE """ + mech_prop
                        )
         else:
             # inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE PRO_ID LIKE """ + prod_id
@@ -260,7 +260,7 @@ class RectangularWood(SupStrucRectangular, Section):
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
     def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bw=0.0, s_bw=0.15, n_bw=0,
-                 phi=2.0, c_nom=0.02, xi=0.02, jnt_srch=0.25):
+                 phi=2.0, c_nom=0.02, xi=0.02, jnt_srch=0.15):
         # create a rectangular concrete object
         section_type = "rc_rec"
         super().__init__(section_type, b, h, phi)
@@ -484,7 +484,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
     #di_x_w, n_x_w = diameter and number of longitudinal reinforcement in rib
     def __init__(self, concrete_type, rebar_type, l0, b, b_w, h, h_f, di_xu, s_xu, di_xo, s_xo, di_x_w, n_x_w,
                  di_pb_bw, s_pb_bw, n_pb_bw=2,
-                 phi=2.0, c_nom=0.03, xi=0.02, jnt_srch=0.25):
+                 phi=2.0, c_nom=0.03, xi=0.02, jnt_srch=0.15):
         section_type = "rc_rib"
         super().__init__(section_type, b, b_w, h, h_f, l0, phi)
         self.concrete_type = concrete_type

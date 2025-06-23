@@ -8,8 +8,11 @@ import matplotlib.pyplot as plt
 
 # INPUT
 # create dummy-database
-database_name = "dummy_sustainability_2.db"  # define database name
-create_dummy_database.create_database(database_name)  # create database
+# database_name = "dummy_sustainability.db"  # define database name
+# create_dummy_database.create_database(database_name)  # create database
+
+# define database
+database_name = "database_250514.db"
 
 
 

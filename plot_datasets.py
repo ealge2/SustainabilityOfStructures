@@ -85,11 +85,11 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
 
             elif crsec_type == "wd_rib":
                 # create a Wood material object
-                timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+                timber1 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
                 timber1.get_design_values()
-                timber2 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+                timber2 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
                 timber2.get_design_values()
-                timber3 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
+                timber3 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
                 timber3.get_design_values()
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
