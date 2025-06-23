@@ -18,7 +18,7 @@ lengths = [4, 6, 8, 10, 12, 14]
 idx_vrc = 3
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 20
+max_iter = 10
 
 #  define content of plot
 criteria = ["ENV"]
@@ -48,7 +48,7 @@ def max_of_arrays(existing_data, new_data):
     return [max(a, b) for a, b in zip(existing_data, new_data)]
 
 
-data_max = [0, 0, 0, 0, 0, 0]
+data_max = [0, 0, 0, 0]
 vrfctn_members = []
 
 # CREATE AND PLOT DATASET FOR RECTANGULAR WOODEN CROSS-SECTIONS
@@ -73,12 +73,11 @@ data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
 # DEFINE LABELS OF PLOTS
-plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
-                ["cost_struct", "[CHF]"]]
+plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"]]
 
 # ADD LABELS, LEGEND, AXIS LIMITS AND GRID TO THE PLOTS
 for idx, info in enumerate(plotted_data):
-    plt.subplot(3, 2, idx + 1)
+    plt.subplot(2, 2, idx + 1)
     plt.xlabel('l [m]')
     plt.ylabel(info[0] + " " + info[1])
     if idx % 2 == 0:

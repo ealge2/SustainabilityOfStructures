@@ -30,6 +30,10 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 SELECT PRO_ID FROM products
                 WHERE density IS NOT NULL
                 AND mech_prop IS NOT NULL
+                AND Total_GWP > 0
+                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                AND "source [string]" NOT LIKE '%Ecoinvent%'
+                AND "source [string]" NOT LIKE '%KBOB%'
                 AND "material [string]" LIKE """ + mat_name
         )
         # inquiry = ("SELECT PRO_ID FROM products WHERE"
@@ -146,26 +150,20 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     co2_tot_min = [min(values) for values in zip(*co2_tot)]
     co2_tot_max = [max(values) for values in zip(*co2_tot)]
 
-    # create data of envelope area for subplot 5: costs of structure
-    cost = [[mem.section.cost for mem in sublist] for sublist in member_list]
-    cost_min = [min(values) for values in zip(*cost)]
-    cost_max = [max(values) for values in zip(*cost)]
-
-    values_min = [h_min, h_tot_min, co2_min, co2_tot_min, cost_min]
-    values_max = [h_max, h_tot_max, co2_max, co2_tot_max, cost_max]
+    values_min = [h_min, h_tot_min, co2_min, co2_tot_min]
+    values_max = [h_max, h_tot_max, co2_max, co2_tot_max]
 
     # PLOT DATASET TO FIGURE
     plt.figure(1)
-    data_max = [0, 0, 0, 0, 0, 0]
+    data_max = [0, 0, 0, 0]
     vrfctn_members = [[], []]
     for i, members in enumerate(member_list):
-        plotdata = [[], [], [], [], []]
+        plotdata = [[], [], [], []]
         for j, mem in enumerate(members):
             plotdata[0].append(mem.section.h)
             plotdata[1].append(mem.section.h + mem.floorstruc.h)
             plotdata[2].append(mem.section.co2)
             plotdata[3].append(mem.section.co2 + mem.floorstruc.co2)
-            plotdata[4].append(mem.section.cost)
             if j == idx_vrfctn:
                 vrfctn_members[0].append(mem)
                 vrfctn_members[1].append(i)
@@ -176,7 +174,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         elif sec_typ == "wd_rec":
             color = "tab:brown"  # color for wood
         elif sec_typ == "rc_rib":
-            color = "tab:green"  # color for wood
+            color = "tab:green"  # color for reinforced concrete
         elif sec_typ == "wd_rib":
             color = "tab:brown"  # color for wood
 
@@ -203,7 +201,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         label = sec_typ + ", " + mat + ", " + cri + ", optimized for " + opt
         # plot data
         for idx, data in enumerate(plotdata):
-            plt.subplot(3, 2, idx + 1)
+            plt.subplot(2, 2, idx + 1)
             # prepare area
             coords = list(zip(lengths, values_max[idx])) + list(zip(lengths[::-1], values_min[idx][::-1]))
             # create a polygon from the coordinates
@@ -211,7 +209,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             # extract the x and y coordinates for plotting
             x, y = polygon.exterior.xy
             # plot area
-            plt.fill(x, y, alpha=0.2, facecolor=color)
+            plt.fill(x, y, alpha=0.05, facecolor=color)
             # plot lines
             plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label)
             data_max[idx] = max(data_max[idx], max(data))
