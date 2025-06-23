@@ -877,13 +877,25 @@ class RibWood(SupStrucRibWood):
 
 
     @staticmethod
-    def fire_resistance(member):
-         bnds = [(0, 240)]
-         t0 = 60
-         max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)
-         t_max = max_t.x[0]
-         return t_max
-    #
+    def fire_resistance(section):
+         #bnds = [(0, 240)]
+         #t0 = 60
+         #max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)
+         #t_max = max_t.x[0]
+        t2 = section.t2
+        t3 = section.t3
+        b = section.b
+        h = section.h
+        if t2 >= 50: #and b > ? and h > ? and t3 >= ?
+            resistance = 90
+        if t2 >= 26 and b > 60 and h > 180 and t3 >= 27:
+            resistance = 60
+        if t2 >= 10: #and b > ? and h > ? and t3 >= ?
+            resistance = 30
+        else:
+            resistance = 0
+        return resistance
+
     # @staticmethod
     # def fire_minimizer(t, args):
     #     member = args[0]
@@ -1182,6 +1194,8 @@ class Member1D:
             fire_resistance = RectangularWood.fire_resistance(self)
         elif self.section.section_type == "rc_rib":
             fire_resistance = RibbedConcrete.fire_resistance(self.section)
+        elif self.section.section_type == "wd_rib":
+            fire_resistance = RibWood.fire_resistance(self.section)
         else:
             #print("fire resistance for is not defined for that cross-section type.")
             fire_resistance = None

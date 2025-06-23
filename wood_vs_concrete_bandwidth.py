@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 database_name = "database_250514.db"  # define database name
 # create_dummy_database.create_database(database_name)  # create database
 
-# define system lengths for plot
+# define system lengths for plot xx
 lengths = [4, 6, 8]
 
 # Index of verified length
