@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 lengths = [4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # Index of verified length (cross-sections of that length will be plotted)
-idx_vrc = 6
+idx_vrc = 2
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 100
+max_iter = 150
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)

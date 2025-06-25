@@ -20,7 +20,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         idx_vrfctn = random.randint(0, len(lengths)-1)
 
     # GENERATE INITIAL CROSS-SECTIONS
-    # Search database (table products, attribute material) for products,
+    # Search database (table products, attribute material) for products
     # get prod_id of relevant materials from database and create initial cross-section for each product
     to_plot = []
     connection = sqlite3.connect(database_name)
@@ -41,7 +41,6 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         cursor.execute(inquiry)
         result = cursor.fetchall()
         for i, prod_id in enumerate(result):
-            # create materials for wooden cross-sections, derive corresponding design values
             prod_id_str = "'" + str(prod_id[0]) + "'"
             inquiry = ("""
                     SELECT mech_prop FROM products
@@ -58,30 +57,100 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 timber.get_design_values()
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RectangularWood(timber, 1.0, 0.1, xi=0.02)
+                # add section to content-definition of plot-line
+                line_i = [section_0, floorstruc]
+                to_plot.append(line_i)
+
             elif crsec_type == "rc_rec":
                 # create a Concrete material object
                 concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
                 concrete.get_design_values()
-                # create a Rebar material object
-                # ToDo integrate calculations with low and high value for rebar emissions
-                rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
-                # create initial wooden rectangular cross-section
-                section_0 = struct_analysis.RectangularConcrete(concrete, rebar, 1.0, 0.12,
+                # search database for rebar material of type B500B with lowest and highes emissions
+                inquiry = ("""
+                            SELECT PRO_ID FROM products
+                            WHERE Total_GWP = (SELECT MIN(Total_GWP) FROM products
+                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
+                                                AND density IS NOT NULL
+                                                AND mech_prop IS NOT NULL
+                                                AND Total_GWP > 0
+                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
+                                                AND "source [string]" NOT LIKE '%KBOB%')
+                            OR Total_GWP = (SELECT MAX(Total_GWP) FROM products
+                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
+                                                AND density IS NOT NULL
+                                                AND mech_prop IS NOT NULL
+                                                AND Total_GWP > 0
+                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
+                                                AND "source [string]" NOT LIKE '%KBOB%')
+                            """
+                           )
+                cursor.execute(inquiry)
+                result = cursor.fetchall()
+                prod_id_low = result[0]
+                prod_id_low_str = "'" + str(prod_id_low[0]) + "'"
+                prod_id_high = result[1]
+                prod_id_high_str = "'" + str(prod_id_high[0]) + "'"
+                # create a rebar material objects with mech prop B500B and low rsp high emission values
+                rebar_low_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_low_str)
+                rebar_high_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_high_str)
+                # create initial cross-sections
+                section_00 = struct_analysis.RectangularConcrete(concrete, rebar_low_em, 1.0, 0.12,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
-                color = "tab:green"
-
+                section_01 = struct_analysis.RectangularConcrete(concrete, rebar_high_em, 1.0, 0.12,
+                                                                 0.014, 0.15, 0.01, 0.15,
+                                                                 0, 0.15, 2)
+                # add sections to content-definition of plot-line
+                line_i0 = [section_00, floorstruc]
+                line_i1 = [section_01, floorstruc]
+                to_plot.extend([line_i0, line_i1])
 
             elif crsec_type == "rc_rib":
                 # create a Concrete material object
                 concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
                 concrete.get_design_values()
-                # create a Rebar material object
-                rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
-                #ToDo integrate calculations with low and high value for rebar emissions
+                # search database for rebar material of type B500B with lowest and highes emissions
+                inquiry = ("""
+                                            SELECT PRO_ID FROM products
+                                            WHERE Total_GWP = (SELECT MIN(Total_GWP) FROM products
+                                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
+                                                                AND density IS NOT NULL
+                                                                AND mech_prop IS NOT NULL
+                                                                AND Total_GWP > 0
+                                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
+                                                                AND "source [string]" NOT LIKE '%KBOB%')
+                                            OR Total_GWP = (SELECT MAX(Total_GWP) FROM products
+                                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
+                                                                AND density IS NOT NULL
+                                                                AND mech_prop IS NOT NULL
+                                                                AND Total_GWP > 0
+                                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
+                                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
+                                                                AND "source [string]" NOT LIKE '%KBOB%')
+                                            """
+                           )
+                cursor.execute(inquiry)
+                result = cursor.fetchall()
+                prod_id_low = result[0]
+                prod_id_low_str = "'" + str(prod_id_low[0]) + "'"
+                prod_id_high = result[1]
+                prod_id_high_str = "'" + str(prod_id_high[0]) + "'"
 
-                # create initial wooden rectangular cross-section
-                section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
+                # create a rebar material objects with mech prop B500B and low rsp high emission values
+                rebar_low_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_low_str)
+                rebar_high_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_high_str)
+
+                # create initial cross-sections
+                section_00 = struct_analysis.RibbedConcrete(concrete, rebar_low_em, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
+                section_01 = struct_analysis.RibbedConcrete(concrete, rebar_high_em, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15,
+                                                            0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
+                # add sections to content-definition of plot-line
+                line_i0 = [section_00, floorstruc]
+                line_i1 = [section_01, floorstruc]
+                to_plot.extend([line_i0, line_i1])
 
             elif crsec_type == "wd_rib":
                 # create a Wood material object
@@ -93,16 +162,14 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 timber3.get_design_values()
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
-
-
+                # add section to content-definition of plot-line
+                line_i = [section_0, floorstruc]
+                to_plot.append(line_i)
 
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
-                section_0 = []
 
-            # define content of plot-line
-            line_i = [section_0, floorstruc]
-            to_plot.append(line_i)
+
 
     # ANALYSIS AND OPTIMIZATION OF CROSS-SECTIONS
     member_list = []
