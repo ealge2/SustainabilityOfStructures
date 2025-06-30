@@ -50,7 +50,8 @@ class Wood:
         cursor.execute(inquiry)
         result = cursor.fetchall()
         # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
-        self.prod_id, density, self.GWP, self.cost = result[0]
+        self.prod_id, density, GWP, self.cost = result[0]
+        self.GWP = GWP/1e3  # transform unit from [kg-Co2-eq/t] to [kg-Co2-eq/kg]
         self.density = float(density)
         self.cost = 0
         self.cost2 = 0
@@ -93,7 +94,8 @@ class ReadyMixedConcrete:
         cursor.execute(inquiry)
         result = cursor.fetchall()
         # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
-        self.prod_id, density, self.GWP, self.cost = result[0]
+        self.prod_id, density, GWP, self.cost = result[0]
+        self.GWP = GWP/1e3  # transform unit from [kg-Co2-eq/t] to [kg-Co2-eq/kg]
         self.density = float(density)
         self.cost = 0
         self.cost2 = 0
@@ -129,7 +131,8 @@ class SteelReinforcingBar:
         cursor.execute(inquiry)
         result = cursor.fetchall()
         #self.prod_id, density, self.GWP, self.cost = result[0]
-        self.prod_id, density, self.GWP, self.cost = result[0]
+        self.prod_id, density, GWP, self.cost = result[0]
+        self.GWP = GWP/1e3  # transform unit from [kg-Co2-eq/t] to [kg-Co2-eq/kg]
         self.density = float(density)
         self.cost = 0
         self.fsd = self.get_design_values()
