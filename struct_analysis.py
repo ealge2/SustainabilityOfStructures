@@ -9,6 +9,8 @@
 # Abgebildete Querschnitte 1D:
 # - Betonrechteck-QS
 # - Holzrechteck-QS
+# - Beton-Rippen-QS
+# - Holz-Hohlkasten-QS
 #
 # Abgebildete Statische Systeme 1D:
 # - Einfacher Balken
@@ -257,7 +259,6 @@ class RectangularWood(SupStrucRectangular, Section):
         b_fire = max(section.b - d_ef * (fire[1] + fire[3]), 0)
         rem_sec = RectangularWood(section.wood_type, b_fire, h_fire)
         return rem_sec
-
 
 # ........................................................................
 class RectangularConcrete(SupStrucRectangular):
@@ -920,8 +921,6 @@ class RibWood(SupStrucRibWood):
     #     b_fire = max(section.b - d_ef * (fire[1] + fire[3]), 0)
     #     rem_sec = RectangularWood(section.wood_type, b_fire, h_fire)
     #     return rem_sec
-
-
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
