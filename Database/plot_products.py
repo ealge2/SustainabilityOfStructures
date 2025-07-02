@@ -159,6 +159,10 @@ KBOB_steel_values = [row[0] for row in KBOB_steel]
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+plt.rcParams.update({'font.size': 16})
+
+
 # Create subplots
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))#, sharey=True)
 
@@ -208,13 +212,13 @@ ax1.set_title('Beton')
 #ax1.legend(loc='upper right')
 
 # Add vertical lines and text for KBOB values
-ax1.axvline(KBOB_concrete_values[0], linestyle='--', alpha=0.5, color='tomato')
-ax1.text(KBOB_concrete_values[0]+0.5, max(hist_EPD)/2, 'KBOB Hochbaubeton',alpha=0.7, rotation=90, color='tomato')
+ax1.axvline(KBOB_concrete_values[0], linestyle='--', alpha=0.9, color='tomato')
+ax1.text(KBOB_concrete_values[0]+0.2, 6, 'KBOB Hochbaubeton', fontsize = 12, alpha=0.9, rotation=90, color='tomato')
 
-ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.6, color='forestgreen')
-ax1.text(statistics.mean(EPD_concrete_values)+0.5, ymax-1, r'$\mu$', color = 'forestgreen', alpha = 0.6)
+ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.9, color='forestgreen')
+ax1.text(statistics.mean(EPD_concrete_values), -0.7, r'$\mu$', color = 'forestgreen', alpha = 0.9)
 ax1.fill_betweenx([ymin, ymax], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color='grey', alpha=0.1, zorder=1)
-ax1.text(np.quantile(EPD_concrete_values, 0.1)+2, ymax-1, '80 %', color = 'forestgreen', alpha=0.5)
+ax1.text(np.quantile(EPD_concrete_values, 0.1)+1, ymax-1, '80%', color = 'forestgreen', alpha=0.9)
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot wood
@@ -262,19 +266,19 @@ ax2.set_ylim(ymin,ymax)
 ax2.set_xlim(-300)
 
 # Add vertical lines and text for KBOB values
-ax2.axvline(KBOB_timber_values[0], linestyle='--', alpha= 0.5, color='tomato')
-ax2.text(KBOB_timber_values[0]+15, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH CH', rotation=90, alpha=0.7, color='tomato')
-ax2.axvline(KBOB_timber_values[1], linestyle='--', alpha=0.5, color='darkorange')
-ax2.text(KBOB_timber_values[1]+15, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB BSH', rotation=90, alpha = 0.7, color='darkorange')
-ax2.axvline(288, linestyle='--', alpha=0.5, color='coral')
-ax2.text(288+15, max(max(hist_Ecoinvent), max(hist_EPD))/2, 'KBOB KVH', rotation=90, alpha = 0.7, color='coral')
+ax2.axvline(KBOB_timber_values[0], linestyle='--', alpha= 0.9, color='tomato')
+ax2.text(KBOB_timber_values[0]+10, 8, 'KBOB BSH CH', fontsize = 12, rotation=90, alpha=0.9, color='tomato')
+ax2.axvline(KBOB_timber_values[1], linestyle='--', alpha=0.9, color='darkorange')
+ax2.text(KBOB_timber_values[1]+10, 8, 'KBOB BSH', fontsize = 12, rotation=90, alpha = 0.9, color='darkorange')
+ax2.axvline(288, linestyle='--', alpha=0.9, color='coral')
+ax2.text(288+10, 8, 'KBOB KVH', fontsize = 12, rotation=90, alpha = 0.9, color='coral')
 
 EPD_timber_values_pos = [x for x in EPD_timber_values if x >= 0]
 
-ax2.axvline(statistics.mean(EPD_timber_values_pos), linestyle='--', alpha=0.6, color='peru')
-ax2.text(statistics.mean(EPD_timber_values_pos)+15, ymax-1, r'$\mu$', color = 'peru', alpha = 0.6)
+ax2.axvline(statistics.mean(EPD_timber_values_pos), linestyle='--', alpha=0.9, color='peru')
+ax2.text(statistics.mean(EPD_timber_values_pos), -0.7, r'$\mu$', color = 'peru', alpha = 0.9)
 ax2.fill_betweenx([ymin, ymax], np.quantile(EPD_timber_values_pos,0.1), np.quantile(EPD_timber_values_pos,0.9), color='grey', alpha=0.1, zorder=1)
-ax2.text(np.quantile(EPD_timber_values_pos, 0.1)+20, ymax-1, '80 %', color = 'peru', alpha=0.5)
+ax2.text(np.quantile(EPD_timber_values_pos, 0.1)-3, ymax-1, '80%', color = 'peru', alpha=0.9)
 
 #------------------------------------------------------------------------------------------------------------------------
 #Betonstahl
@@ -310,17 +314,17 @@ ax3.set_yticks(range(ymin, ymax))
 ax3.set_ylim(ymin,ymax)
 
 # Add vertical lines and text for KBOB values
-ax3.axvline(KBOB_reinf_values[0], linestyle='--', alpha = 0.5, color='tomato')
-ax3.text(KBOB_reinf_values[0]+10, max(hist_EPD)/2, 'KBOB Bewehrung', rotation=90, alpha= 0.7, color='tomato')
+ax3.axvline(KBOB_reinf_values[0], linestyle='--', alpha = 0.7, color='tomato')
+ax3.text(KBOB_reinf_values[0]+5, 6, 'KBOB Bewehrung', fontsize = 12, rotation=90, alpha= 0.9, color='tomato')
 
 ax3.axvline(368, color='grey',linestyle='dotted')
-ax3.text(368+10, 4, 'Stahl Gerlafingen', rotation=90, color='grey')
+ax3.text(368+10, 4, 'Stahl Gerlafingen', fontsize = 12, rotation=90, color='grey')
 
 # Add vertical lines and text for KBOB values
-ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.6, color='blue')
-ax3.text(statistics.mean(EPD_reinf_values)+15, ymax-1, r'$\mu$', color = 'blue', alpha = 0.6)
+ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.9, color='blue')
+ax3.text(statistics.mean(EPD_reinf_values)-10, -0.7, r'$\mu$', color = 'blue', alpha = 0.9)
 ax3.fill_betweenx([ymin, ymax], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color='grey', alpha=0.1, zorder=1)
-ax3.text(np.quantile(EPD_reinf_values, 0.1)+10, ymax-1, '80 %', color = 'blue', alpha=0.5)
+ax3.text(np.quantile(EPD_reinf_values, 0.1)+10, ymax-1, '80%', color = 'blue', alpha=0.9)
 
 #------------------------------------------------------------------------------------------------------------------------
 #plot steel
@@ -356,14 +360,14 @@ ax4.set_title('Baustahl')
 
 
 # Add vertical lines and text for KBOB values
-ax4.axvline(KBOB_steel_values[0], linestyle='--', alpha = 0.5, color='tomato')
-ax4.text(KBOB_steel_values[0]+10, max(hist_EPD)/2, 'KBOB Baustahl', rotation=90, alpha=0.7, color='tomato')
+ax4.axvline(KBOB_steel_values[0], linestyle='--', alpha = 0.7, color='tomato')
+ax4.text(KBOB_steel_values[0]+20, 6, 'KBOB Baustahl', fontsize = 12, rotation=90, alpha=0.9, color='tomato')
 
 # Add vertical lines and text for KBOB values
-ax4.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.6, color='lightskyblue')
-ax4.text(statistics.mean(EPD_steel_values)+15, ymax-1, r'$\mu$', color = 'lightskyblue', alpha = 0.6)
+ax4.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.9, color='lightskyblue')
+ax4.text(statistics.mean(EPD_steel_values), -0.7, r'$\mu$', color = 'lightskyblue', alpha = 0.9)
 ax4.fill_betweenx([ymin, ymax], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color='grey', alpha=0.1, zorder=1)
-ax4.text(np.quantile(EPD_steel_values, 0.1)+10, ymax-1, '80 %', color = 'lightskyblue', alpha=0.5)
+ax4.text(np.quantile(EPD_steel_values, 0.1)+10, ymax-1, '80%', color = 'lightskyblue', alpha=0.9)
 
 plt.show()
 
