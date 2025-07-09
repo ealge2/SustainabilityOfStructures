@@ -28,13 +28,13 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     for mat_name in mat_names:
         inquiry = ("""
                 SELECT PRO_ID FROM products
-                WHERE density IS NOT NULL
-                AND mech_prop IS NOT NULL
-                AND Total_GWP > 0
-                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
-                AND "source [string]" NOT LIKE '%Ecoinvent%'
-                AND "source [string]" NOT LIKE '%KBOB%'
-                AND "material [string]" LIKE """ + mat_name
+                WHERE DENSITY IS NOT NULL
+                AND MECH_PROP IS NOT NULL
+                AND Statistik = 1
+                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                AND "SOURCE" NOT LIKE '%KBOB%'
+                AND "MATERIAL" LIKE """ + mat_name
         )
         # inquiry = ("SELECT PRO_ID FROM products WHERE"
         #            " material=" + mat_name)
@@ -43,7 +43,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         for i, prod_id in enumerate(result):
             prod_id_str = "'" + str(prod_id[0]) + "'"
             inquiry = ("""
-                    SELECT mech_prop FROM products
+                    SELECT MECH_PROP FROM products
                     WHERE  PRO_ID LIKE """ + prod_id_str
             )
             # inquiry = ("SELECT mech_prop FROM products WHERE"
@@ -66,24 +66,26 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 concrete = struct_analysis.ReadyMixedConcrete(mech_prop, database_name, prod_id=prod_id_str)
                 concrete.get_design_values()
                 # search database for rebar material of type B500B with lowest and highes emissions
+                # exclude not epd sources from the data.
+                # only take values, which are inside an 80% confidence interval
                 inquiry = ("""
                             SELECT PRO_ID FROM products
                             WHERE Total_GWP = (SELECT MIN(Total_GWP) FROM products
-                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
-                                                AND density IS NOT NULL
-                                                AND mech_prop IS NOT NULL
-                                                AND Total_GWP > 0
-                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
-                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
-                                                AND "source [string]" NOT LIKE '%KBOB%')
+                                                WHERE "MATERIAL" LIKE '%Steel_reinforcing_bar%'
+                                                AND DENSITY IS NOT NULL
+                                                AND MECH_PROP IS NOT NULL
+                                                AND Statistik = 1
+                                                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                                                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                                                AND "SOURCE" NOT LIKE '%KBOB%')
                             OR Total_GWP = (SELECT MAX(Total_GWP) FROM products
-                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
-                                                AND density IS NOT NULL
-                                                AND mech_prop IS NOT NULL
-                                                AND Total_GWP > 0
-                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
-                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
-                                                AND "source [string]" NOT LIKE '%KBOB%')
+                                                WHERE "MATERIAL" LIKE '%Steel_reinforcing_bar%'
+                                                AND DENSITY IS NOT NULL
+                                                AND MECH_PROP IS NOT NULL
+                                                AND Statistik = 1
+                                                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                                                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                                                AND "SOURCE" NOT LIKE '%KBOB%')
                             """
                            )
                 cursor.execute(inquiry)
@@ -115,21 +117,21 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 inquiry = ("""
                                             SELECT PRO_ID FROM products
                                             WHERE Total_GWP = (SELECT MIN(Total_GWP) FROM products
-                                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
-                                                                AND density IS NOT NULL
-                                                                AND mech_prop IS NOT NULL
-                                                                AND Total_GWP > 0
-                                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
-                                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
-                                                                AND "source [string]" NOT LIKE '%KBOB%')
+                                                                WHERE "MATERIAL" LIKE '%Steel_reinforcing_bar%'
+                                                                AND DENSITY IS NOT NULL
+                                                                AND MECH_PROP IS NOT NULL
+                                                                AND Statistik = 1
+                                                                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                                                                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                                                                AND "SOURCE" NOT LIKE '%KBOB%')
                                             OR Total_GWP = (SELECT MAX(Total_GWP) FROM products
-                                                                WHERE "material [string]" LIKE '%Steel_reinforcing_bar%'
-                                                                AND density IS NOT NULL
-                                                                AND mech_prop IS NOT NULL
-                                                                AND Total_GWP > 0
-                                                                AND "source [string]" NOT LIKE '%Betonsortenrechner%'
-                                                                AND "source [string]" NOT LIKE '%Ecoinvent%'
-                                                                AND "source [string]" NOT LIKE '%KBOB%')
+                                                                WHERE "MATERIAL" LIKE '%Steel_reinforcing_bar%'
+                                                                AND DENSITY IS NOT NULL
+                                                                AND MECH_PROP IS NOT NULL
+                                                                AND Statistik = 1
+                                                                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                                                                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                                                                AND "SOURCE" NOT LIKE '%KBOB%')
                                             """
                            )
                 cursor.execute(inquiry)
@@ -161,7 +163,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 timber3 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
                 timber3.get_design_values()
                 # create initial wooden rectangular cross-section
-                section_0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.18, 0.625, 0.027, 0.027)
+                section_0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.22, 0.625, 0.027, 0.027)
                 # add section to content-definition of plot-line
                 line_i = [section_0, floorstruc]
                 to_plot.append(line_i)
@@ -237,13 +239,13 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
         sec_typ, mat, cri, opt = legend[i]
         # set line color
         if sec_typ == "rc_rec":
-            color = "tab:green"  # color for reinforced concrete
+            color = 'green'  # color for reinforced concrete
         elif sec_typ == "wd_rec":
-            color = "tab:brown"  # color for wood
+            color = 'saddlebrown'  # color for wood
         elif sec_typ == "rc_rib":
-            color = "tab:green"  # color for reinforced concrete
+            color = 'limegreen'  # color for reinforced concrete
         elif sec_typ == "wd_rib":
-            color = "tab:brown"  # color for wood
+            color = 'sandybrown'  # color for wood
 
         else:
             color = "k"
@@ -276,9 +278,9 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             # extract the x and y coordinates for plotting
             x, y = polygon.exterior.xy
             # plot area
-            plt.fill(x, y, alpha=0.03, facecolor=color)
+            plt.fill(x, y, alpha=0.05, facecolor=color)
             # plot lines
-            plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label)
+            plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label, alpha=0.3)
             data_max[idx] = max(data_max[idx], max(data))
             # plot points of verification into graph
             ver_x, ver_y = lengths[idx_vrfctn], data[idx_vrfctn]
@@ -541,14 +543,14 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
     y_values = []
     for mat_name in mat_names:
         inquiry = ("SELECT PRO_ID FROM products WHERE"
-                   " material=" + mat_name)
+                   " MATERIAL=" + mat_name)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         for i, prod_id in enumerate(result):
             mat_nr += 1  # number for annotation in plot
             # create materials for wooden cross-sections, derive corresponding design values
             prod_id_str = "'" + str(prod_id[0]) + "'"
-            inquiry = ("SELECT mech_prop FROM products WHERE"
+            inquiry = ("SELECT MECH_PROP FROM products WHERE"
                        " PRO_ID=" + prod_id_str)
             cursor.execute(inquiry)
             result = cursor.fetchall()
@@ -579,7 +581,7 @@ def plot_section_dataset(database_name, crsec_type, mat_names, ax, gwp_budget=50
                 rebar = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
                 # create initial wooden rectangular cross-section
                 section_0 = struct_analysis.RibbedConcrete(concrete, rebar, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
-                color = "tab:green"
+                color = 'mediumseagreen'
 ## XXXXXXXXXXX neuen Querschnittstyp initialisieren
             else:
                 print("cross-section type is not defined inside function plot_dataset()")

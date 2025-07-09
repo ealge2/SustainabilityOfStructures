@@ -8,28 +8,39 @@ import plot_datasets  # file with code for plotting results in a standardized wa
 import matplotlib.pyplot as plt
 
 # define system lengths for plot (Datapoints on x-Axis of plot)
-lengths = [4, 6, 8, 10, 12, 14, 16, 18, 20]
+lengths = [4, 12, 20]
 
 # Index of verified length (cross-sections of that length will be plotted)
-idx_vrc = 2
+idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 150
+max_iter = 15
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
 optima = ["GWP"]  # optimizing cross-sections for minimal GWP
 
 # define database
-database_name = "database_250514.db"
+database_name = "database_250702.db"
 # database_name = "dummy_sustainability.db"  # define database name
 # create_dummy_database.create_database(database_name)  # create database
 
-# create floor structure for solid and ribbed wooden cross-section
-bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+# create floor structure for solid wooden cross-section
+bodenaufbau_vollholzdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                                  ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
                                  ["'Kies gebrochen'", 0.12, False]]
-bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_brettstappeldecke, database_name)
+bodenaufbau_wd_solid = struct_analysis.FloorStruc(bodenaufbau_vollholzdecke, database_name)
+
+# create floor structure for ribbed wooden cross-sectio
+# For reaching REI60, Lignum 4.1, Table 433-2, Column G is applied. Thus, Gipsfaserplatte (2x15 mm) and Steinwolle
+# (180 mm) are required as non load bearing layers.
+h_ins = 0.18
+bodenaufbau_hohlkastendecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+                                 ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Gipsfaserplatte'", 0.03, False], ["'Glaswolle'", 0.03, False],
+                                 ["'Kies gebrochen'", 0.12, False], ["'Steinwolle'", h_ins, False],]
+bodenaufbau_wd_rib = struct_analysis.FloorStruc(bodenaufbau_hohlkastendecke, database_name)
+# correct the total height of the floor structure by the height of the insulation within the element
+bodenaufbau_wd_rib.h = bodenaufbau_wd_rib.h - h_ins
 
 # create floor structure for solid reinforced concrete cross-section
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -38,10 +49,10 @@ bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, Fals
 bodenaufbau_rc = struct_analysis.FloorStruc(bodenaufbau_rcdecke, database_name)
 
 # create floor structure for ribbed reinforced concrete cross-section
-bodenaufbau_rc_slap = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+bodenaufbau_rcdecke_slim = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
                        ["'Glaswolle'", 0.03, False],["'Kies gebrochen'", 0.06, False]]
-bodenaufbau_rc_rib = struct_analysis.FloorStruc(bodenaufbau_rc_slap, database_name)
+bodenaufbau_rc_rib = struct_analysis.FloorStruc(bodenaufbau_rcdecke_slim, database_name)
 
 # define loads on member
 g2k = 0.75e3  # n.t. Einbauten
@@ -59,20 +70,20 @@ data_max = [0, 0, 0, 0]
 vrfctn_members = []
 
 #-----------------------------------------------------------------------------------------------------------------------
-# CREATE AND PLOT DATASET FOR RECTANGULAR WOODEN CROSS-SECTIONS
+# CREATE AND PLOT DATASET FOR RECTANGULAR AND RIBBED WOODEN CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
-mat_names = ["'Glue_laminated_timber'", "'solid_structural_timber_(kvh)'"]
+mat_names = ["'Glue_laminated_timber'", "'Solid_structural_timber'", "'Glue_laminated_timber_board'"]
 
 # retrieve data from database, find optimal cross-sections and plot results for solid cross-section
-data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd,
-                                                              req, "wd_rec", mat_names, g2k, qk, max_iter,
-                                                              idx_vrc)
+data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima,
+                                                              bodenaufbau_wd_solid, req, "wd_rec", mat_names,
+                                                              g2k, qk, max_iter, idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
-data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_wd,
-                                                              req, "wd_rib", mat_names, g2k, qk, max_iter,
-                                                              idx_vrc)
+data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima,
+                                                              bodenaufbau_wd_rib, req, "wd_rib", mat_names,
+                                                              g2k, qk, max_iter, idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
@@ -109,13 +120,13 @@ for idx, info in enumerate(plotted_data):
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
     plt.grid()
 
-# # plot cross-section of members for verification
-# for mem_group in vrfctn_members:
-#     for i, mem in enumerate(mem_group[0]):
-#         section = mem.section
-#         plot_datasets.plot_section(section)
-#         # Show the plot
-#         plt.title(f'#{mem_group[1][i]}')
+# plot cross-section of members for verification
+for mem_group in vrfctn_members:
+    for i, mem in enumerate(mem_group[0]):
+        section = mem.section
+        plot_datasets.plot_section(section)
+        # Show the plot
+        plt.title(f'#{mem_group[1][i]}')
 
 # SHOW FIGURE
 plt.show()

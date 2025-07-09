@@ -160,11 +160,11 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [h_w0, h_f0, di_x_w0, b_w0, b0]
 
     # define bounds of variables
-    bh_f = (0.14,0.5)
-    bh_w = (0.10, 2)  # height between 6 cm and 1.0 m
+    bh_f = (0.12, 0.5)  # height between 12 cm and 50 cm
+    bh_w = (0.10, 2)  # height between 10 cm and 2.0 m
     bdi_x_w = (0.01, 0.04)  # diameter of rebars between 6 mm and 40 mm
-    bb_w = (0.14, 0.4)  # rib width between 12 and 60 cm
-    bb = (0.2, 2.5) # rib spacing between 0.5 and 2.5 m
+    bb_w = (0.12, 0.4)  # rib width between 12 and 40 cm
+    bb = (0.4, 2.5)  # rib spacing between 0.4 and 2.5 m
     bounds = [bh_w, bh_f, bdi_x_w, bb_w, bb]
 
     # definition of fixed values of cross-section
@@ -285,7 +285,7 @@ def rc_rib_rqs(var, add_arg):
 # outer function for finding optimal wooden rectangular cross-section
 def opt_gzt_wd_rqs(member, criterion="ULS"):
     h_0 = member.section.h
-    bnds = [(0.04, 1.2)]
+    bnds = [(0.1, 1.2)]
     minimal_h = minimize(wd_rqs_h, h_0, args=[member, criterion], bounds=bnds, method='Powell')
     h_opt = minimal_h.x[0]
     section = struct_analysis.RectangularWood(member.section.wood_type, member.section.b, h_opt)
@@ -347,37 +347,43 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     h0 = m.section.h
     b0 = m.section.b
     t20 = m.section.t2
-    var0 = [b0, h0, t20]
+    t30 = m.section.t3
+    var0 = [b0, h0, t20, t30]
 
-    #define bounds of variables
-    bh = (0.1, 2)
-    bb = (0.08, 0.26)
-    bt2 = (0.027, 0.1)
-    bounds = [bb, bh,bt2]
+    # define bounds of variables
+    bh = (0.22, 2.0)  # height of rib between 22 cm (minimal requirement b x h = 100 x 220 for R60 according to Lignum 4.1, Table 433-2,
+    # Column G) and 200 cm
+    bb = (0.1, 0.52)  # width of rib between 10 cm (minimal requirement for R60 according to Lignum 4.1, Table 433-2,
+    # Column G) and 52 cm
+    bt2 = (0.025, 0.16)  # hight of lower sheating between 2.5 cm (minimal requirement for R60 according to Lignum 4.1, Table 433-2,
+    # Column G) and 16 cm
+    bt3 = (0.027, 0.16)  # hight of lower sheating between 2.7 cm (minimal requirement for R60 according to Lignum 4.1, Table 433-2,
+    # Column G) and 16 cm
+    bounds = [bb, bh, bt2, bt3]
 
-    #definition of fixed values of cross-section
+    # definition of fixed values of cross-section
     l0 = m.li_max
     a = m.section.a
-    #t2 = m.section.t2
-    t3 = m.section.t3
+    # t2 = m.section.t2
+    # t3 = m.section.t3
 
     ti1, ti2, ti3 = m.section.wood_type_1, m.section.wood_type_2, m.section.wood_type_3
 
-    add_arg = [m.system, ti1, ti2, ti3, l0, a, t3, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk]
+    add_arg = [m.system, ti1, ti2, ti3, l0, a, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk]
 
 # optimize with basinhopping algorithm with bounds also implemented on both levels (inner and outer):
     bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds]))
     opt = basinhopping(wd_rib_rqs, var0, niter=max_iter, T=1, minimizer_kwargs={"args": (add_arg,), "bounds": bounds,
                                                                             "method": "Powell"}, take_step=bounded_step)
 
-    b, h, t2 = opt.x
+    b, h, t2, t3 = opt.x
     optimized_section = struct_analysis.RibWood(ti1, ti2, ti3, l0, b, h, a, t2, t3)
     #print(l0, b, h, t2)
     return optimized_section
 
 #inner function for optimizing wood sections for criteria ULS or SLS in terms of GWP or height
 def wd_rib_rqs(var, add_arg):
-    b, h, t2 = var
+    b, h, t2, t3 = var
     system = add_arg[0]
     timber1 = add_arg[1]
     timber2 = add_arg[2]
@@ -385,13 +391,13 @@ def wd_rib_rqs(var, add_arg):
     l0 = add_arg[4]
     a = add_arg[5]
     #t2 = add_arg[6]
-    t3 = add_arg[6]
-    floorstruc = add_arg[7]
-    criteria = add_arg[8]
-    to_opt = add_arg[9]
-    criterion = add_arg[10]
-    g2k = add_arg[11]
-    qk = add_arg[12]
+    #t3 = add_arg[6]
+    floorstruc = add_arg[6]
+    criteria = add_arg[7]
+    to_opt = add_arg[8]
+    criterion = add_arg[9]
+    g2k = add_arg[10]
+    qk = add_arg[11]
 
     # create section
     section = struct_analysis.RibWood(timber1, timber2, timber3, l0, b, h, a, t2, t3)

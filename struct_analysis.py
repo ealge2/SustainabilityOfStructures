@@ -44,11 +44,9 @@ class Wood:
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            #inquiry = "SELECT PRO_ID, self.density, GWP, cost, cost2 FROM products WHERE mech_prop=" + mech_prop
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop=" + mech_prop
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP=" + mech_prop
         else:
-            inquiry = "SELECT PRO_ID, self.density, GWP, cost, cost2 FROM products WHERE PRO_ID=" + prod_id
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID=" + prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
         # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
@@ -86,12 +84,12 @@ class ReadyMixedConcrete:
             #         SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE "material [string]" LIKE """ + mech_prop
             #            )
             inquiry = ("""
-                                SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop LIKE """ + mech_prop
+                                SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP LIKE """ + mech_prop
                        )
         else:
             # inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE PRO_ID LIKE """ + prod_id
             #            )
-            inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID LIKE """ + prod_id
+            inquiry = ("""SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID LIKE """ + prod_id
                        )
         cursor.execute(inquiry)
         result = cursor.fetchall()
@@ -127,9 +125,9 @@ class SteelReinforcingBar:
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop=" + mech_prop
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP=" + mech_prop
         else:
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID=" + prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
         #self.prod_id, density, self.GWP, self.cost = result[0]
@@ -930,7 +928,8 @@ class MatLayer:  # create a material layer
         connection = sqlite3.connect(database)
         cursor = connection.cursor()
         # get properties from database
-        inquiry = "SELECT h_fix, E, density, weight, GWP FROM floor_struc_prop WHERE name=" + mat_name
+        inquiry = ("""SELECT "h_fix [float, m]", "E [float, N/m^2]", "density [float, kg/m^3]", "weight [float, N/m^3]",
+         "GWP [float, kg/kg]" FROM floor_struc_prop WHERE "name[string]"=""" + mat_name)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         h_fix, e, density, weight, self.GWP = result[0]
