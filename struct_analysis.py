@@ -739,7 +739,7 @@ class SupStrucRibWood(Section):
         z_s2 = self.t3+self.h + self.t2/2
         z_s3 = self. t3/2
         z_s = ((self.b * self.h *z_s1 + self.bt_ef * self.t2 * z_s2 + self.bc_ef * self.t3 * z_s3) /
-               (self.b * self.h + self.bt_ef * self.t2 + self.bc_ef * self.t3))
+               (self.b * self.h + self.bt_ef * self.t2 + self.bc_ef * self.t3))   #README: Is this formula correct?
         return z_s
 
     def calc_moment_of_inertia(self):
