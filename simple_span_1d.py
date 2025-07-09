@@ -14,7 +14,7 @@ lengths = [4, 12, 20]
 idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 15
+max_iter = 20
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
@@ -121,12 +121,12 @@ for idx, info in enumerate(plotted_data):
     plt.grid()
 
 # plot cross-section of members for verification
-for mem_group in vrfctn_members:
-    for i, mem in enumerate(mem_group[0]):
-        section = mem.section
-        plot_datasets.plot_section(section)
-        # Show the plot
-        plt.title(f'#{mem_group[1][i]}')
+# for mem_group in vrfctn_members:
+#     for i, mem in enumerate(mem_group[0]):
+#         section = mem.section
+#         plot_datasets.plot_section(section)
+#         # Show the plot
+#         plt.title(f'#{mem_group[1][i]}')
 
 # SHOW FIGURE
 plt.show()
