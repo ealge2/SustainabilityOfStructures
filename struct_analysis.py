@@ -1115,7 +1115,7 @@ class Member1D:
                     else:
                         shift = 0.5
                     x_d = self.section.x_p / self.section.d
-                    factor = min(0.5 * (1 + 2 / np.pi * np.arctan((self.section.mu_max - self.section.mr_p) / epsilon)),
+                    factor = min(0.5 * (1 + 2 / np.pi * np.arctan((self.section.mu_max - self.section.mr_p) / epsilon)),    #README: Wieso wird hier mit diesem factor gearbeitet? und nicht ienfahc mit qu_bend = 0 wie beim Mehrfehldträger?
                                  1 - 0.5 * (1 + 2 / np.pi * np.arctan((x_d - shift) / epsilon)))
                     qu_bend = factor * self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2)
                 else:
