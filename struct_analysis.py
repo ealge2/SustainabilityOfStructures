@@ -32,7 +32,7 @@ from scipy.optimize import minimize
 class Wood:
     # defines properties of wooden material
     def __init__(self, mech_prop, database, prod_id="undef"):  # retrieve basic mechanical data from database
-        self.mech_prop = mech_prop  #mech_prop = "GL24h" oder "C24"
+        self.mech_prop = mech_prop
         connection = sqlite3.connect(database)
         cursor = connection.cursor()
         # get mechanical properties from database
@@ -40,16 +40,13 @@ class Wood:
                    " name=" + mech_prop)
         cursor.execute(inquiry)
         result = cursor.fetchall()
-        # get caracteristic values for material properties
         self.fmk, self.fvd, self.Emmean, self.weight, self.burn_rate = result[0]
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            #inquiry = "SELECT PRO_ID, self.density, GWP, cost, cost2 FROM products WHERE mech_prop=" + mech_prop
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop=" + mech_prop
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP=" + mech_prop
         else:
-            inquiry = "SELECT PRO_ID, self.density, GWP, cost, cost2 FROM products WHERE PRO_ID=" + prod_id
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID=" + prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
         # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
@@ -62,7 +59,7 @@ class Wood:
 
     def get_design_values(self, gamma_m=1.7, eta_m=1, eta_t=1, eta_w=1):  # calculate design values
         if self.mech_prop[1:3] == "GL":
-            gamma_m = 1.5                                 # SIA 265, 2.2.5: reduzierter Sicherheitsbeiwert für BSH
+            gamma_m = 1.5  # SIA 265, 2.2.5: reduzierter Sicherheitsbeiwert für BSH
         fmd = self.fmk * eta_m * eta_t * eta_w / gamma_m  # SIA 265, 2.2.2, Formel (3)
         return fmd
 
@@ -86,11 +83,14 @@ class ReadyMixedConcrete:
             # inquiry = ("""
             #         SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE "material [string]" LIKE """ + mech_prop
             #            )
-            inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop LIKE """ + mech_prop)
+            inquiry = ("""
+                                SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP LIKE """ + mech_prop
+                       )
         else:
             # inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE PRO_ID LIKE """ + prod_id
             #            )
-            inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID LIKE """ + prod_id)
+            inquiry = ("""SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID LIKE """ + prod_id
+                       )
         cursor.execute(inquiry)
         result = cursor.fetchall()
         # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
@@ -103,8 +103,8 @@ class ReadyMixedConcrete:
         self.fcd, self.tcd, self.ec2d = self.get_design_values()
 
     def get_design_values(self, gamma_c=1.5, eta_t=1):  # calculate design values
-        eta_fc = min((30e6 / self.fck) ** (1 / 3), 1)   # SIA 262, 4.2.1.2, Formel (26)
-        fcd = self.fck * eta_fc * eta_t / gamma_c       # SIA 262, 2.3.2.3, Formel (2)
+        eta_fc = min((30e6 / self.fck) ** (1 / 3), 1)  # SIA 262, 4.2.1.2, Formel (26)
+        fcd = self.fck * eta_fc * eta_t / gamma_c  # SIA 262, 2.3.2.3, Formel (2)
         tcd = 0.3 * eta_t * 1e6 * (self.fck * 1e-6) ** 0.5 / gamma_c  # SIA 262, 2.3.2.4, Formel (3)
         ec2d = 0.003  # SIA 262, 4.2.4, Tabelle 8
         return fcd, tcd, ec2d
@@ -125,9 +125,9 @@ class SteelReinforcingBar:
         # get GWP properties from database
         if prod_id == "undef":  # no specific product is defined, chose first product entry with required mechanical
             # properties in database
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE mech_prop=" + mech_prop
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP=" + mech_prop
         else:
-            inquiry = "SELECT PRO_ID, density, Total_GWP, cost FROM products WHERE PRO_ID=" + prod_id
+            inquiry = "SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID=" + prod_id
         cursor.execute(inquiry)
         result = cursor.fetchall()
         #self.prod_id, density, self.GWP, self.cost = result[0]
@@ -216,7 +216,9 @@ class RectangularWood(SupStrucRectangular, Section):
         super().__init__(section_type, b, h, phi)
         self.wood_type = wood_type
         mu_el, vu_el = self.calc_strength_elast(wood_type.fmd, wood_type.fvd)
-        self.mu_max, self.mu_min = [mu_el, -mu_el]
+        self.mu_max, self.mu_min = [mu_el, -mu_el]  #Readme: Why is this needed for wood? -> is not needed for wood.
+        # However, as the same resistance values should be provided for all cross-sections, I defined them for both
+        # directions for wood too
         self.vu_p, self.vu_n = vu_el, vu_el
         self.qs_class_n, self.qs_class_p = [3, 3]  # Required cross-section class: 1:=PP, 2:EP, 3:EE
         self.g0k = self.calc_weight(wood_type.weight)
@@ -467,6 +469,8 @@ class SupStrucRibbedConcrete(Section):
         iy = i_01 + i_02 + as_01 + as_02
         return iy
 
+    #def calc_strength_elast(self, fy, ty):
+    #def calc_strength_plast(self, fy, ty):
 
     def calc_weight(self,
                     spec_weight=25):  #README: Spec-Weight muss automatisch aus Tabelle eingelesen werden können! Ergänzen!
@@ -474,6 +478,7 @@ class SupStrucRibbedConcrete(Section):
         #  out: weight of cross section per m length [N/m]
         w = spec_weight * self.a_brutt
         return w
+
 
 #.....................................................................................
 class RibbedConcrete(SupStrucRibbedConcrete):
@@ -739,7 +744,7 @@ class SupStrucRibWood(Section):
         z_s2 = self.t3+self.h + self.t2/2
         z_s3 = self. t3/2
         z_s = ((self.b * self.h *z_s1 + self.bt_ef * self.t2 * z_s2 + self.bc_ef * self.t3 * z_s3) /
-               (self.b * self.h + self.bt_ef * self.t2 + self.bc_ef * self.t3))   #README: Is this formula correct?
+               (self.b * self.h + self.bt_ef * self.t2 + self.bc_ef * self.t3))
         return z_s
 
     def calc_moment_of_inertia(self):
@@ -923,7 +928,8 @@ class MatLayer:  # create a material layer
         connection = sqlite3.connect(database)
         cursor = connection.cursor()
         # get properties from database
-        inquiry = "SELECT h_fix, E, density, weight, GWP FROM floor_struc_prop WHERE name=" + mat_name
+        inquiry = ("""SELECT "h_fix [float, m]", "E [float, N/m^2]", "density [float, kg/m^3]", "weight [float, N/m^3]",
+         "GWP [float, kg/kg]" FROM floor_struc_prop WHERE "name[string]"=""" + mat_name)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         h_fix, e, density, weight, self.GWP = result[0]
