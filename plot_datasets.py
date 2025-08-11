@@ -158,15 +158,51 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 # create a Wood material object
                 timber1 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
                 timber1.get_design_values()
-                timber2 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
-                timber2.get_design_values()
-                timber3 = struct_analysis.Wood(mech_prop, database_name, prod_id=prod_id_str)  # create a Wood material object
-                timber3.get_design_values()
-                # create initial wooden rectangular cross-section
-                section_0 = struct_analysis.RibWood(timber1, timber2, timber3, 4, 0.12, 0.22, 0.625, 0.027, 0.027)
-                # add section to content-definition of plot-line
-                line_i = [section_0, floorstruc]
-                to_plot.append(line_i)
+
+                # search database for timber board material (CLT) with lowest and highes emissions
+                inquiry = ("""
+                                                            SELECT PRO_ID FROM products
+                                                            WHERE Total_GWP = (SELECT MIN(Total_GWP) FROM products
+                                                                                WHERE "MATERIAL" LIKE '%Glue_laminated_timber_board%'
+                                                                                AND DENSITY IS NOT NULL
+                                                                                AND MECH_PROP IS NOT NULL
+                                                                                AND Statistik = 1
+                                                                                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                                                                                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                                                                                AND "SOURCE" NOT LIKE '%KBOB%')
+                                                            OR Total_GWP = (SELECT MAX(Total_GWP) FROM products
+                                                                                WHERE "MATERIAL" LIKE '%Glue_laminated_timber_board%'
+                                                                                AND DENSITY IS NOT NULL
+                                                                                AND MECH_PROP IS NOT NULL
+                                                                                AND Statistik = 1
+                                                                                AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
+                                                                                AND "SOURCE" NOT LIKE '%Ecoinvent%'
+                                                                                AND "SOURCE" NOT LIKE '%KBOB%')
+                                                            """
+                           )
+                cursor.execute(inquiry)
+                result = cursor.fetchall()
+                prod_id_low = result[0]
+                prod_id_low_str = "'" + str(prod_id_low[0]) + "'"
+                prod_id_high = result[1]
+                prod_id_high_str = "'" + str(prod_id_high[0]) + "'"
+
+                # create a timber material objects in timber board (CLT, C24) with and low rsp high emission values
+                clt_low_em = struct_analysis.Wood("'C24'", database_name, prod_id=prod_id_low_str)
+                clt_low_em.get_design_values()
+                clt_high_em = struct_analysis.Wood("'C24'", database_name, prod_id=prod_id_high_str)
+                clt_high_em.get_design_values()
+
+                # create initial cross-sections
+                section_00 = struct_analysis.RibWood(timber1, clt_low_em, clt_low_em, 4, 0.12, 0.22, 0.625,
+                                                     0.027, 0.027)
+                section_01 = struct_analysis.RibWood(timber1, clt_high_em, clt_high_em, 4, 0.12, 0.22, 0.625,
+                                                    0.027, 0.027)
+
+                # add sections to content-definition of plot-line
+                line_i0 = [section_00, floorstruc]
+                line_i1 = [section_01, floorstruc]
+                to_plot.extend([line_i0, line_i1])
 
             else:
                 print("cross-section type is not defined inside function plot_dataset()")
@@ -280,15 +316,15 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             # plot area
             plt.fill(x, y, alpha=0.05, facecolor=color)
             # plot lines
-            plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label, alpha=0.3)
+            plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label, alpha=0.2)
             data_max[idx] = max(data_max[idx], max(data))
-            # plot points of verification into graph
-            ver_x, ver_y = lengths[idx_vrfctn], data[idx_vrfctn]
-            plt.plot(ver_x, ver_y, 'o', color='black', markersize=2)
-            plt.annotate(f'#{i}', xy=(ver_x, ver_y),
-                         xytext=(ver_x + 0.05*lengths[-1], ver_y),
-                         arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
-                         fontsize=9, color='black', va='center')
+            # # plot points of verification into graph
+            # ver_x, ver_y = lengths[idx_vrfctn], data[idx_vrfctn]
+            # plt.plot(ver_x, ver_y, 'o', color='black', markersize=2)
+            # plt.annotate(f'#{i}', xy=(ver_x, ver_y),
+            #              xytext=(ver_x + 0.05*lengths[-1], ver_y),
+            #              arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
+            #              fontsize=9, color='black', va='center')
 
     return data_max, vrfctn_members
 
