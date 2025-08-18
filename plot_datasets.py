@@ -98,10 +98,10 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 rebar_low_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_low_str)
                 rebar_high_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_high_str)
                 # create initial cross-sections
-                section_00 = struct_analysis.RectangularConcrete(concrete, rebar_low_em, 1.0, 0.12,
+                section_00 = struct_analysis.RectangularConcrete(concrete, rebar_low_em, 1.0, 0.20,
                                                                 0.014, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
-                section_01 = struct_analysis.RectangularConcrete(concrete, rebar_high_em, 1.0, 0.12,
+                section_01 = struct_analysis.RectangularConcrete(concrete, rebar_high_em, 1.0, 0.20,
                                                                  0.014, 0.15, 0.01, 0.15,
                                                                  0, 0.15, 2)
                 # add sections to content-definition of plot-line

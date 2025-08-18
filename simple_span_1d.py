@@ -8,13 +8,13 @@ import plot_datasets  # file with code for plotting results in a standardized wa
 import matplotlib.pyplot as plt
 
 # define system lengths for plot (Datapoints on x-Axis of plot)
-lengths = [4, 6, 8, 10, 12, 14, 16]
+lengths = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 # Index of verified length (cross-sections of that length will be plotted)
 idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 100
+max_iter = 200
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
@@ -100,6 +100,7 @@ data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_
                                                               idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
+
 
 # retrieve data from database, find optimal cross-sections and plot results for ribbed cross-section
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima,

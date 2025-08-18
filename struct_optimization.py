@@ -34,7 +34,7 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [h0, di_xu0]
 
     # define bounds of variables
-    bh = (0.06, 1.2)  # height between 6 cm and 1.0 m
+    bh = (0.20, 1.2)  # height between 20 cm and 1.2 m
     bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bounds = [bh, bdi_xu]
 
