@@ -8,13 +8,13 @@ import plot_datasets  # file with code for plotting results in a standardized wa
 import matplotlib.pyplot as plt
 
 # define system lengths for plot (Datapoints on x-Axis of plot)
-lengths = [4, 12, 20]
+lengths = [4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 # Index of verified length (cross-sections of that length will be plotted)
 idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 20
+max_iter = 150
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
@@ -31,7 +31,7 @@ bodenaufbau_vollholzdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False
                                  ["'Kies gebrochen'", 0.12, False]]
 bodenaufbau_wd_solid = struct_analysis.FloorStruc(bodenaufbau_vollholzdecke, database_name)
 
-# create floor structure for ribbed wooden cross-sectio
+# create floor structure for ribbed wooden cross-section
 # For reaching REI60, Lignum 4.1, Table 433-2, Column G is applied. Thus, Gipsfaserplatte (2x15 mm) and Steinwolle
 # (180 mm) are required as non load bearing layers.
 h_ins = 0.18
@@ -81,6 +81,8 @@ data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
+mat_names = ["'Glue_laminated_timber'", "'Solid_structural_timber'"]
+# retrieve data from database, find optimal cross-sections and plot results for ribbed cross-section
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima,
                                                               bodenaufbau_wd_rib, req, "wd_rib", mat_names,
                                                               g2k, qk, max_iter, idx_vrc)
@@ -98,6 +100,7 @@ data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_
                                                               idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
+
 
 # retrieve data from database, find optimal cross-sections and plot results for ribbed cross-section
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima,

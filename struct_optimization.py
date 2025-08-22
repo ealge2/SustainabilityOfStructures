@@ -34,7 +34,7 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [h0, di_xu0]
 
     # define bounds of variables
-    bh = (0.06, 1.2)  # height between 6 cm and 1.0 m
+    bh = (0.20, 1.2)  # height between 20 cm and 1.2 m
     bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bounds = [bh, bdi_xu]
 
@@ -353,7 +353,7 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     # define bounds of variables
     bh = (0.22, 2.0)  # height of rib between 22 cm (minimal requirement b x h = 100 x 220 for R60 according to Lignum 4.1, Table 433-2,
     # Column G) and 200 cm
-    bb = (0.1, 0.52)  # width of rib between 10 cm (minimal requirement for R60 according to Lignum 4.1, Table 433-2,
+    bb = (0.1, 0.52)  # width of rib between 10 cm (minimal requirement b x h = 100 x 220 for R60 according to Lignum 4.1, Table 433-2,
     # Column G) and 52 cm
     bt2 = (0.025, 0.16)  # hight of lower sheating between 2.5 cm (minimal requirement for R60 according to Lignum 4.1, Table 433-2,
     # Column G) and 16 cm
