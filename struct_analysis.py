@@ -1003,6 +1003,39 @@ class ContinuousSup:
         self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
         self.alpha_w_f_cd = 1/192  # Faktor zur Berechung der Durchbiegung unter Einzellast
 
+class Slab:
+    """
+    Nimmt die Faktoren für die Beanspruchung der Platte aus der Tabelle slab_properties.db
+    """
+
+    def __init__(self, length_x, length_y, support):
+
+        self.lx = length_x
+        self.ly = length_y
+
+
+        connection = sqlite3.connect("slab_properties.db")
+        cursor = connection.cursor()
+        # get mechanical properties from database
+        inquiry = """
+                    SELECT NAME, RAENDER, LX, LY, MX_POS, MY_POS, MX_NEG, MY_NEG, V_POS, V_NEG, W, F 
+                    FROM slab_properties
+                    WHERE LX = self.lx AND LY + self.ly """
+        cursor.execute(inquiry)
+        self.result = cursor.fetchall()
+
+
+        self.alpha_m = []
+        self.alpha_v = []
+        self.qs_cl_erf = [2, 1]
+        self.alpha_w = 10000
+        self.kf2 = 1.0
+        self.alpha_w_f_cd = 10000
+
+        self.linear_eingespannt_3x3 = 0.456
+
+
+
 class Member1D:
     def __init__(self, section, system, floorstruc, requirements, g2k=0.0, qk=2e3, psi0=0.7, psi1=0.5, psi2=0.3,
                  fire_b=True, fire_l=False, fire_t=False, fire_r=False):
@@ -1095,6 +1128,17 @@ class Member1D:
             else:
                 self.r1 = 1.25  # HBT S. 48
             self.ve_cd = self.requirements.alpha_ve_cd * 100 ** (self.f1 * self.section.xi - 1)
+
+    class Member2D:
+        def __init__(self, section, system, floorstruc, requirements, g2k=0.0, qk=2e3, psi0=0.7, psi1=0.5, psi2=0.3,
+                     fire_b=True, fire_l=False, fire_t=False, fire_r=False):
+            """
+            Definiert ein 2-Dimensionales Bauteil (Platte) mit Eigenschaften
+
+           :section:
+           :system:
+            """
+
 
     def calc_qu(self):
         # calculates maximal load qu in respect to bearing moment mu_max, mu_min and static system
