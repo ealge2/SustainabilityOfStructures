@@ -2,6 +2,8 @@
 # units: [m], [kg], [s], [N], [CHF]
 import sqlite3
 
+
+
 def create_database(data_base_name):
     # create or open database sustainability
     connection = sqlite3.connect(data_base_name)
