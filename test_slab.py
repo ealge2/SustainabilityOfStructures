@@ -9,8 +9,8 @@ import struct_optimization  # file with code for structural optimization
 
 # INPUT
 # create dummy-database
-database_name = "dummy_sustainability.db"  # define database name
-create_dummy_database.create_database(database_name)  # create database
+database_name = "database_250702.db"  # define database name
+#create_dummy_database.create_database(database_name)  # create database
 
 # create material for reinforced concrete cross-section, derive corresponding design values
 concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)  # create a Wood material object
@@ -19,7 +19,7 @@ rebar1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)  # create
 rebar1.get_design_values()
 
 # create reinforced concrete rectangular cross-section
-section = struct_analysis.RectangularConcrete(concrete1, rebar1, 1.0, 0.24, 0.012, 0.15, 0.012, 0.15, 0.012, 0.15, 0)
+section = struct_analysis.RectangularConcrete(concrete1, rebar1, 1.0, 0.24, 0.012, 0.15, 0.012, 0.15, 0.0, 0.15, 0)
 
 # create floor structure for solid wooden cross-section
 bodenaufbau = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
@@ -35,30 +35,34 @@ qk = 2e3  # Nutzlast
 # define service limit state criteria
 req = struct_analysis.Requirements()
 
-slab = struct_analysis.Slab.result
-print(slab)
+length_x = 3.0
+length_y = 3.0
+support = "LL-frei"
+
+# create slab system
+system = struct_analysis.Slab(length_x,length_y,support)
 
 
-"""
-# define system length
-length = 5.8
+# create rc member
+member = struct_analysis.Member2D(section, system, bodenaufbau_rc, requirements, g2k, qk)
 
-# create simple supported beam system
-system = struct_analysis.BeamSimpleSup(length)
-
-# create wooden member
-member = struct_analysis.Member1D(section, system, bodenaufbau_rc, requirements, g2k, qk)
-
-print(section.mu_max)
-print(section.mr_p)
-print(section.x_p/section.d)
+print("d =", section.d)
+print("mu_max= ", round(section.mu_max,2))
+print(system.alpha_m)
 print()
-print(member.qu)
-print(member.section.vu_p, member.section.vu_n)
+print("mr_p =", section.mr_p)
+print("x/d =", section.x_p/section.d)
+print()
+print("qu =", round(member.qu,2))
+print("vu = ", member.section.vu_p, member.section.vu_n)
 
 member.calc_qk_zul_gzt()
 print("qk_zul_gzt =", member.qk_zul_gzt)
 print("Feuerwiderstand:")
 member.get_fire_resistance()
 print(member.fire_resistance)
-"""
+
+
+print("w_inst_adm=", round(member.w_install_adm,5))
+print("w_use_adm=", round(member.w_use_adm,5))
+print("w_app_adm=", round(member.w_app_adm,5))
