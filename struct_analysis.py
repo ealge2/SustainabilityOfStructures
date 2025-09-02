@@ -1133,107 +1133,6 @@ class Member1D:
                 self.r1 = 1.25  # HBT S. 48
             self.ve_cd = self.requirements.alpha_ve_cd * 100 ** (self.f1 * self.section.xi - 1)
 
-class Member2D:
-    def __init__(self, section, system, floorstruc, requirements, g2k=0.0, qk=2e3, psi0=0.7, psi1=0.5, psi2=0.3,
-                     fire_b=True, fire_l=False, fire_t=False, fire_r=False):
-        """
-        Definiert ein 2-Dimensionales Bauteil (Platte) mit Eigenschaften
-        :section:
-        :system:
-        """
-        self.section = section
-        self.system = system
-        self.floorstruc = floorstruc
-        self.requirements = requirements
-        self.li_min = min(self.system.lx, self.system.ly)
-        self.li_max = self.system.li_max
-        self.g0k = self.section.g0k
-        self.g1k = self.floorstruc.gk_area
-        self.g2k = g2k
-        self.gk = self.g0k + self.g1k + self.g2k
-        self.qk = qk
-        self.psi = [psi0, psi1, psi2]
-        self.q_rare = self.gk + self.qk
-        self.q_freq = self.gk + self.psi[1] * self.qk
-        self.q_per = self.gk + self.psi[2] * self.qk
-        self.m = self.q_per / 10
-        self.w_install_adm = self.li_min / self.requirements.lw_install
-        self.w_use_adm = self.li_min / self.requirements.lw_use
-        self.w_app_adm = self.li_min / self.requirements.lw_app
-        self.qu = self.calc_qu()
-        self.mkd_n = self.system.alpha_m[0] * (self.gk + self.qk) * self.system.l_tot ** 2
-        self.mkd_p = self.system.alpha_m[1] * (self.gk + self.qk) * self.system.l_tot ** 2
-        #self.mkd_n_y =
-        #self.mkd_p_y =
-        #TODO: Everything for lx and ly!
-        self.qk_zul_gzt = float
-        self.fire = [0, 0, 0, 0]  # fire from bottom, left, top, right (0: no fire; 1: fire)
-        if fire_b is True:
-            self.fire[0] = 1
-        if fire_l is True:
-            self.fire[1] = 1
-        if fire_t is True:
-            self.fire[2] = 1
-        if fire_r is True:
-            self.fire[3] = 1
-        self.fire_resistance = []
-
-        # calculation of deflections uncracked (plus cracked for concrete sections self.section.section_type[0:2] = rc))
-        section_material = self.section.section_type[0:2]
-        unit_def = self.system.alpha_w * self.system.l_tot ** 4 / self.section.ei1  # deflection for q = 1, phi = 0
-
-
-        if self.requirements.install == "ductile":
-            self.w_install = unit_def * (self.q_freq + self.q_per * (self.section.phi - 1))
-            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
-                self.w_install_ger = unit_def * (
-                        self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi, self.section.h, self.section.d)
-                        + (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,0, self.section.h,self.section.d)
-                        - self.q_per
-                        )
-            elif self.requirements.install == "brittle":
-                self.w_install = unit_def * (self.q_rare + self.q_per * (self.section.phi - 1))
-                if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
-                        self.w_install_ger = unit_def * (
-                        self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi, self.section.h, self.section.d)
-                        + (self.q_rare - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,0, self.section.h, self.section.d)
-                        - self.q_per
-                        )
-            self.w_use = unit_def * (self.q_freq - self.gk)
-            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
-                self.w_use_ger = unit_def * (
-                            (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh,
-                                                                                     self.section.rohs, 0,
-                                                                                     self.section.h, self.section.d)
-                    )
-                self.w_app = unit_def * (self.q_per * (1 + self.section.phi))
-                if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
-                    self.w_app_ger = unit_def * (
-                            self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,
-                                                                     self.section.phi,
-                                                                     self.section.h, self.section.d)
-                    )
-                self.co2 = system.l_tot * (self.floorstruc.co2 + self.section.co2)
-
-                # calculation first frequency (uncracked cross-section, method for cracked cross-section is not implemented jet)
-                self.f1 = self.calc_f1()
-                # calculation of further vibration criteria for wooden cross-sections
-                section_material = self.section.section_type[0:2]
-                if section_material == "wd" or section_material == "rc":  # check for material type
-                    self.ei_b = max(self.section.ei_b,
-                                    self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
-                    self.bm_rech = self.system.li_max / 1.1 * (self.ei_b / self.section.ei1) ** 0.25  # HBT Seite 46
-                    self.a_ed = self.calc_vib1()
-                    self.wf_ed, self.ve_ed = self.calc_vib2()
-                    if self.section.xi < 0.015:
-                        self.r1 = 1.0  # HBT S. 48
-                    elif self.section.xi < 0.025:
-                        self.r1 = 1.15  # HBT S. 48
-                    else:
-                        self.r1 = 1.25  # HBT S. 48
-                    self.ve_cd = self.requirements.alpha_ve_cd * 100 ** (self.f1 * self.section.xi - 1)
-
-
     def calc_qu(self):
         # calculates maximal load qu in respect to bearing moment mu_max, mu_min and static system
         alpha_m = self.system.alpha_m
@@ -1339,6 +1238,110 @@ class Member2D:
             #print("fire resistance for is not defined for that cross-section type.")
             fire_resistance = None
         self.fire_resistance = fire_resistance
+
+
+class Member2D:
+    def __init__(self, section, system, floorstruc, requirements, g2k=0.0, qk=2e3, psi0=0.7, psi1=0.5, psi2=0.3,
+                     fire_b=True, fire_l=False, fire_t=False, fire_r=False):
+        """
+        Definiert ein 2-Dimensionales Bauteil (Platte) mit Eigenschaften
+        :section:
+        :system:
+        """
+        self.section = section
+        self.system = system
+        self.floorstruc = floorstruc
+        self.requirements = requirements
+        self.li_min = min(self.system.lx, self.system.ly)
+        self.li_max = self.system.li_max
+        self.g0k = self.section.g0k
+        self.g1k = self.floorstruc.gk_area
+        self.g2k = g2k
+        self.gk = self.g0k + self.g1k + self.g2k
+        self.qk = qk
+        self.psi = [psi0, psi1, psi2]
+        self.q_rare = self.gk + self.qk
+        self.q_freq = self.gk + self.psi[1] * self.qk
+        self.q_per = self.gk + self.psi[2] * self.qk
+        self.m = self.q_per / 10
+        self.w_install_adm = self.li_min / self.requirements.lw_install
+        self.w_use_adm = self.li_min / self.requirements.lw_use
+        self.w_app_adm = self.li_min / self.requirements.lw_app
+        self.qu = self.calc_qu()
+        self.mkd_n = self.system.alpha_m[0] * (self.gk + self.qk) * self.system.l_tot ** 2
+        self.mkd_p = self.system.alpha_m[1] * (self.gk + self.qk) * self.system.l_tot ** 2
+        #self.mkd_n_y =
+        #self.mkd_p_y =
+        #TODO: Everything for lx and ly!
+        self.qk_zul_gzt = float
+        self.fire = [0, 0, 0, 0]  # fire from bottom, left, top, right (0: no fire; 1: fire)
+        if fire_b is True:
+            self.fire[0] = 1
+        if fire_l is True:
+            self.fire[1] = 1
+        if fire_t is True:
+            self.fire[2] = 1
+        if fire_r is True:
+            self.fire[3] = 1
+        self.fire_resistance = []
+
+        # calculation of deflections uncracked (plus cracked for concrete sections self.section.section_type[0:2] = rc))
+        section_material = self.section.section_type[0:2]
+        unit_def = self.system.alpha_w * self.system.l_tot ** 4 / self.section.ei1  # deflection for q = 1, phi = 0
+
+
+        if self.requirements.install == "ductile":
+            self.w_install = unit_def * (self.q_freq + self.q_per * (self.section.phi - 1))
+            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                self.w_install_ger = unit_def * (
+                        self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi, self.section.h, self.section.d)
+                        + (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,0, self.section.h,self.section.d)
+                        - self.q_per
+                        )
+            elif self.requirements.install == "brittle":
+                self.w_install = unit_def * (self.q_rare + self.q_per * (self.section.phi - 1))
+                if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                        self.w_install_ger = unit_def * (
+                        self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi, self.section.h, self.section.d)
+                        + (self.q_rare - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,0, self.section.h, self.section.d)
+                        - self.q_per
+                        )
+            self.w_use = unit_def * (self.q_freq - self.gk)
+            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                self.w_use_ger = unit_def * (
+                            (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh,
+                                                                                     self.section.rohs, 0,
+                                                                                     self.section.h, self.section.d)
+                    )
+                self.w_app = unit_def * (self.q_per * (1 + self.section.phi))
+                if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                    self.w_app_ger = unit_def * (
+                            self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,
+                                                                     self.section.phi,
+                                                                     self.section.h, self.section.d)
+                    )
+                self.co2 = system.l_tot * (self.floorstruc.co2 + self.section.co2)
+
+                # calculation first frequency (uncracked cross-section, method for cracked cross-section is not implemented jet)
+                self.f1 = self.calc_f1()
+                # calculation of further vibration criteria for wooden cross-sections
+                section_material = self.section.section_type[0:2]
+                if section_material == "wd" or section_material == "rc":  # check for material type
+                    self.ei_b = max(self.section.ei_b,
+                                    self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
+                    self.bm_rech = self.system.li_max / 1.1 * (self.ei_b / self.section.ei1) ** 0.25  # HBT Seite 46
+                    self.a_ed = self.calc_vib1()
+                    self.wf_ed, self.ve_ed = self.calc_vib2()
+                    if self.section.xi < 0.015:
+                        self.r1 = 1.0  # HBT S. 48
+                    elif self.section.xi < 0.025:
+                        self.r1 = 1.15  # HBT S. 48
+                    else:
+                        self.r1 = 1.25  # HBT S. 48
+                    self.ve_cd = self.requirements.alpha_ve_cd * 100 ** (self.f1 * self.section.xi - 1)
+
+
+
 
 
 class Requirements:
