@@ -971,6 +971,12 @@ class FloorStruc:  # create a floor structure
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
 class BeamSimpleSup:
+    """
+    Definiert die statischen Eigenschaften (Faktoren) eines Einfeldträgers
+    :M = ql2/8, 0
+    :V = ql/2, -ql/2
+    :w = 5/384·ql4/EI
+    """
     def __init__(self, length):
         self.l_tot = length
         self.li_max = self.l_tot    # max span (used for calculation of admissible deflections)
@@ -1002,6 +1008,37 @@ class ContinuousSup:
         self.alpha_w = 1 / 384  # Faktor zur Berechung der Durchbiegung unter verteilter Last
         self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
         self.alpha_w_f_cd = 1/192  # Faktor zur Berechung der Durchbiegung unter Einzellast
+
+class Slab:
+    """
+    Nimmt die Faktoren für die Beanspruchung der Platte aus der Tabelle slab_properties.db, welche mit FE ermittelt wurden
+    """
+
+    def __init__(self, length_x, length_y, support):
+        self.raender = support
+        self.lx = length_x
+        self.ly = length_y
+        self.li_max = max(length_x, length_y)
+        self.l_tot = max(length_x, length_y)
+        conn = sqlite3.connect("slab_properties.db")
+        cursor = conn.cursor()
+        # get mechanical properties from database
+        result = cursor.execute(
+                    """
+                    SELECT NAME, RAENDER, LX, LY, MX_POS, MY_POS, MX_NEG, MY_NEG, V_POS, V_NEG, W, F 
+                    FROM slab_properties
+                    WHERE RAENDER = ? AND LX = ? AND LY = ? """, (self.raender, self.lx, self.ly)).fetchall()
+        self.result = result[0]
+
+        self.alpha_m = (float(self.result[4]), float(self.result[5]))
+        self.alpha_v = (float(self.result[8]), float(self.result[9]))
+        self.qs_cl_erf = [2, 1]
+        self.alpha_w = float(self.result[10])
+        self.kf2 = 1.0
+        self.alpha_w_f_cd = 10000
+
+        #self.factors = [self.alpha_m, self.alpha_v, self.qs_cl_erf, self.alpha_w, self.kf2, self.alpha_w_f_cd]
+
 
 class Member1D:
     def __init__(self, section, system, floorstruc, requirements, g2k=0.0, qk=2e3, psi0=0.7, psi1=0.5, psi2=0.3,
@@ -1121,7 +1158,7 @@ class Member1D:
                     else:
                         shift = 0.5
                     x_d = self.section.x_p / self.section.d
-                    factor = min(0.5 * (1 + 2 / np.pi * np.arctan((self.section.mu_max - self.section.mr_p) / epsilon)),
+                    factor = min(0.5 * (1 + 2 / np.pi * np.arctan((self.section.mu_max - self.section.mr_p) / epsilon)),    #README: Wieso wird hier mit diesem factor gearbeitet? und nicht ienfahc mit qu_bend = 0 wie beim Mehrfehldträger?
                                  1 - 0.5 * (1 + 2 / np.pi * np.arctan((x_d - shift) / epsilon)))
                     qu_bend = factor * self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2)
                 else:
@@ -1201,6 +1238,110 @@ class Member1D:
             #print("fire resistance for is not defined for that cross-section type.")
             fire_resistance = None
         self.fire_resistance = fire_resistance
+
+
+class Member2D:
+    def __init__(self, section, system, floorstruc, requirements, g2k=0.0, qk=2e3, psi0=0.7, psi1=0.5, psi2=0.3,
+                     fire_b=True, fire_l=False, fire_t=False, fire_r=False):
+        """
+        Definiert ein 2-Dimensionales Bauteil (Platte) mit Eigenschaften
+        :section:
+        :system:
+        """
+        self.section = section
+        self.system = system
+        self.floorstruc = floorstruc
+        self.requirements = requirements
+        self.li_min = min(self.system.lx, self.system.ly)
+        self.li_max = self.system.li_max
+        self.g0k = self.section.g0k
+        self.g1k = self.floorstruc.gk_area
+        self.g2k = g2k
+        self.gk = self.g0k + self.g1k + self.g2k
+        self.qk = qk
+        self.psi = [psi0, psi1, psi2]
+        self.q_rare = self.gk + self.qk
+        self.q_freq = self.gk + self.psi[1] * self.qk
+        self.q_per = self.gk + self.psi[2] * self.qk
+        self.m = self.q_per / 10
+        self.w_install_adm = self.li_min / self.requirements.lw_install
+        self.w_use_adm = self.li_min / self.requirements.lw_use
+        self.w_app_adm = self.li_min / self.requirements.lw_app
+        self.qu = self.calc_qu()
+        self.mkd_n = self.system.alpha_m[0] * (self.gk + self.qk) * self.system.l_tot ** 2
+        self.mkd_p = self.system.alpha_m[1] * (self.gk + self.qk) * self.system.l_tot ** 2
+        #self.mkd_n_y =
+        #self.mkd_p_y =
+        #TODO: Everything for lx and ly!
+        self.qk_zul_gzt = float
+        self.fire = [0, 0, 0, 0]  # fire from bottom, left, top, right (0: no fire; 1: fire)
+        if fire_b is True:
+            self.fire[0] = 1
+        if fire_l is True:
+            self.fire[1] = 1
+        if fire_t is True:
+            self.fire[2] = 1
+        if fire_r is True:
+            self.fire[3] = 1
+        self.fire_resistance = []
+
+        # calculation of deflections uncracked (plus cracked for concrete sections self.section.section_type[0:2] = rc))
+        section_material = self.section.section_type[0:2]
+        unit_def = self.system.alpha_w * self.system.l_tot ** 4 / self.section.ei1  # deflection for q = 1, phi = 0
+
+
+        if self.requirements.install == "ductile":
+            self.w_install = unit_def * (self.q_freq + self.q_per * (self.section.phi - 1))
+            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                self.w_install_ger = unit_def * (
+                        self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi, self.section.h, self.section.d)
+                        + (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,0, self.section.h,self.section.d)
+                        - self.q_per
+                        )
+            elif self.requirements.install == "brittle":
+                self.w_install = unit_def * (self.q_rare + self.q_per * (self.section.phi - 1))
+                if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                        self.w_install_ger = unit_def * (
+                        self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs, self.section.phi, self.section.h, self.section.d)
+                        + (self.q_rare - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,0, self.section.h, self.section.d)
+                        - self.q_per
+                        )
+            self.w_use = unit_def * (self.q_freq - self.gk)
+            if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                self.w_use_ger = unit_def * (
+                            (self.q_freq - self.q_per) * RectangularConcrete.f_w_ger(self.section.roh,
+                                                                                     self.section.rohs, 0,
+                                                                                     self.section.h, self.section.d)
+                    )
+                self.w_app = unit_def * (self.q_per * (1 + self.section.phi))
+                if section_material == "rc":  # Alternative Durchbiegungsberechnung für Betonquerschnitte gem. SIA262,(102)
+                    self.w_app_ger = unit_def * (
+                            self.q_per * RectangularConcrete.f_w_ger(self.section.roh, self.section.rohs,
+                                                                     self.section.phi,
+                                                                     self.section.h, self.section.d)
+                    )
+                self.co2 = system.l_tot * (self.floorstruc.co2 + self.section.co2)
+
+                # calculation first frequency (uncracked cross-section, method for cracked cross-section is not implemented jet)
+                self.f1 = self.calc_f1()
+                # calculation of further vibration criteria for wooden cross-sections
+                section_material = self.section.section_type[0:2]
+                if section_material == "wd" or section_material == "rc":  # check for material type
+                    self.ei_b = max(self.section.ei_b,
+                                    self.floorstruc.ei)  # Berücksichtigung n.t. Bodenaufbau gemäss Beispielsammlung HBT)
+                    self.bm_rech = self.system.li_max / 1.1 * (self.ei_b / self.section.ei1) ** 0.25  # HBT Seite 46
+                    self.a_ed = self.calc_vib1()
+                    self.wf_ed, self.ve_ed = self.calc_vib2()
+                    if self.section.xi < 0.015:
+                        self.r1 = 1.0  # HBT S. 48
+                    elif self.section.xi < 0.025:
+                        self.r1 = 1.15  # HBT S. 48
+                    else:
+                        self.r1 = 1.25  # HBT S. 48
+                    self.ve_cd = self.requirements.alpha_ve_cd * 100 ** (self.f1 * self.section.xi - 1)
+
+
+
 
 
 class Requirements:

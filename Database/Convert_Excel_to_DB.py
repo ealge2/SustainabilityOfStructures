@@ -3,7 +3,6 @@
 import pandas as pd
 import sqlite3
 
-
 # Pfad zur Excel-Datei (bitte anpassen!)
 excel_file = "250702_Datenbankdefinition_lua-bac.xlsx"   #name of excel file. must be in same directory as code
 
