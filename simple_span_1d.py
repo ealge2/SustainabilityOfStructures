@@ -14,7 +14,7 @@ lengths = [4, 5, 6, 7, 8, 9, 10, 11, 12]
 idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 150
+max_iter = 200
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
@@ -72,7 +72,7 @@ vrfctn_members = []
 #-----------------------------------------------------------------------------------------------------------------------
 # CREATE AND PLOT DATASET FOR RECTANGULAR AND RIBBED WOODEN CROSS-SECTIONS
 # define materials for which date is searched in the database (table products, attribute material)
-mat_names = ["'Glue_laminated_timber'", "'Solid_structural_timber'", "'Glue_laminated_timber_board'"]
+mat_names = ["'Glue_laminated_timber'", "'Glue_laminated_timber_board'", "'Solid_structural_timber'"]
 
 # retrieve data from database, find optimal cross-sections and plot results for solid cross-section
 data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima,
@@ -123,13 +123,13 @@ for idx, info in enumerate(plotted_data):
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
     plt.grid()
 
-# plot cross-section of members for verification
-# for mem_group in vrfctn_members:
-#     for i, mem in enumerate(mem_group[0]):
-#         section = mem.section
-#         plot_datasets.plot_section(section)
-#         # Show the plot
-#         plt.title(f'#{mem_group[1][i]}')
+# # plot cross-section of members for verification
+for mem_group in vrfctn_members:
+    for i, mem in enumerate(mem_group[0]):
+        section = mem.section
+        plot_datasets.plot_section(section)
+        # Show the plot
+        plt.title(f'#{mem_group[1][i]}')
 
 # SHOW FIGURE
 plt.show()

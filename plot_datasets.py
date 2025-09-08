@@ -104,6 +104,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 section_01 = struct_analysis.RectangularConcrete(concrete, rebar_high_em, 1.0, 0.20,
                                                                  0.014, 0.15, 0.01, 0.15,
                                                                  0, 0.15, 2)
+
                 # add sections to content-definition of plot-line
                 line_i0 = [section_00, floorstruc]
                 line_i1 = [section_01, floorstruc]
@@ -219,9 +220,24 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 members = []
                 for length in lengths:
                     sys = struct_analysis.BeamSimpleSup(length)
-                    member0 = struct_analysis.Member1D(i[0], sys, i[1], requirements, g2k, qk)
+                    section0 = i[0]
+                    floorstruc = i[1]
+                    member0 = struct_analysis.Member1D(section0, sys, floorstruc, requirements, g2k, qk)
                     opt_section = struct_optimization.get_optimized_section(member0, criterion, optimum, max_iter)
-                    opt_member = struct_analysis.Member1D(opt_section, sys, i[1], requirements, g2k, qk)
+                    opt_member = struct_analysis.Member1D(opt_section, sys, floorstruc, requirements, g2k, qk)
+                    # search for an alternative solution for rectangular concrete section with lower minimal h and fill in floorstructure
+                    if section0.section_type == "rc_rec":
+                        # create floor structure for slim reinforced concrete cross-section
+                        bodenaufbau_rcdecke_slim = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
+                                                    ["'Unterlagsboden Zement, 85 mm'", False, False],
+                                                    ["'Glaswolle'", 0.03, False], ["'Kies gebrochen'", 0.06, False]]
+                        floorstruc_alt = struct_analysis.FloorStruc(bodenaufbau_rcdecke_slim, database_name)
+                        member0_alt = struct_analysis.Member1D(section0, sys, floorstruc_alt, requirements, g2k, qk)
+                        opt_section_alt = struct_optimization.get_optimized_section(member0_alt, criterion, optimum, max_iter, h_min=0.12)
+                        opt_member_alt = struct_analysis.Member1D(opt_section_alt, sys, floorstruc_alt, requirements, g2k, qk)
+                        # update opt_member, if alternative solution has lower GWP
+                        if opt_member_alt.co2 < opt_member.co2:
+                            opt_member = opt_member_alt
                     members.append(opt_member)
                 member_list.append(members)
                 if i[0].section_type[0:2] == "rc":

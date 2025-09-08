@@ -27,14 +27,14 @@ class RandomDisplacementBounds(object):
 
 #OPTIMIZATION OF RECTANGULAR CONCRETE CROSS-SECTIONS
 #.......................................................................................................................
-def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100):
+def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h  # start value for height corresponds to 1/20 of system length
     di_xu0 = m.section.bw[0][0]  # start value for rebar diameter 40 mm
     var0 = [h0, di_xu0]
 
     # define bounds of variables
-    bh = (0.20, 1.2)  # height between 20 cm and 1.2 m
+    bh = (h_min, 1.2)  # height between h_min and 1.2 m
     bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
     bounds = [bh, bdi_xu]
 
@@ -161,8 +161,8 @@ def opt_rc_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
 
     # define bounds of variables
     bh_f = (0.12, 0.5)  # height between 12 cm and 50 cm
-    bh_w = (0.10, 2)  # height between 10 cm and 2.0 m
-    bdi_x_w = (0.01, 0.04)  # diameter of rebars between 6 mm and 40 mm
+    bh_w = (0.04, 2)  # height between 10 cm and 2.0 m
+    bdi_x_w = (0.008, 0.04)  # diameter of rebars between 8 mm and 40 mm
     bb_w = (0.12, 0.4)  # rib width between 12 and 40 cm
     bb = (0.4, 2.5)  # rib spacing between 0.4 and 2.5 m
     bounds = [bh_w, bh_f, bdi_x_w, bb_w, bb]
@@ -469,11 +469,11 @@ def wd_rib_rqs(var, add_arg):
 
 #-----------------------------------------------------------------------------------------------------------------------
 # function for returning optimal section for defined QS-type, system, requirements, loads, criterion and type of optimum
-def get_optimized_section(member, criterion, to_opt, max_iter):
+def get_optimized_section(member, criterion, to_opt, max_iter, h_min=0.2):
     if member.section.section_type == "rc_rec":
         # available to_opt arguments: "GWP", "h"
         # available criterion arguments: "ULS", "SLS1", "SLS2"
-        return opt_rc_rec(member, to_opt, criterion, max_iter)
+        return opt_rc_rec(member, to_opt, criterion, max_iter, h_min)
     elif member.section.section_type == "wd_rec":
         # available criterion arguments: "ULS", "SLS1", "SLS2"
         return opt_gzt_wd_rqs(member, criterion=criterion)
