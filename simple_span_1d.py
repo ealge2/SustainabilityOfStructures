@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 lengths = [4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 # Index of verified length (cross-sections of that length will be plotted)
-idx_vrc = 1
+idx_vrc = 4
 
 # max. number of iterations per optimization. Higher value leads to better results
 max_iter = 200
