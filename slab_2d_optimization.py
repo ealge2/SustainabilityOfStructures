@@ -4,17 +4,17 @@
 # IMPORT
 # import create_dummy_database  # file for creating a "dummy database", for test propose
 import struct_analysis  # file with code for structural analysis
-import plot_datasets  # file with code for plotting results in a standardized way
+import plot_datasets_2D  # file with code for plotting results in a standardized way
 import matplotlib.pyplot as plt
 
 # define system lengths for plot (Datapoints on x-Axis of plot)
-lengths = [3]
+lengths = [3,5,6,7,8,10]
 
 # Index of verified length (cross-sections of that length will be plotted)
 idx_vrc = 1
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 50
+max_iter = 25
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
@@ -95,7 +95,7 @@ vrfctn_members = []
 mat_names = ["'ready_mixed_concrete'"]
 
 # retrieve data from database, find optimal cross-sections and plot results for solid cross-section
-data_max_new, vrfctn_members_new = plot_datasets.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc,
+data_max_new, vrfctn_members_new = plot_datasets_2D.plot_dataset(lengths, database_name, criteria, optima, bodenaufbau_rc,
                                                               req, "rc_rec", mat_names, g2k, qk, max_iter,
                                                               idx_vrc)
 data_max = max_of_arrays(data_max, data_max_new)

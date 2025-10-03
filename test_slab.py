@@ -4,6 +4,7 @@
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
+import struct_optimization
 import struct_optimization  # file with code for structural optimization
 #import matplotlib.pyplot as plt
 
@@ -35,8 +36,8 @@ qk = 2e3  # Nutzlast
 # define service limit state criteria
 req = struct_analysis.Requirements()
 
-length_x = 3.0
-length_y = 3.0
+length_x = 8
+length_y = 8
 support = "LL-frei"
 
 # create slab system
@@ -45,6 +46,8 @@ system = struct_analysis.Slab(length_x,length_y,support)
 
 # create rc member
 member = struct_analysis.Member2D(section, system, bodenaufbau_rc, requirements, g2k, qk)
+opt_section = struct_optimization.get_optimized_section(member, "ENV", "GWP", 25)
+print("opt section = ", opt_section.h)
 
 print("d =", section.d)
 print("mu_max= ", round(section.mu_max,2))

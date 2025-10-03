@@ -1323,6 +1323,7 @@ class Member2D:
                 self.co2 = system.l_tot * (self.floorstruc.co2 + self.section.co2)
 
                 # calculation first frequency (uncracked cross-section, method for cracked cross-section is not implemented jet)
+                """
                 self.f1 = self.calc_f1()
                 # calculation of further vibration criteria for wooden cross-sections
                 section_material = self.section.section_type[0:2]
@@ -1339,9 +1340,119 @@ class Member2D:
                     else:
                         self.r1 = 1.25  # HBT S. 48
                     self.ve_cd = self.requirements.alpha_ve_cd * 100 ** (self.f1 * self.section.xi - 1)
+                """
+        self.a_ed = 0
+        self.wf_ed = 0
+        self.ve_cd = 0
+        self.ve_ed = 0
+        self.r1 = 1.15
+        self.f1 = 100
 
+    def calc_qu(self):
+        # calculates maximal load qu in respect to bearing moment mu_max, mu_min and static system
+        alpha_m = self.system.alpha_m
+        alpha_v = self.system.alpha_v
+        qs_class_erf = self.system.qs_cl_erf  # z.B. [0, 2]
+        qs_class_vorh = [self.section.qs_class_n, self.section.qs_class_p]
 
+        if min(alpha_m) == 0:
+            if qs_class_vorh[1] <= qs_class_erf[1]:
+                # if cross-section fulfills the ductility criterion (e.g. required: PP, present PP) then assign the full
+                # bending strength
+                qu_bend = self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2)
+            else:
+                # if the cross-section is not fulfilling the ductility criterion (e.g. required: EP, present PP) then
+                # assign a value, which drops from the full bending strength fast towards 0 (for concrete sections)
+                # or a value of 0 (for all other sections)
+                if self.section.section_type[0:2] == "rc":
+                    # for reinforced concrete cross-sections: smooth change to 0 load bearing capacity when roh<roh_min
+                    # or roh>roh_zul (enables more efficient optimization)
+                    epsilon = 1.0e-3
+                    if qs_class_vorh[1] == 1:
+                        shift = 0.35
+                    else:
+                        shift = 0.5
+                    x_d = self.section.x_p / self.section.d
+                    factor = min(0.5 * (1 + 2 / np.pi * np.arctan((self.section.mu_max - self.section.mr_p) / epsilon)),    #README: Wieso wird hier mit diesem factor gearbeitet? und nicht ienfahc mit qu_bend = 0 wie beim Mehrfehldträger?
+                                 1 - 0.5 * (1 + 2 / np.pi * np.arctan((x_d - shift) / epsilon)))
+                    qu_bend = factor * self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2)
+                else:
+                    # for all other cross-sections bending strength = 0
+                    qu_bend = 0
+            qu_shear = self.section.vu_p / (max(alpha_v) * self.system.l_tot)
+        else:
+            if qs_class_vorh[0] <= qs_class_erf[0] & qs_class_vorh[1] <= qs_class_erf[1]:
+                qu_bend = min(self.section.mu_max / (max(alpha_m) * self.system.l_tot ** 2), self.section.mu_min /
+                              (min(alpha_m) * self.system.l_tot ** 2))
+            else:
+                qu_bend = 0
+            qu_shear = min(self.section.vu_p / (max(alpha_v) * self.system.l_tot),
+                           self.section.vu_n / (min(alpha_v) * self.system.l_tot))
+        return min(qu_bend, qu_shear)
 
+    def calc_qk_zul_gzt(self, gamma_g=1.35, gamma_q=1.5):
+        self.qk_zul_gzt = (self.qu - gamma_g * self.gk) / gamma_q
+    '''
+    def calc_f1(self):
+        # calculates first frequency of system according to HBT, Seite 46
+        kf2 = self.system.kf2
+        l_rech = self.system.li_max
+        section_material = self.section.section_type[0:2]
+        if section_material == "rc":  # take cracked stiffness for calculation of concrete sections if section is cracked
+            if self.mkd_p < self.section.mr_p and self.mkd_n > self.section.mr_n:
+                eil = self.section.ei1
+            else:
+                eil = self.section.ei2
+        else:
+            eil = self.section.ei1
+        m = self.m
+ #       print("m =", m)
+        f1 = kf2 * np.pi / (2 * l_rech ** 2) * (eil / m) ** 0.5  # HBT, Seite 46    #FEHLER WARNUNG IN COMPARISON ULS SLS
+        return f1
+
+    def calc_vib1(self, f0=700):
+        # calculates a_Ed according to HBT, Seite 47
+        f1 = self.f1
+        m_gen = self.m * self.system.li_max / 2 * self.bm_rech
+        xi = self.section.xi
+        if f1 <= 5.1:
+            alpha = 0.2
+            ff = f1
+        elif f1 <= 6.9:
+            alpha = 0.06
+            ff = f1
+        else:
+            alpha = 0.06
+            ff = 6.9
+        a_ed = 0.4 * f0 * alpha / m_gen * 1 / (
+                    ((f1 / ff) ** 2 - 1) ** 2 + (2 * xi * f1 / ff) ** 2) ** 0.5  # HBT, Seite 47
+        return a_ed
+
+    def calc_vib2(self, f=1000):
+        # calculates W_F,ED according to to HBT, Seite 48
+        wf_ed = self.system.alpha_w_f_cd * f * self.system.li_max ** 3 / (self.bm_rech * self.section.ei1)
+        section_material = self.section.section_type[0:2]
+        if section_material == "rc":  # take cracked stiffness for calculation of concrete sections
+            eil = self.section.ei2
+        else:
+            eil = self.section.ei1
+        ve_ed = 364 / (self.bm_rech * (self.m ** 3 * eil * 1e6) ** 0.25)        #FEHLER WARNUNG IN COMPARISON ULS SLS
+        return wf_ed, ve_ed
+    '''
+    def get_fire_resistance(self):
+        # evaluate fire resistance
+        if self.section.section_type == "rc_rec":
+            fire_resistance = RectangularConcrete.fire_resistance(self.section)
+        # elif self.section.section_type == "wd_rec":
+        #     fire_resistance = RectangularWood.fire_resistance(self)
+        # elif self.section.section_type == "rc_rib":
+        #     fire_resistance = RibbedConcrete.fire_resistance(self.section)
+        # elif self.section.section_type == "wd_rib":
+        #     fire_resistance = RibWood.fire_resistance(self.section)
+        else:
+            #print("fire resistance for is not defined for that cross-section type.")
+            fire_resistance = None
+        self.fire_resistance = fire_resistance
 
 
 class Requirements:
