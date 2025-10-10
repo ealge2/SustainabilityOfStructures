@@ -4,7 +4,7 @@
 # IMPORT
 import create_dummy_database  # file for creating a "dummy database", as long as no real database is available
 import struct_analysis  # file with code for structural analysis
-import struct_optimization
+import struct_optimization_2D
 import struct_optimization  # file with code for structural optimization
 #import matplotlib.pyplot as plt
 
@@ -46,7 +46,7 @@ system = struct_analysis.Slab(length_x,length_y,support)
 
 # create rc member
 member = struct_analysis.Member2D(section, system, bodenaufbau_rc, requirements, g2k, qk)
-opt_section = struct_optimization.get_optimized_section(member, "ENV", "GWP", 25)
+opt_section = struct_optimization_2D.get_optimized_section(member, "ENV", "GWP", 25)
 print("opt section = ", opt_section.h)
 
 print("d =", section.d)

@@ -1028,6 +1028,12 @@ class Slab:
                     SELECT NAME, RAENDER, LX, LY, MX_POS, MY_POS, MX_NEG, MY_NEG, V_POS, V_NEG, W, F 
                     FROM slab_properties
                     WHERE RAENDER = ? AND LX = ? AND LY = ? """, (self.raender, self.lx, self.ly)).fetchall()
+
+       # try:
+    #    print(result[0])
+    #    except IndexError:
+     #       print("Index out of range")
+
         self.result = result[0]
 
         self.alpha_m = (float(self.result[4]), float(self.result[5]))
