@@ -1,6 +1,6 @@
 import sqlite3  # import modul for SQLite
 
-database_name = 'database_250326.db'
+database_name = 'database_251030.db'
 
 connection = sqlite3.connect(database_name)
 cursor = connection.cursor()
@@ -32,7 +32,7 @@ print(result)
 # Referenz aus Code Luisa (funktioniert)
 KBOB_steel = cursor.execute("""
                         SELECT A1toA3_GWP FROM products
-                        WHERE type LIKE '%structural steel profile%'
+                        WHERE MATERIAL LIKE '%structural steel profile%'
                         AND "source [string]" LIKE '%KBOB%'
                         """).fetchall()
 print(KBOB_steel)
