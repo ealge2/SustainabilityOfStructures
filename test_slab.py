@@ -52,7 +52,13 @@ print("opt section = ", opt_section.h)
 print("d =", section.d)
 print("mu_max= ", round(section.mu_max,2))
 print(system.alpha_m)
+print("mu_min= ", round(section.mu_min,2))
+
+
 print()
+print("as = ", opt_section.bw)
+
+
 print("mr_p =", section.mr_p)
 print("x/d =", section.x_p/section.d)
 print()

@@ -14,6 +14,7 @@
 #
 # Abgebildete Statische Systeme 1D:
 # - Einfacher Balken
+# - Durchlaufträger (in Bearbeitung)
 #
 # Weitere Klassen:
 # - Bauteil 1D
@@ -83,14 +84,13 @@ class ReadyMixedConcrete:
             # inquiry = ("""
             #         SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE "material [string]" LIKE """ + mech_prop
             #            )
-            inquiry = ("""
-                                SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP LIKE """ + mech_prop
-                       )
+            inquiry = ("""SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP LIKE """
+                       + mech_prop                       )
         else:
             # inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE PRO_ID LIKE """ + prod_id
             #            )
-            inquiry = ("""SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID LIKE """ + prod_id
-                       )
+            inquiry = ("""SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE PRO_ID LIKE """
+                       + prod_id)
         cursor.execute(inquiry)
         result = cursor.fetchall()
         # self.prod_id, self.density, self.GWP, self.cost, self.cost2 = result[0]
@@ -108,7 +108,6 @@ class ReadyMixedConcrete:
         tcd = 0.3 * eta_t * 1e6 * (self.fck * 1e-6) ** 0.5 / gamma_c  # SIA 262, 2.3.2.4, Formel (3)
         ec2d = 0.003  # SIA 262, 4.2.4, Tabelle 8
         return fcd, tcd, ec2d
-
 
 class SteelReinforcingBar:
     # defines properties of reinforcement  material
@@ -1035,8 +1034,10 @@ class Slab:
      #       print("Index out of range")
 
         self.result = result[0]
-
+        #Faktor alpha_m → Feldbewehrung untere Lagen: alpha_m[0] → Bewehrung 1. Lage für l_max; alpha_m[1] → Bewehrung 2. Lage für l_min
         self.alpha_m = (float(self.result[4]), float(self.result[5]))
+        #Faktor alpha_m_neg → Stützenbewehrung obere Lagen: alpha_m_neg[0] → Bewehrung 4. Lage für l_max; alpha_m_neg[1] → Bewehrung 3. Lage für l_min
+        #self.alpha_m_neg = (float(self.result[])¨, float(self.result[]))
         self.alpha_v = (float(self.result[8]), float(self.result[9]))
         self.qs_cl_erf = [2, 1]
         self.alpha_w = float(self.result[10])
