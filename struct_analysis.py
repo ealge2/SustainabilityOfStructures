@@ -1032,10 +1032,10 @@ class Slab:
                     WHERE RAENDER = ? AND LX = ? AND LY = ? """, (self.raender, self.lx, self.ly)).fetchall()
 
         self.result = result[0]
-        #Faktor alpha_m → Feldbewehrung untere Lagen: alpha_m[0] → Bewehrung 1. Lage für l_max; alpha_m[1] → Bewehrung 2. Lage für l_min
-        self.alpha_m = (float(self.result[4]), float(self.result[5]))
-        #Faktor alpha_m_neg → Stützenbewehrung obere Lagen: alpha_m_neg[0] → Bewehrung 4. Lage für l_max; alpha_m_neg[1] → Bewehrung 3. Lage für l_min
-        #self.alpha_m_neg = (float(self.result[])¨, float(self.result[]))
+        #Faktor alpha_m_x: Bewehrungfür l_max
+        self.alpha_m_x = (float(self.result[4]), float(self.result[5]))
+        #Faktor alpha_m_x: Bewehrungfür l_min
+        self.alpha_m_y = (float(self.result[6]), float(self.result[7]))
         self.alpha_v = (float(self.result[8]), float(self.result[9]))
         self.qs_cl_erf = [2, 1]
         self.alpha_w = float(self.result[10])
@@ -1288,10 +1288,10 @@ class Member2D:
         self.w_use_adm = self.li_min / self.requirements.lw_use
         self.w_app_adm = self.li_min / self.requirements.lw_app
         self.qu = self.calc_qu()
-        self.mkd_n = self.system.alpha_m[0] * (self.gk + self.qk) * self.system.l_tot ** 2
-        self.mkd_p = self.system.alpha_m[1] * (self.gk + self.qk) * self.system.l_tot ** 2
-        #self.mkd_n_y =
-        #self.mkd_p_y =
+        self.mkd_n = self.system.alpha_m_x[0] * (self.gk + self.qk) * self.li_max ** 2
+        self.mkd_p = self.system.alpha_m_x[1] * (self.gk + self.qk) * self.li_max ** 2
+        self.mkd_n_y = self.system.alpha_m_y[0] * (self.gk + self.qk) * self.li_min ** 2
+        self.mkd_p_y = self.system.alpha_m_y[1] * (self.gk + self.qk) * self.li_min ** 2
         #TODO: Everything for lx and ly!
         self.qk_zul_gzt = float
         self.fire = [0, 0, 0, 0]  # fire from bottom, left, top, right (0: no fire; 1: fire)
@@ -1369,8 +1369,12 @@ class Member2D:
         self.f1 = 100
 
     def calc_qu(self):
+        """
+        Idea: qu von maximaler Spannweite definiert
+        Schauen, welche Nachweise man alles in beide Richtungen machen muss und bei welchen einfach l_max ausreicht!
+        """
         # calculates maximal load qu in respect to bearing moment mu_max, mu_min and static system
-        alpha_m = self.system.alpha_m
+        alpha_m = self.system.alpha_m_x
         alpha_v = self.system.alpha_v
         qs_class_erf = self.system.qs_cl_erf  # z.B. [0, 2]
         qs_class_vorh = [self.section.qs_class_n, self.section.qs_class_p]
