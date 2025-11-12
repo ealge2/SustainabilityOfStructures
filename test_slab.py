@@ -51,7 +51,8 @@ print("opt section = ", opt_section.h)
 
 print("d =", section.d)
 print("mu_max= ", round(section.mu_max,2))
-print(system.alpha_m)
+print("alpha_m: ",system.alpha_m)
+print("alpha_m_neg: ",system.alpha_m_neg)
 print("mu_min= ", round(section.mu_min,2))
 
 

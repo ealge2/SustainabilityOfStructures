@@ -1033,9 +1033,9 @@ class Slab:
 
         self.result = result[0]
         #Faktor alpha_m → Feldbewehrung untere Lagen: alpha_m[0] → Bewehrung 1. Lage für l_max; alpha_m[1] → Bewehrung 2. Lage für l_min
-        self.alpha_m = (float(self.result[4]), float(self.result[5]))
+        self.alpha_m = (float(self.result[4]), float(self.result[6]))
         #Faktor alpha_m_neg → Stützenbewehrung obere Lagen: alpha_m_neg[0] → Bewehrung 4. Lage für l_max; alpha_m_neg[1] → Bewehrung 3. Lage für l_min
-        #self.alpha_m_neg = (float(self.result[])¨, float(self.result[]))
+        self.alpha_m_neg = (float(self.result[5]), float(self.result[7]))
         self.alpha_v = (float(self.result[8]), float(self.result[9]))
         self.qs_cl_erf = [2, 1]
         self.alpha_w = float(self.result[10])
