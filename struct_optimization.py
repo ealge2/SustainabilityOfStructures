@@ -30,30 +30,53 @@ class RandomDisplacementBounds(object):
 def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h  # start value for height corresponds to 1/20 of system length
-    di_xu0 = m.section.bw[0][0]  # start value for rebar diameter 40 mm
-    var0 = [h0, di_xu0]
-
-    # define bounds of variables
-    bh = (h_min, 1.2)  # height between h_min and 1.2 m
-    bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
-    bounds = [bh, bdi_xu]
-
-    # definition of fixed values of cross-section
-    b = m.section.b
-    s_xu, di_xo, s_xo = m.section.bw[0][1], m.section.bw[1][0], m.section.bw[1][1]
-    di_bw, s_bw, n_bw = m.section.bw_bg[0], m.section.bw_bg[1], m.section.bw_bg[2]
-    phi, c_nom, xi, jnt_srch = m.section.phi, m.section.c_nom, m.section.xi, m.section.joint_surcharge
-
-    co, st = m.section.concrete_type, m.section.rebar_type
-    add_arg = [m.system, co, st, b, s_xu, di_xo, s_xo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk]
+    if min(m.system.alpha_m) < 0 and abs(min(m.system.alpha_m)) > max(m.system.alpha_m):
+        optimise = "oben"
+        di_xo0 = m.section.bw[1][0]  # start value for rebar diameter 40 mm
+        var0 = [h0, di_xo0]
+        # define bounds of variables
+        bh = (0.06, 1.2)  # height between 6 cm and 1.0 m
+        bdi_xo = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
+        bounds = [bh, bdi_xo]
+        # definition of fixed values of cross-section
+        b = m.section.b
+        s_xu, di_xu, s_xo = m.section.bw[0][1], m.section.bw[0][0], m.section.bw[1][1]
+        di_bw, s_bw, n_bw = m.section.bw_bg[0], m.section.bw_bg[1], m.section.bw_bg[2]
+        phi, c_nom, xi, jnt_srch = m.section.phi, m.section.c_nom, m.section.xi, m.section.joint_surcharge
+        co, st = m.section.concrete_type, m.section.rebar_type
+        add_arg = [m.system, co, st, b, s_xu, di_xu, s_xo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk,
+                   optimise]
+    else:
+        optimise = "unten"
+        di_xu0 = m.section.bw[0][0]  # start value for rebar diameter 40 mm
+        var0 = [h0, di_xu0]
+        # define bounds of variables
+        bh = (0.06, 1.2)  # height between 6 cm and 1.0 m
+        bdi_xu = (0.006, 0.04)  # diameter of rebars between 6 mm and 40 mm
+        bounds = [bh, bdi_xu]
+        # definition of fixed values of cross-section
+        b = m.section.b
+        s_xu, di_xo, s_xo = m.section.bw[0][1], m.section.bw[1][0], m.section.bw[1][1]
+        di_bw, s_bw, n_bw = m.section.bw_bg[0], m.section.bw_bg[1], m.section.bw_bg[2]
+        phi, c_nom, xi, jnt_srch = m.section.phi, m.section.c_nom, m.section.xi, m.section.joint_surcharge
+        co, st = m.section.concrete_type, m.section.rebar_type
+        add_arg = [m.system, co, st, b, s_xu, di_xo, s_xo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk,
+                   optimise]
 
     # optimize with basinhopping algorithm with bounds also implemented on both levels (inner and outer):
     bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds]))
     opt = basinhopping(rc_rqs, var0, niter=max_iter, T=1, minimizer_kwargs={"args": (add_arg,), "bounds": bounds,
                                                                             "method": "Powell"}, take_step=bounded_step)
-    h, di_xu = opt.x
-    optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw, n_bw,
-                                                            phi, c_nom, xi, jnt_srch)
+    if min(m.system.alpha_m) < 0 and abs(min(m.system.alpha_m)) > max(m.system.alpha_m):
+        h, di_xo = opt.x
+        optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw,
+                                                                n_bw,
+                                                                phi, c_nom, xi, jnt_srch)
+    else:
+        h, di_xu = opt.x
+        optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw,
+                                                                n_bw,
+                                                                phi, c_nom, xi, jnt_srch)
     return optimized_section
 
 # inner function for optimizing reinforced concrete section for criteria ULS or SLS1 in terms of GWP or height
@@ -61,12 +84,20 @@ def rc_rqs(var, add_arg):
     # input: variables, which have to be optimized, additional info about cross-section and system, optimizing option
     # output: if criterion == GWP -> co2 of cross-section, punished by delta 10*(qk_zul-qk)
     # output: if criterion == h -> height of cross-section, punished by delta 1*(qk_zul-qk)
-    h, di_xu = var
+    optimise = add_arg[13]
+    if optimise == "oben":
+        h, di_xo = var
+        di_xu = s_xu = add_arg[5]
+    elif optimise == "unten":
+        h, di_xu = var
+        di_xo = s_xu = add_arg[5]
+
     system = add_arg[0]
     concrete = add_arg[1]
     reinfsteel = add_arg[2]
     b = add_arg[3]
-    s_xu, di_xo, s_xo = add_arg[4:7]
+    s_xu = add_arg[4]
+    s_xo = add_arg[6]
     floorstruc = add_arg[7]
     criteria = add_arg[8]
     to_opt = add_arg[9]
@@ -85,7 +116,10 @@ def rc_rqs(var, add_arg):
     penalty1 = max(member.qk - member.qk_zul_gzt, 0)
 
     # define penalty2, if SLS1 (deflections) are not fulfilled
-    if member.mkd_p < member.section.mr_p and member.mkd_n < member.section.mr_n:
+    if optimise == "oben" and member.mkd_n < member.section.mr_n:
+        d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
+                      member.w_app - member.w_app_adm]
+    elif optimise == "unten" and member.mkd_p < member.section.mr_p:
         d1, d2, d3 = [member.w_install - member.w_install_adm, member.w_use - member.w_use_adm,
                       member.w_app - member.w_app_adm]
     else:
@@ -125,8 +159,10 @@ def rc_rqs(var, add_arg):
     elif criterion == "SLS2":
         if to_opt == "GWP":
             to_minimize = member.section.co2*(1+penalty3)
+            return to_minimize
         elif to_opt == "h":
             to_minimize = member.section.h*(1+penalty3)
+            return to_minimize
 
     # optimize fire resistance only
     elif criterion == "FIRE":

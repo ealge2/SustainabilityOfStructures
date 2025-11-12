@@ -12,16 +12,11 @@ import matplotlib.pyplot as plt
 # create_dummy_database.create_database(database_name)  # create database
 
 # define database
-database_name = "database_250514.db"
-
-
-
+database_name = "database_250702.db"
 
 # create material for wooden cross-section, derive corresponding design values
 timber1 = struct_analysis.Wood("'GL24h'", database_name)  # create a Wood material object
 timber1.get_design_values()
-
-
 
 # create materials for reinforced concrete cross-section, derive corresponding design values
 concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)
@@ -56,7 +51,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+lengths = [2,  8, 9, 10, 11, 12, 17, 18, 19, 20]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
