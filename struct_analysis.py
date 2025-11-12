@@ -16,6 +16,9 @@
 # - Einfacher Balken
 # - Durchlaufträger (in Bearbeitung)
 #
+#Statische Systeme 2D:
+# - Platte 4-seitig gelagert für vordefinierte Spannweiten
+#
 # Weitere Klassen:
 # - Bauteil 1D
 # - Bodenaufbauschicht
@@ -1027,11 +1030,6 @@ class Slab:
                     SELECT NAME, RAENDER, LX, LY, MX_POS, MY_POS, MX_NEG, MY_NEG, V_POS, V_NEG, W, F 
                     FROM slab_properties
                     WHERE RAENDER = ? AND LX = ? AND LY = ? """, (self.raender, self.lx, self.ly)).fetchall()
-
-       # try:
-    #    print(result[0])
-    #    except IndexError:
-     #       print("Index out of range")
 
         self.result = result[0]
         #Faktor alpha_m → Feldbewehrung untere Lagen: alpha_m[0] → Bewehrung 1. Lage für l_max; alpha_m[1] → Bewehrung 2. Lage für l_min
