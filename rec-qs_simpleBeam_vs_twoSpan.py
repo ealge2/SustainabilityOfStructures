@@ -23,20 +23,20 @@ concrete1 = struct_analysis.ReadyMixedConcrete("'C25/30'", database_name)
 concrete1.get_design_values()
 reinfsteel1 = struct_analysis.SteelReinforcingBar("'B500B'", database_name)
 reinfsteel1.get_design_values()
-"""
+
 # create initial wooden rectangular cross-section
 section_wd0 = struct_analysis.RectangularWood(timber1, 1.0, 0.1, xi=0.02)
-"""
+
 # create initial reinforced concrete rectangular cross-section
 section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
 
-"""
+
 # create floor structure for solid wooden cross-section
 bodenaufbau_brettstappeldecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                                  ["'Unterlagsboden Zement, 85 mm'", False, False], ["'Glaswolle'", 0.03, False],
                                  ["'Kies gebrochen'", 0.12, False]]
 bodenaufbau_wd = struct_analysis.FloorStruc(bodenaufbau_brettstappeldecke, database_name)
-"""
+
 # create floor structure for solid reinforced concrete cross-section
 bodenaufbau_rcdecke = [["'Parkett 2-Schicht werkversiegelt, 11 mm'", False, False],
                        ["'Unterlagsboden Zement, 85 mm'", False, False],
@@ -54,7 +54,7 @@ req = struct_analysis.Requirements()
 lengths = [2, 3, 4, 5, 6, 7,  8, 9, 10, 11, 12, 13, 14, 15, 16,  17, 18, 19, 20]
 
 #  define content of plot
-to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
+to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
 criteria = ["ULS", "SLS1", "ENV"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
@@ -76,10 +76,10 @@ for idx, i in enumerate(to_plot):
                 if idx == 0:
                     sys = struct_analysis.BeamSimpleSup(length)
                     SystemLegend = "Simple Beam"
-                elif idx  == 1:
+                elif idx  == 2:
                     sys = struct_analysis.BeamTwoSpan(length)
                     SystemLegend = "Two Span"
-                elif idx == 2:
+                elif idx == 1:
                     sys = struct_analysis.ContinuousSup(length)
                     SystemLegend = "Continuously supported"
                 else:

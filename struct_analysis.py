@@ -993,7 +993,7 @@ class BeamTwoSpan:
     def __init__(self, length):
         self.l_tot = length
         self.li_max = self.l_tot  # max span (used for calculation of admissible deflections)
-        self.alpha_m = [0.125, 0.0703]  # Faktor zur Berechung des Momentes unter verteilter Last
+        self.alpha_m = [-0.125, 0.0703]  # Faktor zur Berechung des Momentes unter verteilter Last
         self.alpha_v = [3/8, 5/8]  # Faktor zur Berechung der Querkarft unter verteilter Last
         self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
         self.alpha_w = 2 / 369  # Faktor zur Berechung der Durchbiegung unter verteilter Last
@@ -1004,7 +1004,7 @@ class ContinuousSup:
     def __init__(self, length):
         self.l_tot = length
         self.li_max = self.l_tot  # max span (used for calculation of admissible deflections)
-        self.alpha_m = [-1/12, 1/24]  # Faktor zur Berechung des Momentes unter verteilter Last
+        self.alpha_m = [1/12, 1/24]  # Faktor zur Berechung des Momentes unter verteilter Last
         self.alpha_v = [0.5, 0.5]  # Faktor zur Berechung der Querkarft unter verteilter Last
         self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
         self.alpha_w = 1 / 384  # Faktor zur Berechung der Durchbiegung unter verteilter Last
