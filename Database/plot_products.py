@@ -160,7 +160,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-plt.rcParams.update({'font.size': 16})
+
+plt.rcParams.update({
+    'font.size': 16,
+    'font.family': 'Times New Roman'
+})
+
 
 
 # Create subplots
@@ -205,10 +210,11 @@ ymin = 0
 ymax = 14
 ax1.set_yticks(range(ymin, ymax))
 ax1.set_ylim(ymin,ymax)
+ax1.set_xlim(-300,1300)
 
 ax1.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
-ax1.set_ylabel('#')
-ax1.set_title('Beton')
+ax1.set_ylabel('# EPD')
+ax1.set_title('Beton', fontsize = 16)
 #ax1.legend(loc='upper right')
 
 # Add vertical lines and text for KBOB values
@@ -256,14 +262,14 @@ ax2.scatter(EPD_timber_values, np.random.normal(2, 0.5, len(EPD_timber_values)),
 #ax2.scatter(bin_centers_Ecoinvent, hist_Ecoinvent, alpha=0.3, label='Ecoinvent Emissions', color='gray', edgecolor='black')
 
 ax2.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
-ax2.set_ylabel('#')
-ax2.set_title('Holz')
+ax2.set_ylabel('# EPD')
+ax2.set_title('Holz', fontsize = 16)
 #ax2.legend(loc='upper right')
 
 ax2.set_yticks(range(ymin, ymax))
 ax2.set_ylim(ymin,ymax)
 
-ax2.set_xlim(-300)
+ax2.set_xlim(-300,1300)
 
 # Add vertical lines and text for KBOB values
 ax2.axvline(KBOB_timber_values[0], linestyle='--', alpha= 0.9, color='tomato')
@@ -306,12 +312,13 @@ ax3.scatter(EPD_reinf_values, np.random.normal(2, 0.5, len(EPD_reinf_values)), a
 # ax3.scatter(bin_centers, hist_EPD_neg, alpha=0.2, label='EPD Emissions', color='steelblue', edgecolor='black')
 
 ax3.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
-ax3.set_ylabel('#')
-ax3.set_title('Betonstahl')
+ax3.set_ylabel('# EPD')
+ax3.set_title('Betonstahl', fontsize = 16)
 #ax3.legend(loc='upper right')
 
 ax3.set_yticks(range(ymin, ymax))
 ax3.set_ylim(ymin,ymax)
+ax3.set_xlim(-300,1300)
 
 # Add vertical lines and text for KBOB values
 ax3.axvline(KBOB_reinf_values[0], linestyle='--', alpha = 0.7, color='tomato')
@@ -350,11 +357,11 @@ ax4.scatter(EPD_steel_values, np.random.normal(2, 0.5, len(EPD_steel_values)), a
 
 ax4.set_yticks(range(ymin, ymax))
 ax4.set_ylim(ymin,ymax)
-
+ax4.set_xlim(-300,1300)
 
 ax4.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
-ax4.set_ylabel('#')
-ax4.set_title('Baustahl')
+ax4.set_ylabel('# EPD')
+ax4.set_title('Baustahl', fontsize = 16)
 #ax4.legend(loc='upper right')
 
 

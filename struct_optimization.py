@@ -27,7 +27,7 @@ class RandomDisplacementBounds(object):
 
 #OPTIMIZATION OF RECTANGULAR CONCRETE CROSS-SECTIONS
 #.......................................................................................................................
-def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
+def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2): #max_inter = 100
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h  # start value for height corresponds to 1/20 of system length
     if min(m.system.alpha_m) < 0 and abs(min(m.system.alpha_m)) > max(m.system.alpha_m):
@@ -41,10 +41,11 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
         # definition of fixed values of cross-section
         b = m.section.b
         s_xu, di_xu, s_xo = m.section.bw[0][1], m.section.bw[0][0], m.section.bw[1][1]
+        di_yu, s_yu, di_yo, s_yo = m.section.bw[2][0], m.section.bw[2][1], m.section.bw[3][0], m.section.bw[3][1]
         di_bw, s_bw, n_bw = m.section.bw_bg[0], m.section.bw_bg[1], m.section.bw_bg[2]
         phi, c_nom, xi, jnt_srch = m.section.phi, m.section.c_nom, m.section.xi, m.section.joint_surcharge
         co, st = m.section.concrete_type, m.section.rebar_type
-        add_arg = [m.system, co, st, b, s_xu, di_xu, s_xo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk,
+        add_arg = [m.system, co, st, b, s_xu, di_xu, s_xo, di_yu, s_yu, di_yo, s_yo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk,
                    optimise]
     else:
         optimise = "unten"
@@ -57,10 +58,11 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
         # definition of fixed values of cross-section
         b = m.section.b
         s_xu, di_xo, s_xo = m.section.bw[0][1], m.section.bw[1][0], m.section.bw[1][1]
+        di_yu, s_yu, di_yo, s_yo = m.section.bw[2][0], m.section.bw[2][1], m.section.bw[3][0], m.section.bw[3][1]
         di_bw, s_bw, n_bw = m.section.bw_bg[0], m.section.bw_bg[1], m.section.bw_bg[2]
         phi, c_nom, xi, jnt_srch = m.section.phi, m.section.c_nom, m.section.xi, m.section.joint_surcharge
         co, st = m.section.concrete_type, m.section.rebar_type
-        add_arg = [m.system, co, st, b, s_xu, di_xo, s_xo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk,
+        add_arg = [m.system, co, st, b, s_xu, di_xo, s_xo, di_yu, s_yu, di_yo, s_yo, m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk,
                    optimise]
 
     # optimize with basinhopping algorithm with bounds also implemented on both levels (inner and outer):
@@ -69,12 +71,12 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
                                                                             "method": "Powell"}, take_step=bounded_step)
     if min(m.system.alpha_m) < 0 and abs(min(m.system.alpha_m)) > max(m.system.alpha_m):
         h, di_xo = opt.x
-        optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw,
+        optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_yu, s_yu, di_yo, s_yo, di_bw, s_bw,
                                                                 n_bw,
                                                                 phi, c_nom, xi, jnt_srch)
     else:
         h, di_xu = opt.x
-        optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_bw, s_bw,
+        optimized_section = struct_analysis.RectangularConcrete(co, st, b, h, di_xu, s_xu, di_xo, s_xo, di_yu, s_yu, di_yo, s_yo, di_bw, s_bw,
                                                                 n_bw,
                                                                 phi, c_nom, xi, jnt_srch)
     return optimized_section
@@ -84,7 +86,7 @@ def rc_rqs(var, add_arg):
     # input: variables, which have to be optimized, additional info about cross-section and system, optimizing option
     # output: if criterion == GWP -> co2 of cross-section, punished by delta 10*(qk_zul-qk)
     # output: if criterion == h -> height of cross-section, punished by delta 1*(qk_zul-qk)
-    optimise = add_arg[13]
+    optimise = add_arg[17]
     if optimise == "oben":
         h, di_xo = var
         di_xu = s_xu = add_arg[5]
@@ -98,15 +100,17 @@ def rc_rqs(var, add_arg):
     b = add_arg[3]
     s_xu = add_arg[4]
     s_xo = add_arg[6]
-    floorstruc = add_arg[7]
-    criteria = add_arg[8]
-    to_opt = add_arg[9]
-    criterion = add_arg[10]
-    g2k = add_arg[11]
-    qk = add_arg[12]
+    di_yu, s_yu = add_arg[7:9]
+    di_yo, s_yo = add_arg[9:11]
+    floorstruc = add_arg[11]
+    criteria = add_arg[12]
+    to_opt = add_arg[13]
+    criterion = add_arg[14]
+    g2k = add_arg[15]
+    qk = add_arg[16]
 
     # create section
-    section = struct_analysis.RectangularConcrete(concrete, reinfsteel, b, h, di_xu, s_xu, di_xo, s_xo)
+    section = struct_analysis.RectangularConcrete(concrete, reinfsteel, b, h, di_xu, s_xu, di_xo, s_xo, di_yu, s_yu, di_yo, s_yo)
 
     # create member
     member = struct_analysis.Member1D(section, system, floorstruc, criteria, g2k, qk)

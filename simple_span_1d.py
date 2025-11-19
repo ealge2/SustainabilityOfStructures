@@ -14,7 +14,7 @@ lengths = [4, 5, 6, 7, 8, 9, 10, 11, 12]
 idx_vrc = 4
 
 # max. number of iterations per optimization. Higher value leads to better results
-max_iter = 200
+max_iter = 100
 
 #  define content of plot
 criteria = ["ENV"]  # envelop, all criteria should be fulfilled (ULS, SLS1, SLS2, Fire)
@@ -110,26 +110,26 @@ data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
 # DEFINE LABELS OF PLOTS
-plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"]]
+plotted_data = [["h$struct$", "[m]"], ["h$tot$", "[m]"], ["GWP$struct$", "[kg-CO$_2$-eq]"], ["GWP$tot$", "[kg-CO$_2$-eq]"]]
 
 # ADD LABELS, LEGEND, AXIS LIMITS AND GRID TO THE PLOTS
 for idx, info in enumerate(plotted_data):
     plt.subplot(2, 2, idx + 1)
-    plt.xlabel('l [m]')
-    plt.ylabel(info[0] + " " + info[1])
+    plt.xlabel('l [m]', fontsize =12)
+    plt.ylabel(info[0] + " " + info[1], fontsize=12)
     if idx % 2 == 0:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx+1])))
     else:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
     plt.grid()
 
-# # plot cross-section of members for verification
-for mem_group in vrfctn_members:
-    for i, mem in enumerate(mem_group[0]):
-        section = mem.section
-        plot_datasets.plot_section(section)
-        # Show the plot
-        plt.title(f'#{mem_group[1][i]}')
+# # # plot cross-section of members for verification
+# for mem_group in vrfctn_members:
+#     for i, mem in enumerate(mem_group[0]):
+#         section = mem.section
+#         plot_datasets.plot_section(section)
+#         # Show the plot
+#         plt.title(f'#{mem_group[1][i]}')
 
 # SHOW FIGURE
 plt.show()

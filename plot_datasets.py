@@ -9,8 +9,6 @@ from shapely.geometry import Polygon
 from scipy.interpolate import interp1d
 from scipy.spatial import ConvexHull
 
-
-
 # PLOT DATASETS OF MEMBERS WITH DEFINED CROSS_SECTIONS AND VARIED MATERIALS
 # ----------------------------------------------------------------------------------------------------------------------
 def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requirements, crsec_type, mat_names,
@@ -99,10 +97,10 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 rebar_high_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_high_str)
                 # create initial cross-sections
                 section_00 = struct_analysis.RectangularConcrete(concrete, rebar_low_em, 1.0, 0.20,
-                                                                0.014, 0.15, 0.01, 0.15,
+                                                                0.014, 0.15, 0.01, 0.15, 0.01, 0.15, 0.01, 0.15,
                                                                 0, 0.15, 2)
                 section_01 = struct_analysis.RectangularConcrete(concrete, rebar_high_em, 1.0, 0.20,
-                                                                 0.014, 0.15, 0.01, 0.15,
+                                                                 0.014, 0.15, 0.01, 0.15, 0.01, 0.15, 0.01, 0.15,
                                                                  0, 0.15, 2)
 
                 # add sections to content-definition of plot-line
@@ -147,8 +145,8 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
                 rebar_high_em = struct_analysis.SteelReinforcingBar("'B500B'", database_name, prod_id=prod_id_high_str)
 
                 # create initial cross-sections
-                section_00 = struct_analysis.RibbedConcrete(concrete, rebar_low_em, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
-                section_01 = struct_analysis.RibbedConcrete(concrete, rebar_high_em, 4, 1.0, 0.14, 0.3, 0.18, 0.01, 0.15,
+                section_00 = struct_analysis.RibbedConcrete(concrete, rebar_low_em, 4, 1.0, 0.15, 0.3, 0.18, 0.01, 0.15, 0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
+                section_01 = struct_analysis.RibbedConcrete(concrete, rebar_high_em, 4, 1.0, 0.15, 0.3, 0.18, 0.01, 0.15,
                                                             0.01, 0.15, 0.02, 2, 0.01, 0.15, 2)
                 # add sections to content-definition of plot-line
                 line_i0 = [section_00, floorstruc]
@@ -255,26 +253,34 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     h = [[mem.section.h for mem in sublist] for sublist in member_list]
     h_min = [min(values) for values in zip(*h)]
     h_max = [max(values) for values in zip(*h)]
+    h_mean = [sum(values) / len(values) for values in list(zip(*h))]
 
     # create data of envelope area for subplot 2: total height
     h_tot = [[mem.section.h+mem.floorstruc.h for mem in sublist] for sublist in member_list]
     h_tot_min = [min(values) for values in zip(*h_tot)]
     h_tot_max = [max(values) for values in zip(*h_tot)]
+    h_tot_mean = [sum(values) / len(values) for values in list(zip(*h_tot))]
 
     # create data of envelope area data subplot 3: co2 of structure
     co2 = [[mem.section.co2 for mem in sublist] for sublist in member_list]
     co2_min = [min(values) for values in zip(*co2)]
     co2_max = [max(values) for values in zip(*co2)]
+    co2_mean = [sum(values) / len(values) for values in list(zip(*co2))]
 
     # create data of envelope area for subplot 4: total co2
     co2_tot = [[mem.section.co2+mem.floorstruc.co2 for mem in sublist] for sublist in member_list]
     co2_tot_min = [min(values) for values in zip(*co2_tot)]
     co2_tot_max = [max(values) for values in zip(*co2_tot)]
+    co2_tot_mean = [sum(values) / len(values) for values in list(zip(*co2_tot))]
 
     values_min = [h_min, h_tot_min, co2_min, co2_tot_min]
     values_max = [h_max, h_tot_max, co2_max, co2_tot_max]
+    values_mean = [h_mean, h_tot_mean, co2_mean, co2_tot_mean]
 
     # PLOT DATASET TO FIGURE
+    plt.rcParams.update({
+        'font.family': 'Times New Roman'
+    })
     plt.figure(1)
     data_max = [0, 0, 0, 0]
     vrfctn_members = [[], []]
@@ -330,9 +336,9 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             # extract the x and y coordinates for plotting
             x, y = polygon.exterior.xy
             # plot area
-            plt.fill(x, y, alpha=0.05, facecolor=color)
+            plt.fill(x, y, alpha=0.05, facecolor=color, edgecolor = color, linewidth = 1.5)
             # plot lines
-            plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label, alpha=0.2)
+            #plt.plot(lengths, data, color=color, linestyle=linestyle, linewidth=linewidth, label=label, alpha=0.2)
             data_max[idx] = max(data_max[idx], max(data))
             # # plot points of verification into graph
             # ver_x, ver_y = lengths[idx_vrfctn], data[idx_vrfctn]
@@ -341,8 +347,14 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             #              xytext=(ver_x + 0.05*lengths[-1], ver_y),
             #              arrowprops=dict(facecolor='black', shrink=0.2, width=0.2, headwidth=2, headlength=4),
             #              fontsize=9, color='black', va='center')
+            plt.plot(lengths, values_mean[idx], color = color, linestyle = linestyle, linewidth = 1.5 )
+
 
     return data_max, vrfctn_members
+
+
+
+
 
 # PLOT GEOMETRY OF SECTIONS
 # ----------------------------------------------------------------------------------------------------------------------

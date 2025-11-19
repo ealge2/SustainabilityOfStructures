@@ -88,7 +88,7 @@ class ReadyMixedConcrete:
             #         SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE "material [string]" LIKE """ + mech_prop
             #            )
             inquiry = ("""SELECT PRO_ID, DENSITY, Total_GWP, Cost FROM products WHERE MECH_PROP LIKE """
-                       + mech_prop                       )
+                       + mech_prop)
         else:
             # inquiry = ("""SELECT PRO_ID, density, Total_GWP, cost, cost2 FROM products WHERE PRO_ID LIKE """ + prod_id
             #            )
@@ -168,7 +168,6 @@ class Section:
 class SupStrucRectangular(Section):
     # defines cross-section dimensions and has methods to calculate static properties of rectangular,
     # non-cracked sections
-
     def __init__(self, section_type, b, h, phi=0):  # create a rectangular object
         super().__init__(section_type)
         self.b = b  # width [m]
@@ -263,7 +262,7 @@ class RectangularWood(SupStrucRectangular, Section):
 # ........................................................................
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
-    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_bw=0.0, s_bw=0.15, n_bw=0,
+    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_yu, s_yu, di_yo, s_yo, di_bw=0.0, s_bw=0.15, n_bw=0,
                  phi=2.0, c_nom=0.02, xi=0.02, jnt_srch=0.15):
         # create a rectangular concrete object
         section_type = "rc_rec"
@@ -271,7 +270,7 @@ class RectangularConcrete(SupStrucRectangular):
         self.concrete_type = concrete_type
         self.rebar_type = rebar_type
         self.c_nom = c_nom
-        self.bw = [[di_xu, s_xu], [di_xo, s_xo]]
+        self.bw = [[di_xu, s_xu], [di_xo, s_xo], [di_yu, s_yu],[di_yo, s_yo]]
         self.bw_bg = [di_bw, s_bw, n_bw]
         mr = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  # cracking moment
         self.mr_p, self.mr_n = mr, -mr
@@ -349,7 +348,7 @@ class RectangularConcrete(SupStrucRectangular):
         ds = self.ds
         x_p = self.x_p
         x_n = self.x_n
-        as_bw = self.calc_as_bw(di, n, s)
+        as_bw = self.calc_as_bw(di, n, s, d)
         if d_installation < d / 6:
             dv_p = d
         else:
@@ -363,8 +362,8 @@ class RectangularConcrete(SupStrucRectangular):
         return vu_p, vu_n, as_bw
 
     @staticmethod
-    def calc_as_bw(di, n, s):
-        as_bw = np.pi * di ** 2 / 4 * n / s
+    def calc_as_bw(di, n, s, d):
+        as_bw = np.pi * di ** 2 / 4 * n / s * 0.9*d #ToDo: muss die Bügelquerschnittsfläche nicht noch mit der Plattenstärke multipliziert werden?
         return as_bw
 
     @staticmethod
@@ -424,8 +423,8 @@ class SupStrucRibbedConcrete(Section):
         self.h = h              # total height [m]
         self.h_f = h_f          # flange height [m]
         self.h_w = h - h_f      # web height [m]
-        self.l0 = l0
-        self.b_eff = self.calc_beff()  #Effective width
+        self.l0 = l0            # Abstand Momentennullpunkte [m]
+        self.b_eff = self.calc_beff()  #Effective width [m]
         self.a_brutt = self.calc_area()
         self.z_s = self.calc_center_of_gravity()
         self.iy = self.calc_moment_of_inertia()
@@ -439,7 +438,7 @@ class SupStrucRibbedConcrete(Section):
         return a_brutt
 
     def calc_beff(self):
-        # in: width b and bw [m], Abstand Momentennullpunkte l_0 [m]
+        # in: width b [m], bw [m], l_0 [m]
         # out: effective width b_eff
         l_0 = self.l0
         b_eff_i = 0.2 * (self.b - self.b_w) / 2 + 0.1 * l_0  # SIA 262, 4.1.3.3.2 (20)
@@ -623,7 +622,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
         x_p, x_PB_p = self.x_p, self.x_PB_p
         x_n, x_PB_n = self.x_n, self.x_PB_n
         as_bw = 0
-        as_PB_bw = np.pi * di_r ** 2 / 4 * n_r / s_r
+        as_PB_bw = np.pi * di_r ** 2 / 4 * n_r / s_r * 0.9 * d
 
         if bauteil == 'Platte':
             if d_installation < d / 6:  #SIA 262 4.3.3.2.8
@@ -667,7 +666,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
             vrds = as_bw * z * fsd  # SIA 262, 4.3.3.4.3, (43)
             vrdc = bw * z * kc * fcd * np.sin(alpha) * np.cos(
                 alpha)  # unit of alpha: [rad]    # SIA 262, 4.3.3.4.6, (45)
-            rohw = as_bw / bw
+            rohw = as_bw / bw /(0.9*d)
             rohw_min = 0.001 * (fck * 1e-6 / 30) ** 0.5 * 500 / (fsk * 1e-6)
             if rohw < rohw_min:
                 print("minimal reinforcement ratio of stirrups is lower than required according to SIA 262, (110)")
@@ -783,7 +782,6 @@ class SupStrucRibWood(Section):
         w = spec_weight * self.a_brutt
         return w
 
-
 #................................................................
 class RibWood(SupStrucRibWood):
     # defines properties of ribbed timber slab = "Hohlkastendecke" → box beam floor or "Ripendecke" = → joist floor
@@ -800,7 +798,6 @@ class RibWood(SupStrucRibWood):
         self.phi = phi_1
 
         self.l0 = l0
-
 
         n, n_inf = self.calc_n()
         super().__init__(section_type, b, h, a, t2, t3, n, n_inf)
@@ -822,7 +819,6 @@ class RibWood(SupStrucRibWood):
         self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
 
     def calc_n(self):
-
         ft0d = 8.5 #C24
         fc0d = 12.4 #C24
         E0mean = 11000 #C24
@@ -830,15 +826,15 @@ class RibWood(SupStrucRibWood):
         factor = 2/3 #Dreischichtplatte 9/9/9 oder 10/10/10
 
         n1 = self.wood_type_1.Emmean / self.wood_type_1.Emmean          # Wertigkeit Rippe
-        n2 = self.wood_type_2.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung unten           EMMEAN reduzieren!
-        n3 = self.wood_type_3.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung oben            EMMEAN reduzieren!
+        n2 = self.wood_type_2.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung unten           #Todo: EMMEAN reduzieren!
+        n3 = self.wood_type_3.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung oben            #Todo: EMMEAN reduzieren!
         n = [n1, n2, n3]
         n1_inf = (self.wood_type_1.Emmean / (1 + self.phi_1)) / (
                 self.wood_type_1.Emmean / (1 + self.phi_1))  # Wertigkeit Rippe t=inf
         n2_inf = (self.wood_type_2.Emmean*factor / (1 + self.phi_2)) / (
-                self.wood_type_1.Emmean / (1 + self.phi_1))  # Wertigkeit Beplankung unten t=inf    EMMEAN reduzieren!
+                self.wood_type_1.Emmean / (1 + self.phi_1))  # Wertigkeit Beplankung unten t=inf    #Todo: EMMEAN reduzieren!
         n3_inf = (self.wood_type_3.Emmean*factor / (1 + self.phi_3)) / (
-                self.wood_type_1.Emmean / (1 + self.phi_1))  # Wertigkeit Beplankung oben t=inf     EMMEAN reduzieren!
+                self.wood_type_1.Emmean / (1 + self.phi_1))  # Wertigkeit Beplankung oben t=inf     #Todo: EMMEAN reduzieren!
         n_inf = [n1_inf, n2_inf, n3_inf]
         return n, n_inf
 
@@ -969,13 +965,12 @@ class FloorStruc:  # create a floor structure
             self.h += current_layer.h
             self.ei = max(self.ei, current_layer.ei)
 
-
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
 class BeamSimpleSup:
     """
     Definiert die statischen Eigenschaften (Faktoren) eines Einfeldträgers
-    :M = ql2/8, 0
+    :M = ql^2/8, 0
     :V = ql/2, -ql/2
     :w = 5/384·ql4/EI
     """
@@ -1033,8 +1028,10 @@ class Slab:
 
         self.result = result[0]
         #Faktor alpha_m_x: Bewehrungfür l_max
+        #x-Richtung = Richtung mit maximaler Spannweite
         self.alpha_m_x = (float(self.result[4]), float(self.result[5]))
         #Faktor alpha_m_x: Bewehrungfür l_min
+        #y-Ritchtun = Richtung mit minimaler Spannweite
         self.alpha_m_y = (float(self.result[6]), float(self.result[7]))
         self.alpha_v = (float(self.result[8]), float(self.result[9]))
         self.qs_cl_erf = [2, 1]
