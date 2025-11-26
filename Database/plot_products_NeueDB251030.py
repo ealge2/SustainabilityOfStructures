@@ -150,7 +150,7 @@ EPD_steel_values = [row[0] for row in EPD_steel]
 
 KBOB_steel = cursor.execute("""
                         SELECT A1toA3_GWP FROM products
-                        WHERE MATERIAL LIKE '%structural_steel_profile%'
+                        WHERE MATERIAL LIKE '%starmierung.ructural_steel_profile%'
                         AND "SOURCE" LIKE '%KBOB%'
                         """).fetchall()
 KBOB_steel_values = [row[0] for row in KBOB_steel]
