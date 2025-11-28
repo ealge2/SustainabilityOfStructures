@@ -142,6 +142,7 @@ EPD_steel = cursor.execute("""
                         WHERE MATERIAL LIKE '%structural_steel_profile%'
                         AND Total_GWP IS NOT NULL
                         AND "SOURCE" NOT LIKE '%KBOB%'
+                        AND "SOURCE" NOT LIKE '%Stalia%'
                         """).fetchall()
 EPD_steel_values = [row[0] for row in EPD_steel]
 
@@ -169,7 +170,7 @@ plt.rcParams.update({
 
     # Figure aesthetics
     'figure.facecolor': 'white',
-    'figure.autolayout': True,
+    #'figure.autolayout': True,
     'legend.frameon': False,
 
     # Bar styling
@@ -184,14 +185,14 @@ title = ['Beton', 'Holz', 'Bewehrungsstahl', 'Baustahl']
 ymin = 0
 ymax = 13
 xmin = 0
-xmax = 1300
+xmax = 1400
 
 
 import seaborn as sns
 color = sns.color_palette()
 
 # Create subplots
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))#, sharey=True)
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(10, 10))#, sharey=True)
 
 # Combine all datasets to determine the range for bins
 all_data_concrete = Ecoinvent_concrete_values + Betonsortenrechner_concrete_values + EPD_concrete_values
@@ -239,9 +240,9 @@ ax1.set_title(title[0])
 # Add vertical lines and text for KBOB values
 ax1.axvline(KBOB_concrete_values[0], linestyle='--', alpha=0.9, color=color[3], label='KBOB Hochbaubeton')
 
-ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='--', alpha=0.9, color=color[2], label= r'Mittelwert $\mu$')
-ax1.fill_betweenx([ymin, ymax], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color = color[7], alpha=0.2, zorder=1)
-ax1.text(np.quantile(EPD_concrete_values, 0.1)-10, ymax-1, '80%', color = color[7], alpha=0.9)
+ax1.axvline(statistics.mean(EPD_concrete_values), linestyle='-', alpha=0.9, color=color[2], label= r'Mittelwert $\mu$')
+ax1.fill_betweenx([ymin, ymax], np.quantile(EPD_concrete_values,0.1), np.quantile(EPD_concrete_values,0.9), color = color[7], alpha=0.1, zorder=0)
+ax1.text(np.quantile(EPD_concrete_values, 0.1)-20, ymax-1, '80%', color = color[7], alpha=0.8)
 
 ax1.legend(loc='upper right')
 
@@ -251,7 +252,7 @@ all_data_timber = EPD_timber_values #+ Ecoinvent_timber_values
 EPD_timber_values_pos = [x for x in EPD_timber_values if x >= 0]
 
 # Determine the bins based on all data
-bins = np.histogram_bin_edges(all_data_timber, bins='auto')
+bins = np.histogram_bin_edges(EPD_timber_values_pos, bins='auto')
 # Calculate the bin centers
 bin_centers = 0.5 * (bins[:-1] + bins[1:])
 
@@ -284,12 +285,14 @@ ax2.set_ylabel('# EPD$_{Holz}$')
 ax2.set_title(title[1])
 
 # Add vertical lines and text for KBOB values
-ax2.axvline(KBOB_timber_values[0], linestyle='--', alpha= 0.9, color='tomato', label='KBOB BSH CH')
-ax2.axvline(KBOB_timber_values[1], linestyle='-.', alpha=0.9, color='darkorange', label='KBOB BSH')
-ax2.axvline(288, linestyle=':', alpha=0.9, color='coral', label = 'KBOB KVH')
+ax2.axvline(253, linestyle='--', alpha= 1, color=sns.color_palette("Paired")[1], label='KBOB BSH CH')
+ax2.axvline(335, linestyle='-.', alpha=1, color=sns.color_palette("Paired")[0], label='KBOB BSH')
+ax2.axvline(281, linestyle='--', alpha=1, color=sns.color_palette("Paired")[5], label='KBOB BSP CH')
+ax2.axvline(395, linestyle='-.', alpha=1, color=sns.color_palette("Paired")[4], label='KBOB BSP')
+ax2.axvline(288, linestyle='-.', alpha=1, color=sns.color_palette("Paired")[3], label='KBOB KVH')
 
-ax2.axvline(statistics.mean(EPD_timber_values_pos), linestyle='--', alpha=0.9, color=color[1], label = r'Mittelwert $\mu$')
-ax2.fill_betweenx([ymin, ymax], np.quantile(EPD_timber_values_pos,0.1), np.quantile(EPD_timber_values_pos,0.9), color = color[7], alpha=0.2, zorder=1)
+ax2.axvline(statistics.mean(EPD_timber_values_pos), linestyle='-', alpha=0.9, color=color[1], label = r'Mittelwert $\mu$')
+ax2.fill_betweenx([ymin, ymax], np.quantile(EPD_timber_values_pos,0.1), np.quantile(EPD_timber_values_pos,0.9), color = color[7], alpha=0.1, zorder=0)
 ax2.text(np.quantile(EPD_timber_values_pos, 0.1)-3, ymax-1, '80%', color = color[7], alpha=0.9)
 
 ax2.legend(loc='upper right')
@@ -309,11 +312,11 @@ hist_EPD, _ = np.histogram(EPD_reinf_values, bins=bins)
 
 # Create the scatter plot for EPD values
 bin_widths = np.diff(bins)
-ax3.bar(bin_centers_EPD, hist_EPD, width=bin_widths[:len(bin_centers_EPD)], color=color[0], edgecolor='black', alpha=0.4)
-ax3.scatter(EPD_reinf_values, np.random.normal(2, 0.5, len(EPD_reinf_values)), alpha=0.7, label='EPD Emissions', color = 'white', edgecolor='black')
+ax3.bar(bin_centers_EPD, hist_EPD, width=bin_widths[:len(bin_centers_EPD)], color=color[0], alpha=0.4,label = 'EPD Histogramm')
+ax3.scatter(EPD_reinf_values, np.random.normal(2, 0.5, len(EPD_reinf_values)), alpha=0.7, label='EPD Einzelwerte', color = 'white', edgecolor='black')
 
 ax3.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
-ax3.set_ylabel('# EPD')
+ax3.set_ylabel('# EPD$_{Bewehrung}$')
 ax3.set_title('Betonstahl')
 
 ax3.set_yticks(range(ymin, ymax))
@@ -327,8 +330,8 @@ ax3.axvline(368, color='grey',linestyle='dotted')
 ax3.text(368+10, 4, 'Stahl Gerlafingen', fontsize = 12, rotation=90, color='grey')
 
 # Add vertical lines and text for KBOB values
-ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='--', alpha=0.9, color=color[0], label='EPD Histogramm')
-ax3.fill_betweenx([ymin, ymax], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color = color[7], alpha=0.2, zorder=1)
+ax3.axvline(statistics.mean(EPD_reinf_values), linestyle='-', alpha=0.9, color=color[0], label=r'Mittelwert $\mu$')
+ax3.fill_betweenx([ymin, ymax], np.quantile(EPD_reinf_values,0.1), np.quantile(EPD_reinf_values,0.9), color = color[7], alpha=0.1, zorder=0)
 ax3.text(np.quantile(EPD_reinf_values, 0.1)+10, ymax-1, '80%', color = color[7], alpha=0.9)
 
 ax3.legend(loc='upper right')
@@ -339,7 +342,7 @@ ax3.legend(loc='upper right')
 all_data_steel = EPD_steel_values
 
 # Determine the bins based on all data
-bins = np.histogram_bin_edges(all_data_steel, bins='auto')
+bins = np.histogram_bin_edges(all_data_steel, bins=8)
 
 # Calculate the bin centers
 bin_centers = 0.5 * (bins[:-1] + bins[1:])
@@ -351,23 +354,23 @@ hist_EPD, _ = np.histogram(EPD_steel_values, bins=bins)
 
 # Create the scatter plot for EPD values
 bin_widths = np.diff(bins)
-ax4.bar(bin_centers_EPD, hist_EPD, width=bin_widths[:len(bin_centers_EPD)], color=color[9], edgecolor='black', alpha=0.5)
-ax4.scatter(EPD_steel_values, np.random.normal(2, 0.5, len(EPD_steel_values)), alpha=0.7, label='EPD Emissions', color = 'white', edgecolor='black')
+ax4.bar(bin_centers_EPD, hist_EPD, width=bin_widths[:len(bin_centers_EPD)], color=color[9], alpha=0.3, label = 'EPD Histogramm')
+ax4.scatter(EPD_steel_values, np.random.normal(2, 0.5, len(EPD_steel_values)), alpha=0.7, label='EPD Einzelwerte', color = 'white', edgecolor='black')
 
 ax4.set_yticks(range(ymin, ymax))
 ax4.set_ylim(ymin,ymax)
 ax4.set_xlim(xmin,xmax)
 
 ax4.set_xlabel('Total GWP [kg CO$_2$-eq/t]')
-ax4.set_ylabel('# EPD')
+ax4.set_ylabel('# EPD$_{Baustahl}$')
 ax4.set_title('Baustahl')
 
 # Add vertical lines and text for KBOB values
 ax4.axvline(KBOB_steel_values[0], linestyle='--', alpha = 0.7, color=color[3], label = 'KBOB Baustahl')
 
 # Add vertical lines and text for KBOB values
-ax4.axvline(statistics.mean(EPD_steel_values), linestyle='--', alpha=0.9, color=color[9], label=r'Mittelwert $\mu$')
-ax4.fill_betweenx([ymin, ymax], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color = color[7], alpha=0.2, zorder=1)
+ax4.axvline(statistics.mean(EPD_steel_values), linestyle='-', alpha=0.9, color=color[9], label=r'Mittelwert $\mu$')
+ax4.fill_betweenx([ymin, ymax], np.quantile(EPD_steel_values,0.1), np.quantile(EPD_steel_values,0.9), color = color[7], alpha=0.1, zorder=0)
 ax4.text(np.quantile(EPD_steel_values, 0.1)+10, ymax-1, '80%', color = color[7], alpha=0.9)
 
 ax4.legend(loc='upper right')
