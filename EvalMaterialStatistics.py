@@ -207,7 +207,7 @@ timber_C24_ft0d = 8500000
 timber_GL24h_Emmean = 11500000000
 timber_C24_Emmean =  11000000000
 concrete_C2530_fcd = 16500000
-concrete_C3035_fcd = 20000000
+concrete_C3037_fcd = 20000000
 concrete_C8590_fcd = 56700000
 steel_fsd = 550000000/1.05
 steel_Es = 210000000000
@@ -296,6 +296,15 @@ normalized_by_cstrength = [
     np.array(EPD_prestressingSteel_values) / presteel_fsd*1000
 ]
 
+# Normalize values by respective tensile strength values
+normalized_by_tstrength = [
+    np.array(EPD_timber_GL24h_values) / timber_GL24h_ft0d*1000,
+    np.array(EPD_timber_C24_values) / timber_C24_ft0d*1000,
+    np.array(EPD_reinf_values) / reinfsteel1.fsd*1000,
+    np.array(EPD_steel_values) / steel_fsd*1000,
+    np.array(EPD_prestressingSteel_values) / presteel_fsd*1000
+]
+
 # Volumetric
 volumetricGWP = [
     np.array(EPD_concreteC3037_values),
@@ -305,29 +314,142 @@ volumetricGWP = [
     np.array(EPD_steel_values),
     np.array(EPD_prestressingSteel_values)
 ]
+# ______________________________________________
 
-# Create subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7))
+plt.rcParams['font.family'] = 'Times New Roman'  # globale Schrift
+plt.rcParams['font.size'] = 10                  # optionale Grundgröße
+plt.rcParams['axes.titlesize'] = 10             # Titelgröße
+plt.rcParams['axes.labelsize'] = 10             # Achsentitelgröße
+plt.rcParams['xtick.labelsize'] = 10            # Tick-Größen
+plt.rcParams['ytick.labelsize'] = 10
+plt.rcParams['legend.fontsize'] = 10
 
+
+# Create subplots english
+fig, axs = plt.subplots(2, 2, figsize=(8, 5))
+ax1, ax2, ax3, ax4 = axs.flatten()
 # Left subplot: normalized by Stiffness
-ax1.boxplot(normalized_by_Stiffness, patch_artist=True)
-ax1.set_title('Normalized GWP by Stiffness')
-ax1.set_xticklabels(['Concrete Average','C25/20', 'C85/90', 'Gl24h', 'C24','B500B'], rotation=45)
-ax1.set_ylabel('GWP·\u03C1 / E [kgCO2eq/(MN·m)]')
+ax1.boxplot(normalized_by_Stiffness, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax1.set_ylim(bottom=0)   # untere Grenze auf 0
+ax1.set_title('GWP normalised by stiffness')
+ax1.set_xticklabels(['C37/30', 'GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax1.set_ylabel('GWP·\u03C1 / E [kgCO$_2$eq/(MN·m)]')
 
 # Right subplot: normalized by strength
-ax2.boxplot(normalized_by_strength, patch_artist=True)
-ax2.set_title('Normalized GWP by Compressive Strength')
-ax2.set_xticklabels(['Concrete Average','C25/20', 'C85/90', 'Gl24h', 'C24','B500B'], rotation=45)
-ax2.set_ylabel('GWP·\u03C1 / f [kgCO2eq/(kN·m)]')
+ax2.boxplot(normalized_by_cstrength, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax2.set_ylim(bottom=0)   # untere Grenze auf 0
+ax2.set_title('GWP normalised by compressive strength')
+ax2.set_xticklabels(['C37/30', 'GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax2.set_ylabel('GWP·\u03C1 / f [kgCO$_2$eq/(kN·m)]')
 
+# Right subplot: normalized by strength
+ax3.boxplot(normalized_by_tstrength, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax3.set_ylim(bottom=0)   # untere Grenze auf 0
+ax3.set_title('GWP normalised by tensile strength')
+ax3.set_xticklabels(['GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax3.set_ylabel('GWP·\u03C1 / f [kgCO$_2$eq/(kN·m)]')
+
+# Right subplot: volumetric
+ax4.boxplot(volumetricGWP, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax4.set_ylim(bottom=0)   # untere Grenze auf 0
+ax4.set_title('volumetric GWP')
+ax4.set_xticklabels(['C37/30', 'GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax4.set_ylabel('GWP·\u03C1 [kgCO$_2$eq/m$^3$]')
 plt.tight_layout()
 plt.show()
 
+fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
+ax1.boxplot(volumetricGWP[:3], patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax1.set_ylim(bottom=0)   # untere Grenze auf 0
+ax1.set_title('volumetric GWP')
+ax1.set_xticklabels(['C37/30', 'GL24h', 'C24'], rotation=45)
+ax1.set_ylabel('GWP·\u03C1 [kgCO$_2$eq/m$^3$]')
+plt.tight_layout()
+plt.show()
 
+# Deutsch
+# Create subplots
+fig, axs = plt.subplots(2, 2, figsize=(8, 5))
+ax1, ax2, ax3, ax4 = axs.flatten()
+# Left subplot: normalized by Stiffness
+ax1.boxplot(normalized_by_Stiffness, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax1.set_ylim(bottom=0)   # untere Grenze auf 0
+ax1.set_title('GWP bezogen auf die Steifigkeit')
+ax1.set_xticklabels(['C37/30', 'GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax1.set_ylabel('GWP·\u03C1 / E [kgCO$_2$eq/(MN·m)]')
+
+# Right subplot: normalized by strength
+ax2.boxplot(normalized_by_cstrength, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax2.set_ylim(bottom=0)   # untere Grenze auf 0
+ax2.set_title('GWP bezogen auf die Druckfestigkeit')
+ax2.set_xticklabels(['C37/30', 'GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax2.set_ylabel('GWP·\u03C1 / f [kgCO$_2$eq/(kN·m)]')
+
+# Right subplot: normalized by strength
+ax3.boxplot(normalized_by_tstrength, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax3.set_ylim(bottom=0)   # untere Grenze auf 0
+ax3.set_title('GWP bezogen auf die Zugfestigkeit')
+ax3.set_xticklabels(['GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax3.set_ylabel('GWP·\u03C1 / f [kgCO$_2$eq/(kN·m)]')
+
+# Right subplot: volumetric
+ax4.boxplot(volumetricGWP, patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax4.set_ylim(bottom=0)   # untere Grenze auf 0
+ax4.set_xticklabels(['C37/30', 'GL24h', 'C24','B500B', 'S 460', 'Y1860'], rotation=45)
+ax4.set_ylabel('GWP·\u03C1 [kgCO$_2$eq/m$^3$]')
+plt.tight_layout()
+plt.show()
+
+fig, ax1 = plt.subplots(1, 1, figsize=(4, 3))
+ax1.boxplot(volumetricGWP[:3], patch_artist=True,
+    boxprops=dict(facecolor='gray', color='gray'),  # Füllfarbe + Randfarbe
+    medianprops=dict(color='black'),                # optional: Medianfarbe
+    whiskerprops=dict(color='gray'),
+    capprops=dict(color='gray'))
+ax1.set_ylim(bottom=0)   # untere Grenze auf 0
+ax1.set_xticklabels(['C37/30', 'GL24h', 'C24'], rotation=45)
+ax1.set_ylabel('GWP·\u03C1 [kgCO$_2$eq/m$^3$]')
+plt.tight_layout()
+plt.show()
 # Create subplots
 
-fig, axs = plt.subplots(2, 2, figsize=(10, 12))
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 ax1, ax2, ax3, ax4 = axs.flatten()
 
 # Left subplot: normalized by Stiffness
@@ -374,9 +496,9 @@ y_epd_concC2530_f = np.array(concrete_C2530_fcd) / np.array(EPD_concreteC2530_va
 y_epd_concC2530_E = np.array(concrete1.Ecm) / np.array(EPD_concreteC2530_values)/1000000
 x_epd_concC2530 = np.array(EPD_concreteC2530_values)/1000
 
-y_epd_concC8590_f = np.array(concrete_C8590_fcd) / np.array(EPD_concreteC8590_values)/1000
-y_epd_concC8590_E = np.array(concrete1.Ecm) / np.array(EPD_concreteC8590_values)/1000000
-x_epd_concC8590 = np.array(EPD_concreteC8590_values)/1000
+y_epd_concC3037_f = np.array(concrete_C3037_fcd) / np.array(EPD_concreteC3037_values)/1000
+y_epd_concC3037_E = np.array(concrete1.Ecm) / np.array(EPD_concreteC3037_values)/1000000
+x_epd_concC3037 = np.array(EPD_concreteC3037_values)/1000
 
 y_epd_timberGl24h_f = np.array(timber_GL24h_fc0d) / np.array(EPD_timber_GL24h_values)/1000
 y_epd_timberGl24h_E = np.array(timber_GL24h_Emmean) / np.array(EPD_timber_GL24h_values)/1000000
@@ -397,7 +519,7 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7))
 # Left subplot: E/GWP vs GWP
 ax1.scatter(x_epd_conc, y_epd_conc_E, label='Concrete EPD', alpha=0.7)
 ax1.scatter(x_epd_concC2530, y_epd_concC2530_E, label='C25/30 EPD', alpha=0.7)
-ax1.scatter(x_epd_concC8590, y_epd_concC8590_E, label='C85/90 EPD', alpha=0.7)
+ax1.scatter(x_epd_concC3037, y_epd_concC3037_E, label='C85/90 EPD', alpha=0.7)
 ax1.scatter(x_epd_timberGl24h, y_epd_timberGl24h_E, label='Gl24h', alpha=0.7)
 ax1.scatter(x_epd_timberC24, y_epd_timberC24_E, label='C24', alpha=0.7)
 ax1.scatter(x_epd_reinf, y_epd_reinf_E, label='Reinforcement B500B', alpha=0.7)
@@ -410,7 +532,7 @@ ax1.grid(True)
 # Right subplot: f/GWP vs GWP
 ax2.scatter(x_epd_conc, y_epd_conc_f, label='Concrete EPD', alpha=0.7)
 ax2.scatter(x_epd_concC2530, y_epd_concC2530_f, label='C25/30 EPD', alpha=0.7)
-ax2.scatter(x_epd_concC8590, y_epd_concC8590_f, label='C85/90 EPD', alpha=0.7)
+ax2.scatter(x_epd_concC3037, y_epd_concC3037_f, label='C85/90 EPD', alpha=0.7)
 ax2.scatter(x_epd_timberGl24h, y_epd_timberGl24h_f, label='Gl24h', alpha=0.7)
 ax2.scatter(x_epd_timberC24, y_epd_timberC24_f, label='C24', alpha=0.7)
 ax2.scatter(x_epd_reinf, y_epd_reinf_f, label='Reinforcement B500B', alpha=0.7)

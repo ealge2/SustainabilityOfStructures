@@ -995,11 +995,22 @@ class BeamTwoSpan:
         self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
         self.alpha_w_f_cd = 1/(48*5**0.5)  # Faktor zur Berechnung der Durchbiegung unter Einzellast
 
-class ContinuousSup:
+class BeamContinuousSupEl:
     def __init__(self, length):
         self.l_tot = length
         self.li_max = self.l_tot  # max span (used for calculation of admissible deflections)
-        self.alpha_m = [1/12, 1/24]  # Faktor zur Berechung des Momentes unter verteilter Last
+        self.alpha_m = [-1/12, 1/24]  # Faktor zur Berechung des Momentes unter verteilter Last
+        self.alpha_v = [0.5, 0.5]  # Faktor zur Berechung der Querkarft unter verteilter Last
+        self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
+        self.alpha_w = 1 / 384  # Faktor zur Berechung der Durchbiegung unter verteilter Last
+        self.kf2 = 1.0  # Hilfsfaktor zur Brücksichtigung der Spannweitenverhältnisse bei Berechnung f1 gem. HBT, S. 46
+        self.alpha_w_f_cd = 1/192  # Faktor zur Berechung der Durchbiegung unter Einzellast
+
+class BeamContinuousSupPl:
+    def __init__(self, length):
+        self.l_tot = length
+        self.li_max = self.l_tot  # max span (used for calculation of admissible deflections)
+        self.alpha_m = [-3/48, 3/48]  # Faktor zur Berechung des Momentes unter verteilter Last
         self.alpha_v = [0.5, 0.5]  # Faktor zur Berechung der Querkarft unter verteilter Last
         self.qs_cl_erf = [3, 3]  # Querschnittsklasse: 1 == PP, 2 == EP, 3 == EE
         self.alpha_w = 1 / 384  # Faktor zur Berechung der Durchbiegung unter verteilter Last

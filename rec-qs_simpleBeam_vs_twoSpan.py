@@ -51,10 +51,10 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7,  8, 9, 10, 11, 12, 13, 14, 15, 16,  17, 18, 19, 20]
+lengths = [2, 3, 4, 5, 6, 7,  8, 9, 10, 11, 12, 13, 14, 15, 16,  17, 18 ]
 
 #  define content of plot
-to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
+to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
 criteria = ["ULS", "SLS1", "ENV"]
 optima = ["GWP"]
 plotted_data = [["h_struct", "[m]"], ["h_tot", "[m]"], ["GWP_struct", "[kg-CO2-eq]"], ["GWP_tot", "[kg-CO2-eq]"],
@@ -76,12 +76,15 @@ for idx, i in enumerate(to_plot):
                 if idx == 0:
                     sys = struct_analysis.BeamSimpleSup(length)
                     SystemLegend = "Simple Beam"
-                elif idx  == 2:
+                elif idx  == 3:
                     sys = struct_analysis.BeamTwoSpan(length)
                     SystemLegend = "Two Span"
                 elif idx == 1:
-                    sys = struct_analysis.ContinuousSup(length)
-                    SystemLegend = "Continuously supported"
+                    sys = struct_analysis.BeamContinuousSupEl(length)
+                    SystemLegend = "Continuously supported el"
+                elif idx == 2:
+                    sys = struct_analysis.BeamContinuousSupPl(length)
+                    SystemLegend = "Continuously supported pl"
                 else:
                      # Handle other cases if needed
                     sys = None  # Placeholder, adjust as necessary
@@ -94,6 +97,8 @@ for idx, i in enumerate(to_plot):
             member_list.append(members)
             legend.append([i[0].section_type, criterion, optimum, SystemLegend])
 
+# crsec_type == "rc_rec"
+# plot_dataset(lengths, database_name, criteria, optima, to_plot[1], req, crsec_type, mat_names, g2k=0.75, qk=2.0, max_iter=100, idx_vrfctn=-1):
 # plot figures
 plt.figure(1)
 data_max = [0, 0, 0, 0, 0, 0]
@@ -111,8 +116,10 @@ for i, members in enumerate(member_list):
         color = "tab:green"  # color for simple beam
     elif sys_leg == "Two Span":
         color = "tab:blue"  # color for two span
-    elif sys_leg == "Continuously supported":
+    elif sys_leg == "Continuously supported el":
         color = "tab:red"  # color for continuously supported beam
+    elif sys_leg == "Continuously supported pl":
+        color = "tab:orange"  # color for continuously supported beam
     else:
         color = "k"
     # set linestyle
@@ -182,3 +189,6 @@ for idx, member in enumerate(v_members):
     print(member.w_app)
 
 print("Do manual verification of the data in v_members")
+
+# ____________________________________________________________________________________________________________
+# Balkendiagramm: CO2 nach Herkunft (Tragstruktur, Aufschüttung, Bodenaufbau, Stosslänge, Schalung, ...
