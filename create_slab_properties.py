@@ -35,6 +35,13 @@ def create_database_slab(database_name):
 
     # fill slab properties into db
 
+    #Definitionen:
+    #4-S: 4-Seitig auf Wänden gelagert
+    #4-P: 4-Eckig auf Stützen gelagert
+    #LL-frei: Liniengelagert nicht in Wand eingespannt → keine Durchlaufwirkung
+    # LL-eingespannt: Liniengelagert eingespannt → Durchlaufwirkung
+
+
     entries = [
         ("4S_3x3", "LL-frei", 3, 3, 0.04244, 0, 0.04244, 0, 0.30633, 0.30633, 0.00394, 0),
         ("4S_5x5", "LL-frei", 5, 5, 0.04296, 0, 0.04296, 0, 0.3206, 0.30633, 0.00391, 0),

@@ -30,6 +30,7 @@ class RandomDisplacementBounds(object):
 def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2): #max_inter = 100
     # definition of initial values for variables, which are going to be optimized
     h0 = m.section.h  # start value for height corresponds to 1/20 of system length
+
     if min(m.system.alpha_m) < 0 and abs(min(m.system.alpha_m)) > max(m.system.alpha_m):
         optimise = "oben"
         di_xo0 = m.section.bw[1][0]  # start value for rebar diameter 40 mm
@@ -80,6 +81,65 @@ def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2): #max_
                                                                 n_bw,
                                                                 phi, c_nom, xi, jnt_srch)
     return optimized_section
+
+
+#Possible Alternative Optimization (not correct yet)
+# from scipy.optimize import basinhopping
+# from basinhopping import RandomDisplacementBounds
+# import numpy as np
+#
+# def opt_rc_rec(m, to_opt="GWP", criterion="ULS", max_iter=100, h_min=0.2):
+#     # Allowed diameters in mm and meters
+#     allowed_diams_mm = [6,8,10,12,14,16,18,20,22,26,30,36,40]
+#     allowed_diams_m = [d / 1000.0 for d in allowed_diams_mm]
+#
+#     # Initial guess and bounds for h
+#     h0 = m.section.h
+#     bh = (max(0.06, h_min), 1.2)
+#
+#     # Fixed section parameters
+#     b = m.section.b
+#     s_xu, di_xu, s_xo = m.section.bw[0][1], m.section.bw[0][0], m.section.bw[1][1]
+#     di_yu, s_yu, di_yo, s_yo = m.section.bw[2][0], m.section.bw[2][1], m.section.bw[3][0], m.section.bw[3][1]
+#     di_bw, s_bw, n_bw = m.section.bw_bg[0], m.section.bw_bg[1], m.section.bw_bg[2]
+#     phi, c_nom, xi, jnt_srch = m.section.phi, m.section.c_nom, m.section.xi, m.section.joint_surcharge
+#     co, st = m.section.concrete_type, m.section.rebar_type
+#     optimise = "oben" if min(m.system.alpha_m) < 0 and abs(min(m.system.alpha_m)) > max(m.system.alpha_m) else "unten"
+#
+#     add_arg_base = [m.system, co, st, b, s_xu, di_xu, s_xo, di_yu, s_yu, di_yo, s_yo,
+#                     m.floorstruc, m.requirements, to_opt, criterion, m.g2k, m.qk, optimise]
+#
+#     best = {"obj": float("inf"), "h": None, "di_xo": None}
+#
+#     # Loop over discrete diameters
+#     for di_xo in allowed_diams_m:
+#         var0 = [h0]
+#
+#         def rc_rqs_h(vars, *args):
+#             h = vars[0]
+#             return compute_objective([h, di_xo], *args)
+#
+#         bounds = [(bh[0], bh[1])]
+#         bounded_step = RandomDisplacementBounds(np.array([b[0] for b in bounds]),
+#                                                 np.array([b[1] for b in bounds]))
+#
+#         opt = basinhopping(rc_rqs_h, var0, niter=max_iter, T=1,
+#                            minimizer_kwargs={"args": (add_arg_base,), "bounds": bounds, "method": "Powell"},
+#                            take_step=bounded_step)
+#
+#         h_opt = opt.x[0]
+#         obj_val = opt.fun
+#
+#         if obj_val < best["obj"]:
+#             best.update({"obj": obj_val, "h": h_opt, "di_xo": di_xo})
+#
+#     # Build optimized section
+#     optimized_section = struct_analysis.RectangularConcrete(co, st, b, best["h"], di_xu, s_xu, best["di_xo"], s_xo,
+#                                                              di_yu, s_yu, di_yo, s_yo, di_bw, s_bw,
+#                                                              n_bw, phi, c_nom, xi, jnt_srch)
+#     return optimized_section
+
+
 
 # inner function for optimizing reinforced concrete section for criteria ULS or SLS1 in terms of GWP or height
 def rc_rqs(var, add_arg):
@@ -391,6 +451,8 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     var0 = [b0, h0, t20, t30]
 
     # define bounds of variables
+    # TODO: Stimmen die Randbedingungen der Schichtdicken so gemäss Lignum? Ist zu verifizieren!
+    # TODO: Ev. Fallunterscheidung -> Falls unten GFP vorhanden, gem. aktuellem Stand, falls nicht, dann 2. Fall definieren.
     bh = (0.22, 2.0)  # height of rib between 22 cm (minimal requirement b x h = 100 x 220 for R60 according to Lignum 4.1, Table 433-2,
     # Column G) and 200 cm
     bb = (0.1, 0.52)  # width of rib between 10 cm (minimal requirement b x h = 100 x 220 for R60 according to Lignum 4.1, Table 433-2,
@@ -402,6 +464,7 @@ def opt_wd_rib(m, to_opt="GWP", criterion="ULS", max_iter=100):
     bounds = [bb, bh, bt2, bt3]
 
     # definition of fixed values of cross-section
+    #TODO: Rippenabstand sollte als Variabel einfliessen. Achtung: gem. Tab. 433-2 darf der Abstand jedoch max. 700 mm sein! Grenzen entsprechend wählen.
     l0 = m.li_max
     a = m.section.a
     # t2 = m.section.t2

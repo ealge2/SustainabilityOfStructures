@@ -24,11 +24,12 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
     connection = sqlite3.connect(database_name)
     cursor = connection.cursor()
     for mat_name in mat_names:
+        # Wählt alle EPDs vom Material "mat-name" (z.B. ready mixed concrete), welche sich gem. Spalte Statistik zwischen dem 10% und 90% Quantil befindet. Wo Source = Betonsortenrechenr, Ecoinvent oder KBOB ist, wird die Zeile nicht gewählt.
         inquiry = ("""
                 SELECT PRO_ID FROM products
                 WHERE DENSITY IS NOT NULL
                 AND MECH_PROP IS NOT NULL
-                AND Statistik = 1
+                AND Statistik = 1 
                 AND "SOURCE" NOT LIKE '%Betonsortenrechner%'
                 AND "SOURCE" NOT LIKE '%Ecoinvent%'
                 AND "SOURCE" NOT LIKE '%KBOB%'
@@ -49,6 +50,7 @@ def plot_dataset(lengths, database_name, criteria, optima, floorstruc, requireme
             cursor.execute(inquiry)
             result = cursor.fetchall()
             mech_prop = "'" + result[0][0] + "'"
+
             if crsec_type == "wd_rec":
                 # create a Wood material object
                 timber = struct_analysis.Wood(mech_prop, database_name, prod_id_str)

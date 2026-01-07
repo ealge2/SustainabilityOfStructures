@@ -262,7 +262,7 @@ class RectangularWood(SupStrucRectangular, Section):
 # ........................................................................
 class RectangularConcrete(SupStrucRectangular):
     # defines properties of rectangular, reinforced concrete cross-section
-    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_yu, s_yu, di_yo, s_yo, di_bw=0.0, s_bw=0.15, n_bw=0,
+    def __init__(self, concrete_type, rebar_type, b, h, di_xu, s_xu, di_xo, s_xo, di_yu=0.01, s_yu=0.15, di_yo=0.01, s_yo=0.15, di_bw=0.0, s_bw=0.15, n_bw=0,
                  phi=2.0, c_nom=0.02, xi=0.02, jnt_srch=0.15):
         # create a rectangular concrete object
         section_type = "rc_rec"
@@ -275,6 +275,7 @@ class RectangularConcrete(SupStrucRectangular):
         mr = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  # cracking moment
         self.mr_p, self.mr_n = mr, -mr
         [self.d, self.ds] = self.calc_d()
+        #TODO: x und y Richtung Berücksichtigen
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
         self.roh, self.rohs = self.as_p / self.d, self.as_n / self.ds
@@ -282,7 +283,9 @@ class RectangularConcrete(SupStrucRectangular):
         self.g0k = self.calc_weight(concrete_type.weight)
         a_s_stat = self.as_p + self.as_n + self.as_bw  # rebar area without reinforcement joint surcharge
         self.joint_surcharge = jnt_srch  # joint surcharge
+        #TODO: a_s_tot: Hat erst 1. & 4. Lage drin
         a_s_tot = a_s_stat * (1 + self.joint_surcharge)  # rebar area without reinforcement joint surcharge
+        #TODO: Im GWP vom Gesamtquerschnitt müssen alle 4 Bewehrungslagen berücksichtigt werden! Prüfen ob alle 4 Lagen berücksichtigt werden
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
         co2_concrete = (self.a_brutt - a_s_tot) * self.concrete_type.GWP * self.concrete_type.density  # [kg_CO2_eq/m]
         self.ei1 = self.concrete_type.Ecm * self.iy  # elastic stiffness concrete (uncracked behaviour) [Nm^2]
@@ -390,6 +393,7 @@ class RectangularConcrete(SupStrucRectangular):
     @staticmethod
     def f_w_ger(roh, rohs, phi, h, d):
         f = (1 - 20 * rohs) / (10 * roh ** 0.7) * (0.75 + 0.1 * phi) * (h / d) ** 3
+        #TODO: Prüfen, ob dieser Wert nicht zu konservativ ist!
         return f
 
     @staticmethod
@@ -513,6 +517,7 @@ class RibbedConcrete(SupStrucRibbedConcrete):
             'Plattenbalken')  #Rippe Plattenbalken "Längsrichtung"
         self.g0k = self.calc_weight(concrete_type.weight)
         a_s_stat = self.as_p + self.as_n + self.as_bw + self.as_PB_p + self.as_PB_n + self.as_PB_bw
+        #TODO: Achtung - es fehlt die Spreizbewehrung
         self.joint_surcharge = jnt_srch
         a_s_tot = a_s_stat * (1 + self.joint_surcharge)
         co2_rebar = a_s_tot * self.rebar_type.GWP * self.rebar_type.density  # [kg_CO2_eq/m]
@@ -826,7 +831,7 @@ class RibWood(SupStrucRibWood):
         factor = 2/3 #Dreischichtplatte 9/9/9 oder 10/10/10
 
         n1 = self.wood_type_1.Emmean / self.wood_type_1.Emmean          # Wertigkeit Rippe
-        n2 = self.wood_type_2.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung unten           #Todo: EMMEAN reduzieren!
+        n2 = self.wood_type_2.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung unten           #Todo: EMMEAN reduzieren! Stimmt das?
         n3 = self.wood_type_3.Emmean*factor / self.wood_type_1.Emmean  # Wertigkeit Beplankung oben            #Todo: EMMEAN reduzieren!
         n = [n1, n2, n3]
         n1_inf = (self.wood_type_1.Emmean / (1 + self.phi_1)) / (
@@ -876,6 +881,8 @@ class RibWood(SupStrucRibWood):
     # FEHLT: Rollschubnachweis!!
 
 
+#TODO: Aktueller Stand wird kein Abbrand des Hohlkastenquerschnitts berechnet, die Schichtdicken werden gem. Lignum so gewählt, dass der Abbrand nicht Bemessen werden muss.
+#TODO: Folgende Zeilen müssen angepasst werden, wenn ein anderes Prinzip gewählt wird.
     @staticmethod
     def fire_resistance(section):
          #bnds = [(0, 240)]
@@ -1008,7 +1015,8 @@ class ContinuousSup:
 
 class Slab:
     """
-    Nimmt die Faktoren für die Beanspruchung der Platte aus der Tabelle slab_properties.db, welche mit FE ermittelt wurden
+    Nimmt die Faktoren für die Beanspruchung der Platte aus der Tabelle slab_properties.db, welche mit FE (Cedrus) ermittelt wurden
+    Tabelle wird direkt im Skript "create_slab_properties.py" erstellt.
     """
 
     def __init__(self, length_x, length_y, support):
@@ -1056,7 +1064,7 @@ class Member1D:
         self.gk = self.g0k + self.g1k + self.g2k
         self.qk = qk
         self.psi = [psi0, psi1, psi2]
-        self.q_rare = self.gk + self.qk
+        self.q_rare = self.gk + self.qk  #TODO: Wieso ist hier psi = 1.0?
         self.q_freq = self.gk + self.psi[1] * self.qk
         self.q_per = self.gk + self.psi[2] * self.qk
         self.m = self.q_per / 10
