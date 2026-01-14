@@ -190,14 +190,14 @@ class SupStrucRectangular(Section):
 
     def calc_strength_elast(self, fy, ty):
         #  in: yielding strength fy [Pa], shear strength ty [Pa]
-        #  out: elastic bending resistance [Nm], elastic shear resistance [N]
+        #  out: elastic bending resistance mu_el [Nm], elastic shear resistance vu_el [N]
         mu_el = self.iy * fy * 2 / self.h
         vu_el = self.b * self.h * ty / 1.5
         return mu_el, vu_el
 
     def calc_strength_plast(self, fy, ty):
         #  in: yielding strength fy [Pa], shear strength ty [Pa]
-        #  out: plastic bending resistance [Nm], plastic shear resistance [N]
+        #  out: plastic bending resistance mu_pl [Nm], plastic shear resistance vu_pl [N]
         mu_pl = self.b * self.h ** 2 * fy / 4
         vu_pl = self.b * self.h * ty
         return mu_pl, vu_pl
@@ -205,9 +205,8 @@ class SupStrucRectangular(Section):
     def calc_weight(self, spec_weight):
         #  in: specific weight [N/m^3]
         #  out: weight of cross section per m length [N/m]
-        w = spec_weight * self.a_brutt
+        w = spec_weight * self.a_brutt # w: spec_weight
         return w
-
 
 #........................................................................
 class RectangularWood(SupStrucRectangular, Section):
@@ -221,19 +220,19 @@ class RectangularWood(SupStrucRectangular, Section):
         # However, as the same resistance values should be provided for all cross-sections, I defined them for both
         # directions for wood too
         self.vu_p, self.vu_n = vu_el, vu_el
-        self.qs_class_n, self.qs_class_p = [3, 3]  # Required cross-section class: 1:=PP, 2:EP, 3:EE
-        self.g0k = self.calc_weight(wood_type.weight)
+        self.qs_class_n, self.qs_class_p = [3, 3]  # Required cross-section class: 1:PP, 2:EP, 3:EE
+        self.g0k = self.calc_weight(wood_type.weight) # dead weight of cross section [N/m]
         self.ei1 = self.wood_type.Emmean * self.iy  # elastic stiffness [Nm^2]
         self.co2 = self.a_brutt * self.wood_type.GWP * self.wood_type.density  # [kg_CO2_eq/m]
-        self.cost = self.a_brutt * self.wood_type.cost
-        self.ei_b = ei_b  # stiffness perpendicular to direction of span
+        self.cost = self.a_brutt * self.wood_type.cost # [CHF] #TODO: Not implemented yet!
+        self.ei_b = ei_b  # stiffness perpendicular to direction of span [Nm^2]
         self.xi = xi  # damping factor, preset value see: HBT, Page 47 (higher value for some buildups possible)
 
     @staticmethod
     def fire_resistance(member):
-        bnds = [(0, 240)]
-        t0 = 60
-        max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)
+        bnds = [(0, 240)]   #Randbedingungen für Definition Brand - mind. 0 min max. 240 min
+        t0 = 60     #Brandeinwirkungsdauer
+        max_t = minimize(RectangularWood.fire_minimizer, t0, args=[member], bounds=bnds)    #Brandwiderstanddauer → maximale Brandeinwirkungszeit
         t_max = max_t.x[0]
         return t_max
 
@@ -269,12 +268,12 @@ class RectangularConcrete(SupStrucRectangular):
         super().__init__(section_type, b, h, phi)
         self.concrete_type = concrete_type
         self.rebar_type = rebar_type
-        self.c_nom = c_nom
-        self.bw = [[di_xu, s_xu], [di_xo, s_xo], [di_yu, s_yu],[di_yo, s_yo]]
-        self.bw_bg = [di_bw, s_bw, n_bw]
-        mr = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  # cracking moment
-        self.mr_p, self.mr_n = mr, -mr
-        [self.d, self.ds] = self.calc_d()
+        self.c_nom = c_nom #Bewehrungsüberdeckung
+        self.bw = [[di_xu, s_xu], [di_xo, s_xo], [di_yu, s_yu],[di_yo, s_yo]] #Definition Biegebewehrung 4-Lagig. x-Richtung ist dabei die Haupttragrichtung, di = Durchmesser, s = Abstand, u = untere Lagen (positives Biegemoment), o = obere Lagen (negatives Biegemoment)
+        self.bw_bg = [di_bw, s_bw, n_bw] #Definition Querkraftbewehrung
+        mr = self.b * self.h ** 2 / 6 * 1.3 * self.concrete_type.fctm  #cracking moment
+        self.mr_p, self.mr_n = mr, -mr #mr_p: positives Rissmoment, mr_n: negatives Rissmoment
+        [self.d, self.ds] = self.calc_d() #Statische Höhe. d für positive Biegung (untere Lagen), ds für negative Biegung (obere Lagen)
         #TODO: x und y Richtung Berücksichtigen
         [self.mu_max, self.x_p, self.as_p, self.qs_class_p] = self.calc_mu('pos')
         [self.mu_min, self.x_n, self.as_n, self.qs_class_n] = self.calc_mu('neg')
@@ -297,14 +296,16 @@ class RectangularConcrete(SupStrucRectangular):
         self.ei2 = self.ei1 / self.f_w_ger(self.roh, self.rohs, 0, self.h, self.d)
 
     def calc_d(self):
-        d = self.h - self.c_nom - self.bw_bg[0] - self.bw[0][0] / 2
-        ds = self.h - self.c_nom - self.bw_bg[0] - self.bw[1][0] / 2
+        d = self.h - self.c_nom - self.bw_bg[0] - self.bw[0][0] / 2 #Statische Höhe für Positives Biegemoment
+        ds = self.h - self.c_nom - self.bw_bg[0] - self.bw[1][0] / 2 #Statische Höhe für Negatives Biegemoment
         if d <= 0 or ds <= 0:
             print("d of ds<=0. Cross-section is not valid")
         return d, ds
 
     def calc_mu(self, sign='pos'):
-        b = self.b
+        #in: self
+        #out: Biegewiderstand mu [Nm], Druckzonenhöhe x [m], Bewehrungsfläche a_s [m2], Querschnittsklasse qs_klasse []
+        b = self.b  #Querschnittsbreite
         fsd = self.rebar_type.fsd
         fcd = self.concrete_type.fcd
         if sign == 'pos':
@@ -319,6 +320,8 @@ class RectangularConcrete(SupStrucRectangular):
 
     @staticmethod
     def mu_unsigned(di, s, d, b, fsd, fcd, mr):
+        #in: Bewehrungsdurchmesser di, Bewehrungsabstand s, Statische Höhe d, fsd, fcd, mr
+        #out: mu, x, a_s, qs_klasse
         # units input: [m, m, m, m, N/m^2, N/m^2]
         a_s = np.pi * di ** 2 / (4 * s) * b  # [m^2]
         omega = a_s * fsd / (d * b * fcd)  # [-]
@@ -331,41 +334,45 @@ class RectangularConcrete(SupStrucRectangular):
         else:  # zero resistance for x/d>0.5
             epsilon = 1.0e-3
             shift = 0.5
-            factor = 1 - 0.5 * (1 + 2 / np.pi * np.arctan((x/d - shift) / epsilon))
+            factor = 1 - 0.5 * (1 + 2 / np.pi * np.arctan((x/d - shift) / epsilon)) #irgendein Faktor, um die Funktion richtig auf 0 gehen zu lassen. Ist keine Formel aus irgendeiner Norm o.Ä., hat auch nichts mit der Statik zu tun#
             return factor*mu, x, a_s, 99  # Querschnitt hat ungenügendes Verformungsvermögen
 
     def calc_shear_resistance(self, d_installation=0.0):
-        # calculates shear resistance with d
-        di = self.bw_bg[0]  # diameter
-        s = self.bw_bg[1]  # spacing
-        n = self.bw_bg[2]  # number of stirrups per spacing
-        fck = self.concrete_type.fck
-        fcd = self.concrete_type.fcd
-        tcd = self.concrete_type.tcd
-        dmax = self.concrete_type.dmax  # dmax in mm
-        fsk = self.rebar_type.fsk
-        fsd = self.rebar_type.fsd
-        es = self.rebar_type.Es
-        bw = self.b
-        d = self.d
-        ds = self.ds
-        x_p = self.x_p
-        x_n = self.x_n
+        # in: self
+        # out: Querkraftwiderstand positiv vu_p [N], Querkraftwiderstand negativ vu_n [N], Querkraftbewehrung as_bw [m2]
+        #TODO: Anpassung an die SIA 262 (2025)! Ist noch gemäss alter Norm!
+        di = self.bw_bg[0]      # diameter
+        s = self.bw_bg[1]       # spacing
+        n = self.bw_bg[2]       # number of stirrups per spacing
+        fck = self.concrete_type.fck        #SIA 262
+        fcd = self.concrete_type.fcd        #SIA 262
+        tcd = self.concrete_type.tcd        #SIA 262
+        dmax = self.concrete_type.dmax      #dmax in mm
+        fsk = self.rebar_type.fsk           #SIA 262
+        fsd = self.rebar_type.fsd           #SIA 262
+        es = self.rebar_type.Es             #SIA 262
+        bw = self.b         #Stegbreite
+        d = self.d          #Statische Höhe für positives Biegemoment (untere Lagen)
+        ds = self.ds        #Statische Höhe für negatives Biegemoment (obere Lagen)
+        x_p = self.x_p      #Druckzonenhöhe positives Biegemoment (obere Querschnittsrand)
+        x_n = self.x_n      #Druckzonenhöhe negatives Biegemoment (unterer Querschnittsrand)
         as_bw = self.calc_as_bw(di, n, s, d)
         if d_installation < d / 6:
-            dv_p = d
+            dv_p = d                    #Wirksame statische Höhe für Querkraft
         else:
-            dv_p = d - d_installation
+            dv_p = d - d_installation   #Wirksame statische Höhe für Querkraft
         if d_installation < ds / 6:
-            dv_n = ds
+            dv_n = ds                   #Wirksame statische Höhe für Querkraft
         else:
-            dv_n = ds - d_installation
-        vu_p = self.vu_unsigned(bw, di, n, s, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)
-        vu_n = self.vu_unsigned(bw, di, n, s, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)
+            dv_n = ds - d_installation  #Wirksame statische Höhe für Querkraft
+        vu_p = self.vu_unsigned(bw, di, n, s, as_bw, d, dv_p, x_p, fck, fcd, tcd, fsk, fsd, es, dmax)   #Positiver Querkraftwiderstand [N]
+        vu_n = self.vu_unsigned(bw, di, n, s, as_bw, ds, dv_n, x_n, fck, fcd, tcd, fsk, fsd, es, dmax)  #Negativer Querkraftwiederstand [N]
         return vu_p, vu_n, as_bw
 
     @staticmethod
     def calc_as_bw(di, n, s, d):
+        #in: Bewehrungsduchmesser di [m], Anzahl Stäbe n [], Bewehrungsabstand s [m], Statische Höhe d [m]
+        #out: Bewehrungsquerschnittsfläche Querkraftbewehrung as_bw [mm2]
         as_bw = np.pi * di ** 2 / 4 * n / s * 0.9*d #ToDo: muss die Bügelquerschnittsfläche nicht noch mit der Plattenstärke multipliziert werden?
         return as_bw
 
@@ -379,21 +386,21 @@ class RectangularConcrete(SupStrucRectangular):
         else:
             n_min = 4
         if rohw < rohw_min or s > s_max or n < n_min:  # cross-section resistance without stirrups
-            ev = 1.5 * fsd / es
-            kg = 48 / (16 + dmax)
-            kd = 1 / (1 + ev * d * kg)
+            ev = 1.5 * fsd / es         #SIA 262
+            kg = 48 / (16 + dmax)       #SIA 262
+            kd = 1 / (1 + ev * d * kg)  #SIA 262
             vrd = kd * tcd * dv
-            return vrd
+            return vrd #Querkraftwiderstand OHNE Querkraftbewehrung SIA 262
         else:  # cross-section resistance with vertical stirrups
             z = d - 0.85 * x / 2
             vrds = as_bw * z * fsd
             vrdc = bw * z * kc * fcd * np.sin(alpha) * np.cos(alpha)  # unit of alpha: [rad]
-            return min(vrds, vrdc)
+            return min(vrds, vrdc) #Querkraftwiderstand MIT Querkraftbewehrung SIA 262
 
     @staticmethod
     def f_w_ger(roh, rohs, phi, h, d):
         f = (1 - 20 * rohs) / (10 * roh ** 0.7) * (0.75 + 0.1 * phi) * (h / d) ** 3
-        #TODO: Prüfen, ob dieser Wert nicht zu konservativ ist!
+        #TODO: Prüfen, ob dieser Wert nicht zu konservativ ist! Als Abschätzung für die Vordimensionierung scheint der Wert jedoch schon i.O., ist zumindest nicht komplett willkürlich.
         return f
 
     @staticmethod
@@ -428,12 +435,12 @@ class SupStrucRibbedConcrete(Section):
         self.h_f = h_f          # flange height [m]
         self.h_w = h - h_f      # web height [m]
         self.l0 = l0            # Abstand Momentennullpunkte [m]
-        self.b_eff = self.calc_beff()  #Effective width [m]
-        self.a_brutt = self.calc_area()
-        self.z_s = self.calc_center_of_gravity()
-        self.iy = self.calc_moment_of_inertia()
-        self.w = self.calc_weight()
-        self.phi = phi
+        self.b_eff = self.calc_beff()               #Effective width [m]
+        self.a_brutt = self.calc_area()             #Bruttoquerschnittsfläche [m2]
+        self.z_s = self.calc_center_of_gravity()    #center of gravity [m]
+        self.iy = self.calc_moment_of_inertia()     #moment of inertia [m4]
+        self.w = self.calc_weight()                 #Eigengewicht [n/m]
+        self.phi = phi                              #Kriechzahl
 
     def calc_area(self):
         # in: width b and bw [m], height h and h_f[m]
