@@ -11,10 +11,10 @@ cursor = connection.cursor()
 #extract values for concrete
 emissions_concrete = cursor.execute(
                     "SELECT Total_GWP FROM products "
-                    "WHERE MATERIAL LIKE '%ready mixed concrete%' "
+                    "WHERE MATERIAL LIKE '%ready_mixed_concrete%' "
                     "AND A1toA3_GWP IS NOT NULL "
                     "AND A1toA3_GWP != 0 "
-                    "AND MATERIAL LIKE '%ready mixed concrete%' "
+                    "AND MATERIAL LIKE '%ready_mixed_concrete%' "
                     ).fetchall()
 emissions_concrete_values = [row[0] for row in emissions_concrete]
 
