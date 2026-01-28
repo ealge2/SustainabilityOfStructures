@@ -28,7 +28,7 @@ reinfsteel1.get_design_values()
 section_wd0 = struct_analysis.RectangularWood(timber1, 1.0, 0.1, xi=0.02)
 
 # create initial reinforced concrete rectangular cross-section
-section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15)
+section_rc0 = struct_analysis.RectangularConcrete(concrete1, reinfsteel1, 1.0, 0.12, 0.014, 0.15, 0.01, 0.15, 0.008,0.25,0.008,0.25 )
 
 
 # create floor structure for solid wooden cross-section
@@ -51,7 +51,7 @@ qk = 2e3  # Nutzlast
 req = struct_analysis.Requirements()
 
 # define system lengths for plot
-lengths = [2, 3, 4, 5, 6, 7,  8, 9, 10, 11, 12, 13, 14, 15, 16,  17, 18 ]
+lengths = [4, 5, 6, 7,  8, 9, 10, 11, 12]
 
 #  define content of plot
 to_plot = [[section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc], [section_rc0, bodenaufbau_rc]]
@@ -72,7 +72,6 @@ for idx, i in enumerate(to_plot):
         for optimum in optima:
             members = []
             for length in lengths:
-
                 if idx == 0:
                     sys = struct_analysis.BeamSimpleSup(length)
                     SystemLegend = "Simple Beam"
@@ -155,7 +154,7 @@ for idx, info in enumerate(plotted_data):
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx+1])))
     else:
         plt.axis((min(lengths), max(lengths), 0, max(data_max[idx], data_max[idx-1])))
-    plt.legend()
+    #plt.legend()
 plt.show()
 
 

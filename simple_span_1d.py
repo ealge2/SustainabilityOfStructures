@@ -113,7 +113,7 @@ data_max = max_of_arrays(data_max, data_max_new)
 vrfctn_members.append(vrfctn_members_new)
 
 # DEFINE LABELS OF PLOTS
-plotted_data = [["h$struct$", "[m]"], ["h$tot$", "[m]"], ["GWP$struct$", "[kg-CO$_2$-eq]"], ["GWP$tot$", "[kg-CO$_2$-eq]"]]
+plotted_data = [["h$_{struct}$", "[m]"], ["h$_{tot}$", "[m]"], ["GWP$_{struct}$", "[kg-CO$_2$-eq]"], ["GWP$_{tot}$", "[kg-CO$_2$-eq]"]]
 
 # ADD LABELS, LEGEND, AXIS LIMITS AND GRID TO THE PLOTS
 for idx, info in enumerate(plotted_data):
