@@ -8,7 +8,7 @@ import plot_datasets  # file with code for plotting results in a standardized wa
 import matplotlib.pyplot as plt
 
 # define system lengths for plot (Datapoints on x-Axis of plot)
-lengths = [4, 5, 6, 7]
+lengths = [4, 5, 6, 7, 9, 10]
 
 # Index of verified length (cross-sections of that length will be plotted)
 idx_vrc = 0
